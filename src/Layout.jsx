@@ -438,9 +438,15 @@ export default function Layout({ children, currentPageName }) {
           margin: 0;
           padding: 0;
         }
+        @media (max-width: 768px) {
+          html, body, #root {
+            height: auto;
+            min-height: 100vh;
+          }
+        }
       `}</style>
       
-      <div className="h-full w-full flex bg-gray-50">
+      <div className="min-h-screen md:h-full w-full flex bg-gray-50">
         {/* Desktop Sidebar */}
         <div className={`hidden md:flex flex-col ${sidebarWidth} border-r bg-white h-full fixed left-0 top-0 z-20 transition-all duration-300`}>
           <div className={`flex items-center flex-shrink-0 px-4 pt-5 pb-4 ${sidebarCollapsed ? 'justify-center' : ''}`}>
@@ -491,9 +497,9 @@ export default function Layout({ children, currentPageName }) {
         </div>
 
         {/* Main Content */}
-        <div className={`flex-1 flex flex-col ${mainMargin} h-full transition-all duration-300`}>
+        <div className={`flex-1 flex flex-col ${mainMargin} min-h-screen md:h-full transition-all duration-300`}>
           {/* Mobile Header */}
-          <div className="bg-white px-4 py-3 md:hidden border-b flex-shrink-0 relative z-50">
+          <div className="bg-white px-4 py-3 md:hidden border-b flex-shrink-0 sticky top-0 z-50">
             <Sheet>
               <SheetTrigger asChild>
                 <Button 
@@ -538,7 +544,7 @@ export default function Layout({ children, currentPageName }) {
             </Sheet>
           </div>
 
-          <main className="flex-1 h-full overflow-y-auto">
+          <main className="flex-1 overflow-y-auto p-4 md:p-6">
             {children}
           </main>
         </div>
