@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -122,7 +123,10 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
           updates.deliveryNotes = selectedCustomer.deliveryInstructions;
         }
         
-        if (selectedCustomer.usualSupplier && !formData.pickupLocationId) {
+        // Don't auto-assign pickup location for Southpak (they use multiple suppliers)
+        const isSouthpak = selectedCustomer.customerName?.toLowerCase().includes('southpak');
+        
+        if (selectedCustomer.usualSupplier && !formData.pickupLocationId && !isSouthpak) {
           const matchingLocation = pickupLocations.find(
             loc => loc.sheetType?.toLowerCase() === selectedCustomer.usualSupplier.toLowerCase()
           );
