@@ -358,22 +358,19 @@ export default function SchedulingBoard() {
   if (isMobile) {
     return (
       <div className="h-full flex flex-col bg-gray-50 overflow-hidden">
-        <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white p-4 flex-shrink-0">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <Calendar className="h-6 w-6" />
-              <h1 className="text-xl font-bold">Scheduling Board</h1>
-            </div>
+        <div className="bg-white border-b px-4 py-4 flex-shrink-0 sticky top-0 z-10 shadow-sm">
+          <div className="flex items-center justify-between mb-3">
+            <h1 className="text-xl font-bold text-gray-900">Scheduling Board</h1>
             <Button
               variant="ghost"
               size="icon"
-              className="text-white hover:bg-blue-700"
               onClick={() => setNotificationOpen(true)}
+              className="h-8 w-8 p-0"
             >
               <div className="relative">
                 <Bell className="h-5 w-5" />
                 {unreadNotifications.length > 0 && (
-                  <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 rounded-full text-[10px] flex items-center justify-center font-bold">
+                  <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 rounded-full text-[10px] flex items-center justify-center font-bold text-white">
                     {unreadNotifications.length}
                   </span>
                 )}
@@ -381,27 +378,29 @@ export default function SchedulingBoard() {
             </Button>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={goToPreviousDay}
-              className="text-white hover:bg-blue-700 h-8 w-8"
-            >
+          <div className="flex items-center justify-between gap-2">
+            <Button variant="ghost" size="icon" onClick={goToPreviousDay} className="h-9 w-9">
               <ChevronLeft className="h-5 w-5" />
             </Button>
-            <div className="flex-1 text-center">
-              <p className="text-sm font-medium">{format(new Date(selectedDate), 'EEEE, MMMM d, yyyy')}</p>
+
+            <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg flex-1 justify-center">
+              <Calendar className="h-4 w-4 text-gray-500" />
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="border-none bg-transparent text-sm font-medium focus:outline-none text-center"
+              />
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={goToNextDay}
-              className="text-white hover:bg-blue-700 h-8 w-8"
-            >
+
+            <Button variant="ghost" size="icon" onClick={goToNextDay} className="h-9 w-9">
               <ChevronRight className="h-5 w-5" />
             </Button>
           </div>
+
+          <Button variant="outline" size="sm" onClick={goToToday} className="w-full mt-2">
+            Today
+          </Button>
         </div>
 
         {loading ? (
