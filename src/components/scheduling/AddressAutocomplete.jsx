@@ -73,6 +73,7 @@ export default function AddressAutocomplete({ id, value, onChange, placeholder, 
             if (window.google?.maps?.places?.Autocomplete) {
               clearInterval(checkGoogle);
               if (mountedRef.current) {
+                console.log('✅ Google Places Autocomplete loaded successfully');
                 setScriptLoaded(true);
               }
             }
@@ -128,6 +129,7 @@ export default function AddressAutocomplete({ id, value, onChange, placeholder, 
     }
 
     initAttemptedRef.current = true;
+    console.log('🔧 Initializing Google Places Autocomplete...');
 
     try {
       const queenslandBounds = new window.google.maps.LatLngBounds(
@@ -143,27 +145,37 @@ export default function AddressAutocomplete({ id, value, onChange, placeholder, 
       });
 
       autocompleteRef.current = autocomplete;
+      console.log('✅ Autocomplete initialized');
 
       const listener = autocomplete.addListener('place_changed', () => {
+        console.log('📍 Place changed event fired');
+        
         if (!mountedRef.current) return;
         
         // Set flag immediately to prevent input change handler
         isProcessingAutocomplete.current = true;
         
         const place = autocomplete.getPlace();
+        console.log('📍 Place object:', place);
 
         if (!place.geometry || !place.formatted_address) {
+          console.warn('⚠️ Place missing geometry or address');
           isProcessingAutocomplete.current = false;
           return;
         }
 
+        const addressData = {
+          address: place.formatted_address,
+          latitude: place.geometry.location.lat(),
+          longitude: place.geometry.location.lng()
+        };
+
+        console.log('✅ Address data extracted:', addressData);
+
         // Update parent with selected address and coordinates
         if (onChange && mountedRef.current) {
-          onChange({
-            address: place.formatted_address,
-            latitude: place.geometry.location.lat(),
-            longitude: place.geometry.location.lng()
-          });
+          onChange(addressData);
+          console.log('✅ onChange called with address data');
         }
         
         // Keep flag set for a bit longer to ensure input change event doesn't override
@@ -220,10 +232,12 @@ export default function AddressAutocomplete({ id, value, onChange, placeholder, 
     
     // Don't process if autocomplete is currently selecting
     if (isProcessingAutocomplete.current) {
+      console.log('⏭️ Skipping input change (autocomplete is processing)');
       return;
     }
     
     const newValue = e.target.value;
+    console.log('⌨️ Manual input change:', newValue);
     
     // Call onChange with new address but null coordinates (manual input)
     if (onChange) {
@@ -256,6 +270,11 @@ export default function AddressAutocomplete({ id, value, onChange, placeholder, 
         onChange={handleInputChange}
         className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       />
+      {!scriptLoaded && (
+        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400"></div>
+        </div>
+      )}
     </div>
   );
 }

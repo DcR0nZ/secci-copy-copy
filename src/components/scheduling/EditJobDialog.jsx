@@ -28,6 +28,8 @@ export default function EditJobDialog({ job, open, onOpenChange, onJobUpdated })
     deliveryTypeId: '',
     pickupLocationId: '',
     deliveryLocation: '',
+    deliveryLatitude: null, // New field
+    deliveryLongitude: null, // New field
     requestedDate: '',
     totalUnits: '',
     poSalesDocketNumber: '',
@@ -111,6 +113,8 @@ export default function EditJobDialog({ job, open, onOpenChange, onJobUpdated })
         deliveryTypeId: job.deliveryTypeId || '',
         pickupLocationId: job.pickupLocationId || '',
         deliveryLocation: job.deliveryLocation || '',
+        deliveryLatitude: job.deliveryLatitude || null, // Populate new field
+        deliveryLongitude: job.deliveryLongitude || null, // Populate new field
         requestedDate: job.requestedDate || '',
         totalUnits: job.totalUnits ? String(job.totalUnits) : '',
         poSalesDocketNumber: !isUnitDelivery ? (job.poSalesDocketNumber || '') : '',
@@ -141,33 +145,12 @@ export default function EditJobDialog({ job, open, onOpenChange, onJobUpdated })
     }
   }, [job, dataLoaded, open, deliveryTypes]);
 
-  const handleChange = (eOrValue) => {
-    let name, value, type, checked;
-
-    if (eOrValue && typeof eOrValue === 'object' && eOrValue.target) {
-      const e = eOrValue;
-      name = e.target.name;
-      value = e.target.value;
-      type = e.target.type;
-      checked = e.target.checked;
-    } else if (typeof eOrValue === 'string') {
-      // When called directly with a value (like from AddressAutocomplete)
-      name = 'deliveryLocation';
-      value = eOrValue;
-      type = 'text'; // Default to text type for direct value
-      checked = false;
-    } else {
-      return;
-    }
-
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
     const newValue = type === 'checkbox' ? checked : value;
     
     setFormData(prev => {
       const updated = { ...prev, [name]: newValue };
-      
-      if (name === 'deliveryLocation') {
-        console.log('Delivery location updated to:', newValue);
-      }
       
       if (name === 'sqm') {
         const sqmValue = parseFloat(newValue);
@@ -190,7 +173,7 @@ export default function EditJobDialog({ job, open, onOpenChange, onJobUpdated })
           const currentNotes = docketNotes.slice(0, numUnits);
 
           setDocketNumbers([...currentDockets, ...Array(Math.max(0, numUnits - currentDockets.length)).fill('')]);
-          setDocketNotes([...currentNotes, ...Array(Math.max(0, numUnits - currentNotes.length)).fill('')]); // Corrected numNotes to numUnits
+          setDocketNotes([...currentNotes, ...Array(Math.max(0, numUnits - currentNotes.length)).fill('')]);
         } else {
           setDocketNumbers([]);
           setDocketNotes([]);
@@ -201,9 +184,14 @@ export default function EditJobDialog({ job, open, onOpenChange, onJobUpdated })
     });
   };
 
-  const handleAddressChange = (address) => {
-    console.log('Address changed in EditJobDialog:', address);
-    handleChange(address);
+  const handleAddressChange = (data) => {
+    console.log('📍 Address changed in EditJobDialog:', data);
+    setFormData(prev => ({
+      ...prev,
+      deliveryLocation: data.address,
+      deliveryLatitude: data.latitude,
+      deliveryLongitude: data.longitude
+    }));
   };
 
   const handleNonStandardChange = (field, value) => {
@@ -316,6 +304,8 @@ export default function EditJobDialog({ job, open, onOpenChange, onJobUpdated })
         deliveryTypeId: formData.deliveryTypeId,
         pickupLocationId: formData.pickupLocationId,
         deliveryLocation: formData.deliveryLocation,
+        deliveryLatitude: formData.deliveryLatitude || undefined, // New field
+        deliveryLongitude: formData.deliveryLongitude || undefined, // New field
         requestedDate: formData.requestedDate,
         totalUnits: formData.totalUnits ? Number(formData.totalUnits) : undefined,
         poSalesDocketNumber: docketInfo,
@@ -470,13 +460,25 @@ export default function EditJobDialog({ job, open, onOpenChange, onJobUpdated })
               )}
               
               <div className="md:col-span-2">
-                <label htmlFor="deliveryLocation" className="block text-sm font-medium text-gray-700 mb-1">Delivery Address</label>
+                <label htmlFor="deliveryLocation" className="block text-sm font-medium text-gray-700 mb-1">
+                  Delivery Address <span className="text-red-500">*</span>
+                </label>
                 <AddressAutocomplete
                   value={formData.deliveryLocation}
                   onChange={handleAddressChange}
                   placeholder="Start typing address... e.g., 123 Main St, Brisbane"
                   required
                 />
+                {formData.deliveryLatitude && formData.deliveryLongitude && (
+                  <p className="text-xs text-green-600 mt-1">
+                    ✓ Location coordinates captured ({formData.deliveryLatitude.toFixed(4)}, {formData.deliveryLongitude.toFixed(4)})
+                  </p>
+                )}
+                {formData.deliveryLocation && (!formData.deliveryLatitude || !formData.deliveryLongitude) && (
+                  <p className="text-xs text-orange-600 mt-1">
+                    ⚠ Please select an address from the dropdown to capture GPS coordinates
+                  </p>
+                )}
               </div>
 
               <div>
