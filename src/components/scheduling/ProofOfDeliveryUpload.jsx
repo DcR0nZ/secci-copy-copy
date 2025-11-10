@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -55,13 +54,12 @@ const compressImage = async (file) => {
               }
 
               // Only reduce quality if blob size is still too big AND quality is above threshold
-              // This is a simplified approach, more advanced could binary search for quality.
               if (blob.size > TARGET_SIZE && quality > 0.5) { 
                 quality -= 0.1;
                 tryCompress();
               } else {
                 const compressedFile = new File([blob], file.name, {
-                  type: 'image/jpeg', // Ensure JPEG for consistency after compression
+                  type: 'image/jpeg',
                   lastModified: Date.now(),
                 });
                 resolve(compressedFile);
@@ -142,7 +140,7 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
           reader.onload = (e) => resolve({
             file,
             preview: e.target.result,
-            compressed: false, // This flag might not be used elsewhere, but kept for consistency
+            compressed: false,
             originalSize: file.size,
           });
           reader.readAsDataURL(file);
@@ -163,7 +161,7 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
   const handleRemovePhoto = (index) => {
     setPhotos(prev => prev.filter((_, i) => i !== index));
     setPhotoPreviews(prev => prev.filter((_, i) => i !== index));
-    setErrors(prev => prev.filter((_, i) => i !== index)); // Assuming errors array might align with photos
+    setErrors(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e) => {
@@ -172,7 +170,7 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
     if (photos.length === 0) {
       toast({
         title: "No Photos",
-        description: "Please capture at least one photo of the delivery.",
+        description: "Please add at least one photo of the delivery.",
         variant: "destructive",
       });
       return;
@@ -180,19 +178,18 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
 
     setUploading(true);
     setUploadProgress(0);
-    setErrors([]); // Clear previous errors for a new submission attempt
+    setErrors([]);
 
-    // Fetch user details once, needed for both online notification and offline queue
     const user = await base44.auth.me(); 
 
     try {
       const totalPhotos = photos.length;
       const compressedPhotosDataURLs = [];
-      const currentSubmissionErrors = []; // Collect all errors encountered during this submission
+      const currentSubmissionErrors = [];
 
-      // --- PHASE 1: Compress and convert photos to Data URLs ---
+      // PHASE 1: Compress and convert photos to Data URLs
       for (let i = 0; i < photos.length; i++) {
-        setProcessingIndex(i); // Indicate which photo is currently being processed
+        setProcessingIndex(i);
         const photo = photos[i];
 
         try {
@@ -204,12 +201,9 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
             } catch (compressionError) {
               console.error(`Compression failed for photo ${photo.name}. Attempting to use original file.`, compressionError);
               currentSubmissionErrors.push(`Photo ${i + 1} (${photo.name}): Compression failed. Using original.`);
-              // Decide whether to use original if compression fails. Here we default to it.
-              // If original is also too large, a later step might fail, which is appropriate.
             }
           }
 
-          // Convert the processed (compressed or original) file to a Data URL
           const reader = new FileReader();
           const dataURL = await new Promise((resolve, reject) => {
             reader.onload = (e) => resolve(e.target.result);
@@ -219,7 +213,6 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
           
           compressedPhotosDataURLs.push(dataURL);
           
-          // Update progress for the compression/processing phase (0-50%)
           const progress = ((i + 1) / totalPhotos) * 50;
           setUploadProgress(Math.round(progress));
         } catch (error) {
@@ -228,15 +221,14 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
         }
       }
 
-      setProcessingIndex(-1); // Reset processing index after the compression phase
+      setProcessingIndex(-1);
 
       if (compressedPhotosDataURLs.length === 0) {
         throw new Error('All photos failed to be processed. Please ensure they are valid image files.');
       }
       
-      // If there were any errors during photo processing (compression/dataURL conversion), display a warning toast.
       if (currentSubmissionErrors.length > 0) {
-        setErrors(currentSubmissionErrors); // Display collected errors
+        setErrors(currentSubmissionErrors);
         toast({
           title: "Photo Preparation Warnings",
           description: "Some photos encountered issues during preparation. Attempting to proceed with valid ones.",
@@ -244,19 +236,18 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
         });
       }
 
-
-      // --- PHASE 2: OFFLINE PATH (if not online) ---
+      // PHASE 2: OFFLINE PATH
       if (!isOnline) {
         await queuePODUpload({
           jobId: job.id,
-          photos: compressedPhotosDataURLs, // Pass Data URLs for storage in IndexedDB
+          photos: compressedPhotosDataURLs,
           notes,
-          jobDetails: { // Pass essential job details needed for offline re-upload and notification
-            jobId: job.id, // Redundant but good for clarity in the offline task payload
+          jobDetails: {
+            jobId: job.id,
             customerName: job.customerName,
             deliveryLocation: job.deliveryLocation,
             existingPodFiles: job.podFiles || [],
-            driverName: user?.full_name || 'Driver' // Use the fetched user info
+            driverName: user?.full_name || 'Driver'
           }
         });
 
@@ -267,36 +258,32 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
           duration: 5000,
         });
 
-        onPODUploaded(); // Notify parent component about potential update
-        onOpenChange(false); // Close the dialog
+        onPODUploaded();
+        onOpenChange(false);
 
-        // Reset form state after successful offline save
         setPhotos([]);
         setPhotoPreviews([]);
         setNotes('');
         setErrors([]);
-        setUploading(false); // Make sure uploading state is reset
-        return; // IMPORTANT: Exit early for the offline path
+        setUploading(false);
+        return;
       }
 
-      // --- PHASE 2: ONLINE PATH (if online) ---
-      const uploadedUrls = []; // This will store the Base44 URLs for successfully uploaded photos
+      // PHASE 2: ONLINE PATH
+      const uploadedUrls = [];
 
       for (let i = 0; i < compressedPhotosDataURLs.length; i++) {
-        setProcessingIndex(i); // Indicate which photo is currently being uploaded
+        setProcessingIndex(i);
         try {
           const dataURL = compressedPhotosDataURLs[i];
           const blob = await fetch(dataURL).then(r => r.blob());
           
-          // Use the original file name if available, otherwise generate a generic one
           const originalFile = photos[i]; 
           const fileToUpload = new File([blob], originalFile?.name || `pod-${job.id}-${Date.now()}-${i + 1}.jpg`, { type: blob.type });
           
-          // Upload to Base44
           const result = await base44.integrations.Core.UploadFile({ file: fileToUpload });
           uploadedUrls.push(result.file_url);
 
-          // Update progress for the upload phase (50-100%)
           const progress = 50 + ((i + 1) / compressedPhotosDataURLs.length) * 50;
           setUploadProgress(Math.round(progress));
         } catch (error) {
@@ -304,28 +291,23 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
           currentSubmissionErrors.push(`Photo ${i + 1} (${photos[i]?.name || 'N/A'}): ${error.message || 'Upload failed'}`);
         }
       }
-      setProcessingIndex(-1); // Reset processing index after the upload phase
+      setProcessingIndex(-1);
 
-      // If no photos were successfully uploaded, despite some being processed,
-      // treat this as a critical failure for the online submission.
       if (uploadedUrls.length === 0 && compressedPhotosDataURLs.length > 0) {
         throw new Error('No photos were successfully uploaded. Please check your internet connection and try again.');
       }
 
-      // Get existing POD files and append new ones
       const existingPodFiles = job.podFiles || [];
       const allPodFiles = [...existingPodFiles, ...uploadedUrls];
 
-      // Update job with POD photos and status
       await base44.entities.Job.update(job.id, {
         ...job,
         podFiles: allPodFiles,
-        podNotes: notes || job.podNotes, // Use new notes, or keep existing if no new ones provided
+        podNotes: notes || job.podNotes,
         status: 'DELIVERED',
         driverStatus: 'COMPLETED'
       });
 
-      // Send notification email if there are notes (only if online and notes provided)
       if (notes && notes.trim()) {
         try {
           await sendPODNotesNotification({
@@ -333,15 +315,13 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
             customerName: job.customerName,
             deliveryLocation: job.deliveryLocation,
             notes: notes.trim(),
-            driverName: user?.full_name || 'Driver' // Use the fetched user info
+            driverName: user?.full_name || 'Driver'
           });
         } catch (emailError) {
           console.error('Failed to send POD notes notification:', emailError);
-          // Don't fail the entire submission for a notification error, just log it.
         }
       }
 
-      // Send to Zapier (only if online)
       try {
         await sendToZapier({
           eventType: 'job_delivered',
@@ -357,10 +337,8 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
         });
       } catch (zapierError) {
         console.error('Failed to send to Zapier:', zapierError);
-        // Don't fail the entire submission for a Zapier error, just log it.
       }
 
-      // Determine final toast message and variant based on errors encountered
       let finalToastDescription = `${uploadedUrls.length} photo(s) uploaded successfully!`;
       let finalToastTitle = "Delivery Complete!";
       let finalToastVariant = "default";
@@ -378,16 +356,12 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
       });
 
       if (currentSubmissionErrors.length > 0) {
-        setErrors(currentSubmissionErrors); // Update the errors state with all collected errors
+        setErrors(currentSubmissionErrors);
       }
 
-      onPODUploaded(); // Notify parent component of successful/partial upload
+      onPODUploaded();
       
-      // Close dialog and reset form only if some photos were uploaded (online)
-      // or if the process was an offline save (handled above).
-      // If `uploadedUrls.length` is 0 but `compressedPhotosDataURLs.length` > 0, it means online upload failed
-      // entirely, and the error was thrown, keeping the dialog open for user retry.
-      if (uploadedUrls.length > 0) { // If online and at least one photo uploaded
+      if (uploadedUrls.length > 0) {
         onOpenChange(false);
         setPhotos([]);
         setPhotoPreviews([]);
@@ -402,12 +376,11 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
         variant: "destructive",
       });
       console.error('POD submission error:', error);
-      // Ensure processing state is reset on critical failure
       setProcessingIndex(-1);
     } finally {
       setUploading(false);
       setUploadProgress(0);
-      setProcessingIndex(-1); // Ensure reset regardless of success/failure
+      setProcessingIndex(-1);
     }
   };
 
@@ -422,7 +395,6 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
     }
 
     onOpenChange(false);
-    // Reset state when closing/canceling
     setPhotos([]);
     setPhotoPreviews([]);
     setNotes('');
@@ -479,7 +451,7 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
               </div>
             )}
 
-            {/* Photo Capture Section */}
+            {/* Photo Upload Section */}
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="block text-sm font-medium text-gray-700">
@@ -492,29 +464,60 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
                 )}
               </div>
 
-              {/* Upload Button */}
+              {/* Upload Buttons */}
               {photos.length < MAX_PHOTOS && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full mb-3 border-dashed border-2"
-                  disabled={uploading}
-                  asChild
-                >
-                  <label className="cursor-pointer">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      capture="environment"
-                      onChange={handleFileChange}
-                      className="hidden"
-                      disabled={uploading}
-                    />
-                    <Camera className="h-4 w-4 mr-2" />
-                    Capture Photos ({MAX_PHOTOS - photos.length} remaining)
-                  </label>
-                </Button>
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  {/* Camera Capture Button */}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full border-dashed border-2 border-blue-300 hover:bg-blue-50"
+                    disabled={uploading}
+                    asChild
+                  >
+                    <label className="cursor-pointer">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        capture="environment"
+                        onChange={handleFileChange}
+                        className="hidden"
+                        disabled={uploading}
+                      />
+                      <Camera className="h-4 w-4 mr-2" />
+                      Take Photo
+                    </label>
+                  </Button>
+
+                  {/* Gallery Selection Button */}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full border-dashed border-2 border-green-300 hover:bg-green-50"
+                    disabled={uploading}
+                    asChild
+                  >
+                    <label className="cursor-pointer">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={handleFileChange}
+                        className="hidden"
+                        disabled={uploading}
+                      />
+                      <ImageIcon className="h-4 w-4 mr-2" />
+                      Choose from Gallery
+                    </label>
+                  </Button>
+                </div>
+              )}
+
+              {photos.length < MAX_PHOTOS && (
+                <p className="text-xs text-gray-500 mb-3">
+                  <strong>{MAX_PHOTOS - photos.length} remaining</strong> - You can take photos with your camera or select existing photos from your device
+                </p>
               )}
 
               {/* Photo Preview Grid */}
@@ -594,7 +597,7 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                       {processingIndex >= 0 
                         ? `Processing photo ${processingIndex + 1} of ${photos.length}...`
-                        : !isOnline // Display different message if offline during the upload phase
+                        : !isOnline
                         ? 'Saving offline...'
                         : 'Uploading...'}
                     </span>
@@ -643,7 +646,6 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
             <Button
               type="submit"
               disabled={uploading || photos.length === 0}
-              // Change button style based on online status
               className={!isOnline ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700'}
             >
               {uploading ? (
@@ -653,12 +655,12 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
                 </>
               ) : (
                 <>
-                  {!isOnline ? ( // If offline, show "Save Offline"
+                  {!isOnline ? (
                     <>
                       <WifiOff className="h-4 w-4 mr-2" />
                       Save Offline ({photos.length} {photos.length === 1 ? 'photo' : 'photos'})
                     </>
-                  ) : ( // If online, show "Complete Delivery"
+                  ) : (
                     <>
                       <Upload className="h-4 w-4 mr-2" />
                       Complete Delivery ({photos.length} {photos.length === 1 ? 'photo' : 'photos'})
