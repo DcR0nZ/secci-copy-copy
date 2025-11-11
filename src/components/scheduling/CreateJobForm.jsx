@@ -254,6 +254,203 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
     setAttachments(prev => prev.filter((_, index) => index !== indexToRemove));
   };
 
+  const handleDocumentUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const validTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+    if (!validTypes.includes(file.type)) {
+      toast({
+        title: "Invalid File Type",
+        description: "Please upload a PDF or image file (JPG, PNG).",
+        variant: "destructive",
+      });
+      e.target.value = '';
+      return;
+    }
+
+    const maxSize = 10 * 1024 * 1024;
+    if (file.size > maxSize) {
+      toast({
+        title: "File Too Large",
+        description: "Please upload a file smaller than 10MB.",
+        variant: "destructive",
+      });
+      e.target.value = '';
+      return;
+    }
+
+    setExtractionDocument(file);
+    setExtractedData(null);
+    e.target.value = '';
+  };
+
+  const handleExtractData = async () => {
+    if (!extractionDocument) return;
+
+    setExtractedData(null);
+    setExtracting(true);
+    try {
+      toast({
+        title: "Processing Document",
+        description: "Uploading and analyzing your document with AI...",
+      });
+
+      const { file_url } = await base44.integrations.Core.UploadFile({ file: extractionDocument });
+      setExtractedDocumentUrl(file_url); // Store URL for jobPhotos
+
+      const extractionSchema = {
+        type: "object",
+        properties: {
+          deliveryLocation: { 
+            type: "string", 
+            description: "The full delivery address including street, suburb, state and postcode (DO NOT include company/customer name)" 
+          },
+          poSalesDocketNumber: { 
+            type: "string", 
+            description: "Purchase order number, sales order number, docket number, or invoice number" 
+          },
+          totalSheetQty: { 
+            type: "number", 
+            description: "Total quantity of plasterboard/drywall SHEETS. Look for 'sheets', 'units', 'qty' on the docket. This is the NUMBER OF SHEETS, not dwelling units." 
+          },
+          sqm: { 
+            type: "number", 
+            description: "Total square meters (m²) or area measurement" 
+          },
+          weightKg: { 
+            type: "number", 
+            description: "Total weight in kilograms" 
+          },
+          siteContactName: { 
+            type: "string", 
+            description: "Name of the site contact person or foreman" 
+          },
+          siteContactPhone: { 
+            type: "string", 
+            description: "Phone number for the site contact" 
+          },
+          requestedDate: { 
+            type: "string", 
+            description: "Requested delivery date in YYYY-MM-DD format" 
+          },
+          deliveryNotes: { 
+            type: "string", 
+            description: "Any special delivery instructions, notes, or comments" 
+          },
+          pickupLocation: { 
+            type: "string", 
+            description: "Supplier name, pickup location, or warehouse name" 
+          }
+        }
+      };
+
+      const result = await base44.integrations.Core.ExtractDataFromUploadedFile({
+        file_url: file_url,
+        json_schema: extractionSchema
+      });
+
+      if (result.status === 'success' && result.output) {
+        setExtractedData(result.output);
+        
+        const extracted = result.output;
+        const updates = {};
+
+        if (extracted.pickupLocation) {
+          const matchedLocation = pickupLocations.find(loc =>
+            loc.name.toLowerCase().includes(extracted.pickupLocation.toLowerCase()) ||
+            loc.company.toLowerCase().includes(extracted.pickupLocation.toLowerCase()) ||
+            extracted.pickupLocation.toLowerCase().includes(loc.name.toLowerCase()) ||
+            extracted.pickupLocation.toLowerCase().includes(loc.company.toLowerCase())
+          );
+          if (matchedLocation) {
+            updates.pickupLocationId = matchedLocation.id;
+          }
+        }
+
+        if (extracted.deliveryLocation) {
+          // Attempt to get coordinates for the extracted delivery location
+          try {
+            const addressData = await extractJobDataWithGemini.getAddressCoordinates(extracted.deliveryLocation);
+            if (addressData) {
+              updates.deliveryLocation = addressData.address;
+              updates.deliveryLatitude = addressData.latitude;
+              updates.deliveryLongitude = addressData.longitude;
+            } else {
+              updates.deliveryLocation = extracted.deliveryLocation;
+            }
+          } catch (coordError) {
+            console.warn("Failed to get coordinates for extracted address, using raw string:", extracted.deliveryLocation, coordError);
+            updates.deliveryLocation = extracted.deliveryLocation;
+          }
+        }
+
+        if (extracted.poSalesDocketNumber) updates.poSalesDocketNumber = extracted.poSalesDocketNumber;
+        
+        // Handle totalSheetQty intelligently based on delivery type
+        if (extracted.totalSheetQty) {
+          // Check if the currently selected delivery type is a "unit" delivery (UNITDWN, UNITUP, CRANE JOBS)
+          const selectedType = deliveryTypes.find(t => t.id === formData.deliveryTypeId);
+          const isUnitDeliveryType = selectedType?.name?.toLowerCase().includes('unit') || 
+                                      selectedType?.code === 'UNITDWN' || 
+                                      selectedType?.code === 'UNITUP' ||
+                                      selectedType?.name?.toLowerCase().includes('crane');
+          
+          if (isUnitDeliveryType) {
+            // For unit delivery types, totalSheetQty represents number of units/dwellings
+            updates.totalUnits = String(extracted.totalSheetQty);
+          } else {
+            // For all other delivery types, this represents total sheets
+            // Let's add it to delivery notes for now as supplementary info
+            const sheetNote = `Total sheets (extracted): ${extracted.totalSheetQty}`;
+            if (extracted.deliveryNotes) {
+              updates.deliveryNotes = `${extracted.deliveryNotes}\n${sheetNote}`;
+            } else {
+              updates.deliveryNotes = sheetNote;
+            }
+          }
+        }
+        
+        if (extracted.sqm) updates.sqm = String(extracted.sqm);
+        if (extracted.weightKg) updates.weightKg = String(extracted.weightKg);
+        if (extracted.siteContactName) updates.siteContactName = extracted.siteContactName;
+        if (extracted.siteContactPhone) updates.siteContactPhone = extracted.siteContactPhone;
+        // Only update deliveryNotes if it's not already updated by totalSheetQty and if extractedNotes exist
+        if (extracted.deliveryNotes && !updates.deliveryNotes) updates.deliveryNotes = extracted.deliveryNotes;
+        
+        if (extracted.requestedDate) {
+          try {
+            const date = new Date(extracted.requestedDate);
+            if (!isNaN(date.getTime())) {
+              updates.requestedDate = format(date, 'yyyy-MM-dd');
+            }
+          } catch (e) {
+            console.log('Could not parse date:', extracted.requestedDate);
+          }
+        }
+
+        setFormData(prev => ({ ...prev, ...updates }));
+
+        toast({
+          title: "✨ Data Extracted Successfully!",
+          description: "Please review the pre-filled information and make any necessary corrections.",
+        });
+      } else {
+        throw new Error(result.details || 'Failed to extract data from document');
+      }
+
+    } catch (error) {
+      console.error('Document extraction error:', error);
+      toast({
+        title: "Extraction Failed",
+        description: error.message || "Could not extract data from the document. Please fill the form manually.",
+        variant: "destructive",
+      });
+    } finally {
+      setExtracting(false);
+    }
+  };
+
   const selectedDeliveryType = deliveryTypes.find(t => t.id === formData.deliveryTypeId);
   const isUnitsDelivery = selectedDeliveryType?.name?.toLowerCase().includes('unit');
   const canScheduleDirectly = currentUser && (currentUser.role === 'admin' || currentUser.appRole === 'dispatcher');
@@ -333,6 +530,17 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
       });
 
       const jobPhotos = [];
+      // Add existing attachments
+      attachments.forEach(url => {
+        jobPhotos.push({
+          url: url,
+          caption: url.split('/').pop() || 'Attachment',
+          timestamp: new Date().toISOString(),
+          uploadedBy: currentUser.email || 'system'
+        });
+      });
+
+      // Add extracted document if it exists
       if (extractedDocumentUrl && currentUser?.email) {
         jobPhotos.push({
           url: extractedDocumentUrl,
@@ -358,7 +566,8 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
         siteContactName: formData.siteContactName,
         siteContactPhone: formData.siteContactPhone,
         deliveryNotes: formData.deliveryNotes || undefined,
-        attachments: attachments.length > 0 ? attachments : undefined,
+        // The `attachments` field will now be replaced by the `jobPhotos` array which includes both manual attachments and extracted document
+        // attachments: attachments.length > 0 ? attachments : undefined, 
         jobPhotos: jobPhotos.length > 0 ? jobPhotos : undefined,
         customerName: selectedCustomer.customerName,
         deliveryTypeName: selectedType.name,
@@ -489,17 +698,62 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
     <>
       <Dialog open={open && !showConfirmation} onOpenChange={onOpenChange}>
         <DialogContent 
-          className="sm:max-w-[600px]"
+          className="sm:max-w-[900px] h-[90vh] flex flex-col"
           onInteractOutside={handleInteractOutside}
           onPointerDownOutside={handleInteractOutside}
         >
           <DialogHeader>
             <DialogTitle>Create New Job</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSubmit}>
-            <ScrollArea className="h-[65vh] pr-6">
+          <form onSubmit={handleSubmit} className="flex flex-col flex-grow">
+            <ScrollArea className="flex-grow pr-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
                 
+                {/* Document Upload and AI Extraction Section */}
+                <div className="md:col-span-2 border-b pb-4 mb-4">
+                  <h3 className="text-md font-semibold text-gray-900 mb-3 flex items-center">
+                    <FileText className="h-5 w-5 mr-2" /> AI Document Extraction (Optional)
+                  </h3>
+                  <p className="text-sm text-gray-600 mb-3">Upload a delivery docket/order to automatically fill job details.</p>
+                  <div className="flex items-center space-x-2">
+                    <Input
+                      id="extractionDocumentUpload"
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      onChange={handleDocumentUpload}
+                      className="flex-grow"
+                    />
+                    <Button
+                      type="button"
+                      onClick={handleExtractData}
+                      disabled={!extractionDocument || extracting}
+                      className="flex items-center"
+                    >
+                      {extracting ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Extracting...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="h-4 w-4 mr-2" />
+                          Extract Data
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                  {extractionDocument && (
+                    <div className="mt-2 text-sm text-gray-600 flex items-center">
+                      <FileText className="h-4 w-4 mr-1" /> Selected: {extractionDocument.name}
+                    </div>
+                  )}
+                  {extractedData && (
+                    <div className="mt-2 text-sm text-green-600 flex items-center">
+                      <Sparkles className="h-4 w-4 mr-1" /> Data extracted and pre-filled! Please review.
+                    </div>
+                  )}
+                </div>
+
                 <div>
                   <label htmlFor="customerId" className="block text-sm font-medium text-gray-700 mb-1">Customer</label>
                   <Select name="customerId" onValueChange={(value) => handleSelectChange('customerId', value)} value={formData.customerId} required>
@@ -909,7 +1163,7 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
               <DialogClose asChild>
                 <Button type="button" variant="outline">Cancel</Button>
               </DialogClose>
-              <Button type="submit" disabled={loading || uploadingAttachment}>
+              <Button type="submit" disabled={loading || extracting || uploadingAttachment}>
                 {loading ? 'Creating...' : 'Create Job'}
               </Button>
             </DialogFooter>

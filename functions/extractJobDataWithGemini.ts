@@ -54,13 +54,13 @@ Deno.serve(async (req) => {
         }
 
         // Create the prompt
-        const prompt = `You are analyzing a delivery order document. Extract the following information from this document and return ONLY a valid JSON object with these exact field names:
+        const prompt = `You are analyzing a delivery order document for plasterboard/drywall sheets. Extract the following information from this document and return ONLY a valid JSON object with these exact field names:
 
 {
-  "customerName": "The customer or company name",
-  "deliveryLocation": "The full delivery address including street, suburb, state and postcode",
+  "customerName": "The customer or company name (exclude from delivery address)",
+  "deliveryLocation": "The full delivery address including street, suburb, state and postcode (DO NOT include company/customer name)",
   "poSalesDocketNumber": "Purchase order number, sales order number, docket number, or invoice number",
-  "totalUnits": "Total number of units, items, or dockets (as a number, not string)",
+  "totalSheetQty": "Total quantity of plasterboard/drywall sheets (look for terms like 'sheets', 'units', 'quantity', 'qty' - this is the NUMBER OF SHEETS, not dwelling units)",
   "sqm": "Total square meters or m² (as a number, not string)",
   "weightKg": "Total weight in kilograms (as a number, not string)",
   "siteContactName": "Name of the site contact person or foreman",
@@ -70,11 +70,19 @@ Deno.serve(async (req) => {
   "pickupLocation": "Supplier name, pickup location, or warehouse name"
 }
 
-Rules:
+CRITICAL RULES FOR SHEET QUANTITY:
+- "totalSheetQty" should contain the TOTAL NUMBER OF PLASTERBOARD SHEETS being delivered
+- Look for terms like: "sheets", "units", "qty", "quantity", "pieces", "pcs"
+- If you see something like "98 sheets" or "98 units" on a docket, extract 98
+- This is NOT the number of dwelling units or apartments - it's the number of individual plasterboard sheets
+- Sum up all sheets from multiple dockets if present
+
+OTHER RULES:
 - Return ONLY the JSON object, no additional text or explanation
 - If a field cannot be found, use null for that field
-- For numeric fields (totalUnits, sqm, weightKg), use actual numbers not strings
+- For numeric fields (totalSheetQty, sqm, weightKg), use actual numbers not strings
 - For dates, use YYYY-MM-DD format
+- For deliveryLocation, extract ONLY the address, NOT the customer/company name
 - Be thorough and check the entire document carefully
 
 Now analyze this document:`;
