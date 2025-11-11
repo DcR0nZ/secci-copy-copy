@@ -28,6 +28,7 @@ export default function CustomerRequestDeliveryPage() {
     deliveryLongitude: null,
     requestedDate: '',
     totalUnits: '',
+    totalSheetQty: '', // Added totalSheetQty to formData
     poSalesDocketNumber: '',
     deliveryWindow: '',
     sqm: '',
@@ -165,9 +166,6 @@ export default function CustomerRequestDeliveryPage() {
         const extracted = result.output;
         const updates = {};
         
-        let deliveryNotesForUpdate = [];
-        let totalUnitsFromExtraction = null;
-        
         // Determine if the current delivery type selected in the form is a 'unit' type
         const selectedTypeInForm = deliveryTypes.find(t => t.id === formData.deliveryTypeId);
         const isCurrentlyUnitDeliveryType = selectedTypeInForm?.name?.toLowerCase().includes('unit') || 
@@ -197,30 +195,21 @@ export default function CustomerRequestDeliveryPage() {
         if (extracted.totalSheetQty !== undefined && extracted.totalSheetQty !== null) {
           if (isCurrentlyUnitDeliveryType) {
             // For unit delivery types, totalSheetQty represents number of units/dwellings
-            totalUnitsFromExtraction = String(extracted.totalSheetQty);
+            updates.totalUnits = String(extracted.totalSheetQty);
           } else {
             // For all other delivery types, this represents total sheets
-            deliveryNotesForUpdate.push(`Total sheets: ${extracted.totalSheetQty}`);
+            updates.totalSheetQty = String(extracted.totalSheetQty);
           }
         }
 
-        if (totalUnitsFromExtraction !== null) {
-          updates.totalUnits = totalUnitsFromExtraction;
-        }
-        
         if (extracted.sqm) updates.sqm = String(extracted.sqm);
         if (extracted.weightKg) updates.weightKg = String(extracted.weightKg);
         if (extracted.siteContactName) updates.siteContactName = extracted.siteContactName;
         if (extracted.siteContactPhone) updates.siteContactPhone = extracted.siteContactPhone;
 
-        // Add extracted deliveryNotes to the list if present
+        // Apply extracted delivery notes
         if (extracted.deliveryNotes) {
-            deliveryNotesForUpdate.push(extracted.deliveryNotes);
-        }
-
-        // Combine all delivery notes parts
-        if (deliveryNotesForUpdate.length > 0) {
-            updates.deliveryNotes = deliveryNotesForUpdate.join('\n');
+            updates.deliveryNotes = extracted.deliveryNotes;
         }
         
         if (extracted.requestedDate) {
@@ -385,6 +374,7 @@ export default function CustomerRequestDeliveryPage() {
         deliveryLongitude: formData.deliveryLongitude,
         requestedDate: formData.requestedDate,
         totalUnits: formData.totalUnits ? Number(formData.totalUnits) : undefined,
+        totalSheetQty: formData.totalSheetQty ? Number(formData.totalSheetQty) : undefined, // Added to job creation
         poSalesDocketNumber: formData.poSalesDocketNumber || undefined,
         deliveryWindow: formData.deliveryWindow || undefined,
         sqm: formData.sqm ? Number(formData.sqm) : undefined,
@@ -418,7 +408,7 @@ export default function CustomerRequestDeliveryPage() {
         deliveryTypeId: '', pickupLocationId: '', deliveryLocation: '', 
         deliveryLatitude: null, deliveryLongitude: null,
         requestedDate: '', 
-        totalUnits: '', poSalesDocketNumber: '', deliveryWindow: '',
+        totalUnits: '', totalSheetQty: '', poSalesDocketNumber: '', deliveryWindow: '', // Added to reset
         sqm: '', weightKg: '', siteContactName: '', siteContactPhone: '', deliveryNotes: '',
         nonStandardDelivery: {
           longWalk: false, longWalkDistance: '', passUp: false, passDown: false, stairs: false,
@@ -558,6 +548,14 @@ export default function CustomerRequestDeliveryPage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Total Number of Units</label>
                   <Input name="totalUnits" type="number" value={formData.totalUnits} onChange={handleChange} placeholder="e.g., 150" />
+                </div>
+              )}
+
+              {/* Added totalSheetQty input field */}
+              {!isUnitsDelivery && formData.deliveryTypeId && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Total Sheet Quantity</label>
+                  <Input name="totalSheetQty" type="number" value={formData.totalSheetQty} onChange={handleChange} placeholder="e.g., 98" />
                 </div>
               )}
 

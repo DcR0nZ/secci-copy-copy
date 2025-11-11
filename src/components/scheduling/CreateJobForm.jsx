@@ -44,6 +44,7 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
     deliveryLongitude: null,
     requestedDate: '',
     totalUnits: '',
+    totalSheetQty: '', // Added totalSheetQty
     poSalesDocketNumber: '',
     deliveryWindow: '',
     sqm: '',
@@ -170,7 +171,7 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
           const currentNotes = docketNotes.slice(0, numUnits);
 
           setDocketNumbers([...currentDockets, ...Array(Math.max(0, numUnits - currentDockets.length)).fill('')]);
-          setDocketNotes([...currentNotes, ...Array(Math.max(0, numUnits - currentNotes.length)).fill('')]);
+          setDocketNotes([...currentNotes, ...Array(Math.max(0, numNotes - currentNotes.length)).fill('')]);
         } else {
           setDocketNumbers([]);
           setDocketNotes([]);
@@ -401,13 +402,7 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
             updates.totalUnits = String(extracted.totalSheetQty);
           } else {
             // For all other delivery types, this represents total sheets
-            // Let's add it to delivery notes for now as supplementary info
-            const sheetNote = `Total sheets (extracted): ${extracted.totalSheetQty}`;
-            if (extracted.deliveryNotes) {
-              updates.deliveryNotes = `${extracted.deliveryNotes}\n${sheetNote}`;
-            } else {
-              updates.deliveryNotes = sheetNote;
-            }
+            updates.totalSheetQty = String(extracted.totalSheetQty);
           }
         }
         
@@ -416,7 +411,7 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
         if (extracted.siteContactName) updates.siteContactName = extracted.siteContactName;
         if (extracted.siteContactPhone) updates.siteContactPhone = extracted.siteContactPhone;
         // Only update deliveryNotes if it's not already updated by totalSheetQty and if extractedNotes exist
-        if (extracted.deliveryNotes && !updates.deliveryNotes) updates.deliveryNotes = extracted.deliveryNotes;
+        if (extracted.deliveryNotes) updates.deliveryNotes = extracted.deliveryNotes;
         
         if (extracted.requestedDate) {
           try {
@@ -530,17 +525,7 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
       });
 
       const jobPhotos = [];
-      // Add existing attachments
-      attachments.forEach(url => {
-        jobPhotos.push({
-          url: url,
-          caption: url.split('/').pop() || 'Attachment',
-          timestamp: new Date().toISOString(),
-          uploadedBy: currentUser.email || 'system'
-        });
-      });
-
-      // Add extracted document if it exists
+      // Only add extracted document to jobPhotos
       if (extractedDocumentUrl && currentUser?.email) {
         jobPhotos.push({
           url: extractedDocumentUrl,
@@ -559,6 +544,7 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
         deliveryLongitude: formData.deliveryLongitude,
         requestedDate: formData.requestedDate,
         totalUnits: formData.totalUnits ? Number(formData.totalUnits) : undefined,
+        totalSheetQty: formData.totalSheetQty ? Number(formData.totalSheetQty) : undefined, // Added totalSheetQty
         poSalesDocketNumber: docketInfo,
         deliveryWindow: formData.deliveryWindow || undefined,
         sqm: formData.sqm ? Number(formData.sqm) : undefined,
@@ -566,9 +552,8 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
         siteContactName: formData.siteContactName,
         siteContactPhone: formData.siteContactPhone,
         deliveryNotes: formData.deliveryNotes || undefined,
-        // The `attachments` field will now be replaced by the `jobPhotos` array which includes both manual attachments and extracted document
-        // attachments: attachments.length > 0 ? attachments : undefined, 
-        jobPhotos: jobPhotos.length > 0 ? jobPhotos : undefined,
+        attachments: attachments.length > 0 ? attachments : undefined, // Manual attachments
+        jobPhotos: jobPhotos.length > 0 ? jobPhotos : undefined, // Extracted doc to jobPhotos
         customerName: selectedCustomer.customerName,
         deliveryTypeName: selectedType.name,
         pickupLocation: `${selectedLocation.company} - ${selectedLocation.name}`,
@@ -664,7 +649,7 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
         customerId: '', deliveryTypeId: '', pickupLocationId: '', deliveryLocation: '', 
         deliveryLatitude: null, deliveryLongitude: null,
         requestedDate: '', 
-        totalUnits: '', poSalesDocketNumber: '', deliveryWindow: '',
+        totalUnits: '', totalSheetQty: '', poSalesDocketNumber: '', deliveryWindow: '', // Added totalSheetQty
         sqm: '', weightKg: '', siteContactName: '', siteContactPhone: '', deliveryNotes: '',
         scheduleTruckId: '', scheduleDate: '', scheduleTimeSlot: '', scheduleSlotPosition: '1',
         nonStandardDelivery: {
@@ -783,6 +768,14 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
                   <div>
                     <label htmlFor="totalUnits" className="block text-sm font-medium text-gray-700 mb-1">Number of Dockets/Units</label>
                     <Input id="totalUnits" name="totalUnits" type="number" value={formData.totalUnits} onChange={handleChange} placeholder="e.g. 8" />
+                  </div>
+                )}
+                
+                {/* Added totalSheetQty input field */}
+                {!isUnitsDelivery && formData.deliveryTypeId && (
+                  <div>
+                    <label htmlFor="totalSheetQty" className="block text-sm font-medium text-gray-700 mb-1">Total Sheet Quantity</label>
+                    <Input id="totalSheetQty" name="totalSheetQty" type="number" value={formData.totalSheetQty} onChange={handleChange} placeholder="e.g., 98" />
                   </div>
                 )}
 

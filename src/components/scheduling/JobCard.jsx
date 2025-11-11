@@ -1,6 +1,6 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, ArrowUp, Construction } from 'lucide-react';
+import { AlertTriangle, ArrowUp, Construction, FileStack } from 'lucide-react';
 
 export default function JobCard({ job, deliveryTypes }) {
   const deliveryType = deliveryTypes?.find(dt => dt.id === job.deliveryTypeId);
@@ -74,6 +74,12 @@ export default function JobCard({ job, deliveryTypes }) {
           {isUnitDelivery && job.totalUnits && (
             <Badge variant="outline" className="text-xs bg-indigo-50 text-indigo-700 border-indigo-300">
               {job.totalUnits} units
+            </Badge>
+          )}
+          {!isUnitDelivery && job.totalSheetQty && (
+            <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-300 flex items-center gap-1">
+              <FileStack className="h-3 w-3" />
+              {job.totalSheetQty.toLocaleString()} sheets
             </Badge>
           )}
           {job.isDifficultDelivery && (
