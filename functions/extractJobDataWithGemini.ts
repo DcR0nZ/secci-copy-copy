@@ -53,14 +53,15 @@ Deno.serve(async (req) => {
             mimeType = 'image/png';
         }
 
-        // Create the prompt
+        // Create the prompt with clear distinction between dockets and sheets
         const prompt = `You are analyzing a delivery order document. Extract the following information from this document and return ONLY a valid JSON object with these exact field names:
 
 {
   "customerName": "The customer or company name",
-  "deliveryLocation": "The full delivery address including street, suburb, state and postcode",
+  "deliveryLocation": "The full delivery address including street, suburb, state and postcode. ONLY the address, do NOT include company names or contact names",
   "poSalesDocketNumber": "Purchase order number, sales order number, docket number, or invoice number",
-  "totalUnits": "Total number of units, items, or dockets (as a number, not string)",
+  "totalUnits": "The number of separate dockets/orders/units being delivered (e.g., if there are 3 dockets, this should be 3)",
+  "totalSheetQty": "The TOTAL number of sheets/boards across ALL dockets (e.g., if there are 98 sheets total, this should be 98)",
   "sqm": "Total square meters or m² (as a number, not string)",
   "weightKg": "Total weight in kilograms (as a number, not string)",
   "siteContactName": "Name of the site contact person or foreman",
@@ -70,12 +71,18 @@ Deno.serve(async (req) => {
   "pickupLocation": "Supplier name, pickup location, or warehouse name"
 }
 
+IMPORTANT DISTINCTIONS:
+- "totalUnits" = Number of dockets/separate orders (e.g., 1, 2, 3, etc.)
+- "totalSheetQty" = Total quantity of sheets/boards being delivered (e.g., 50, 98, 150, etc.)
+- These are DIFFERENT values - don't confuse them!
+
 Rules:
 - Return ONLY the JSON object, no additional text or explanation
 - If a field cannot be found, use null for that field
-- For numeric fields (totalUnits, sqm, weightKg), use actual numbers not strings
+- For numeric fields (totalUnits, totalSheetQty, sqm, weightKg), use actual numbers not strings
 - For dates, use YYYY-MM-DD format
 - Be thorough and check the entire document carefully
+- For deliveryLocation, extract ONLY the physical address, excluding any company names
 
 Now analyze this document:`;
 
