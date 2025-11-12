@@ -140,12 +140,12 @@ export default function AddressAutocomplete({ id, value, onChange, placeholder, 
       const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, {
         componentRestrictions: { country: 'au' },
         bounds: queenslandBounds,
-        fields: ['address_components', 'formatted_address', 'geometry'],
-        types: ['address']
+        fields: ['address_components', 'formatted_address', 'geometry', 'name'],
+        types: ['establishment', 'geocode']
       });
 
       autocompleteRef.current = autocomplete;
-      console.log('✅ Autocomplete initialized');
+      console.log('✅ Autocomplete initialized with establishment and geocode types');
 
       const listener = autocomplete.addListener('place_changed', () => {
         console.log('📍 Place changed event fired');
@@ -245,7 +245,7 @@ export default function AddressAutocomplete({ id, value, onChange, placeholder, 
         ref={inputRef}
         id={id}
         type="text"
-        placeholder={placeholder || 'Start typing address...'}
+        placeholder={placeholder || 'Start typing address or place name...'}
         required={required}
         autoComplete="off"
         value={value || ''}
