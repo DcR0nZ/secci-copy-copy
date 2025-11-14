@@ -61,11 +61,8 @@ export default function DashboardPage() {
         const user = await base44.auth.me();
         setCurrentUser(user);
 
-        // Check if user has access to this page
-        if (user.role !== 'admin' && user.appRole !== 'dispatcher' && user.appRole !== 'manager' && user.appRole !== 'outreach') {
-          window.location.href = createPageUrl('DailyJobBoard');
-          return;
-        }
+        // Check if user has access to this page - all authenticated users can see dashboard
+        // No access restrictions needed
 
         const today = format(startOfDay(new Date()), 'yyyy-MM-dd');
         const mondayThisWeek = startOfWeek(new Date(), { weekStartsOn: 1 }); // Monday this week

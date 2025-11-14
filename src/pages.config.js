@@ -10,7 +10,6 @@ import AdminPickupLocations from './pages/AdminPickupLocations';
 import AdminDeliveryTypes from './pages/AdminDeliveryTypes';
 import DriverMyRuns from './pages/DriverMyRuns';
 import Dashboard from './pages/Dashboard';
-import DriverDashboard from './pages/DriverDashboard';
 import WeatherToday from './pages/WeatherToday';
 import TestEmails from './pages/TestEmails';
 import Reports from './pages/Reports';
@@ -31,7 +30,6 @@ export const PAGES = {
     "AdminDeliveryTypes": AdminDeliveryTypes,
     "DriverMyRuns": DriverMyRuns,
     "Dashboard": Dashboard,
-    "DriverDashboard": DriverDashboard,
     "WeatherToday": WeatherToday,
     "TestEmails": TestEmails,
     "Reports": Reports,
