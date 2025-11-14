@@ -704,6 +704,7 @@ export default function JobDetailsDialog({ job, open, onOpenChange, onJobUpdated
                             <img
                               src={url}
                               alt={`POD ${index + 1}`}
+                              loading="lazy"
                               className="w-full aspect-square object-cover rounded-lg border-2 border-green-200 cursor-pointer hover:border-green-400 transition-colors"
                               onClick={() => setFullScreenImage(url)} // Changed to open full screen
                             />
@@ -824,6 +825,7 @@ export default function JobDetailsDialog({ job, open, onOpenChange, onJobUpdated
                           <img
                             src={photo.url}
                             alt={`Job photo ${index + 1}`}
+                            loading="lazy"
                             className="w-full aspect-square object-cover rounded-lg border-2 border-gray-200 cursor-pointer hover:border-blue-400 transition-colors"
                             onClick={() => setFullScreenImage(photo.url)} // Changed to open full screen
                           />
@@ -944,6 +946,7 @@ export default function JobDetailsDialog({ job, open, onOpenChange, onJobUpdated
               <img
                 src={fullScreenImage}
                 alt="Full size"
+                loading="lazy"
                 className="w-full h-auto max-h-[90vh] object-contain rounded-lg"
               />
               <Button

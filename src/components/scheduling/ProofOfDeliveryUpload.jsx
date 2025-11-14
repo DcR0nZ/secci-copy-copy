@@ -535,6 +535,7 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
                       <img
                         src={preview.preview}
                         alt={`Preview ${index + 1}`}
+                        loading="lazy"
                         className="w-full h-full object-cover"
                       />
                       
