@@ -301,7 +301,7 @@ export default function DashboardPage() {
           <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => window.location.href = createPageUrl('DailyJobBoard')}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-gray-600">
-                {isOutreach ? 'Total Hours Booked Today' : 'Total SQM Today'}
+                {isOutreach ? 'Total Hours Booked Today' : 'Total m² Today'}
               </CardTitle>
               <Package className="h-5 w-5 text-green-600" />
             </CardHeader>
@@ -377,7 +377,7 @@ export default function DashboardPage() {
           <Card className="border-purple-200 bg-purple-50">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-gray-700">
-                {isOutreach ? 'Total Hours' : 'Total SQM'}
+                {isOutreach ? 'Total Hours' : 'Total m²'}
               </CardTitle>
               <Package className="h-5 w-5 text-purple-600" />
             </CardHeader>
