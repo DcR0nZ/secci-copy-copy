@@ -220,26 +220,26 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Clock Card */}
         <Card className="bg-gradient-to-br from-blue-500 to-blue-700">
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div className="text-white">
                 <p className="text-sm font-medium opacity-90">Current Time</p>
-                <p className="text-5xl font-bold mt-2">
+                <p className="text-4xl font-bold mt-2">
                   {format(currentTime, 'h:mm')}
-                  <span className="text-2xl ml-2">{format(currentTime, 'a')}</span>
+                  <span className="text-xl ml-2">{format(currentTime, 'a')}</span>
                 </p>
-                <p className="text-lg mt-2 opacity-90">
+                <p className="text-base mt-2 opacity-90">
                   {format(currentTime, 'EEEE, MMMM d, yyyy')}
                 </p>
               </div>
-              <ClockIcon className="h-16 w-16 text-white opacity-50" />
+              <ClockIcon className="h-12 w-12 text-white opacity-50" />
             </div>
           </CardContent>
         </Card>
 
         {/* Weather Card */}
         <Card className="bg-gradient-to-br from-indigo-500 to-indigo-700">
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             <div className="text-white">
               <div className="flex items-center justify-between">
                 <div>
