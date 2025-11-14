@@ -191,9 +191,9 @@ export default function DashboardPage() {
 
   const getWeatherIcon = (condition) => {
     if (condition?.toLowerCase().includes('rain')) {
-      return <Droplets className="h-8 w-8 text-blue-500" />;
+      return <Droplets className="h-6 w-6 text-blue-400" />;
     }
-    return <Cloud className="h-8 w-8 text-gray-500" />;
+    return <Cloud className="h-6 w-6 text-blue-200" />;
   };
 
   if (loading) {
@@ -268,7 +268,7 @@ export default function DashboardPage() {
                   )}
                 </div>
                 <div>
-                  {weather && <Cloud className="h-6 w-6 text-gray-500" />}
+                  {weather && getWeatherIcon(weather.description)}
                 </div>
               </div>
             </div>
