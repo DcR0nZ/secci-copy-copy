@@ -262,13 +262,13 @@ export default function DashboardPage() {
                       </div>
                     </>
                   ) : weatherError ? (
-                    <p className="text-lg mt-2">{weatherError}</p>
+                    <p className="text-base mt-2">{weatherError}</p>
                   ) : (
-                    <p className="text-lg mt-2">Loading weather...</p>
+                    <p className="text-base mt-2">Loading weather...</p>
                   )}
                 </div>
                 <div>
-                  {weather && getWeatherIcon(weather.description)}
+                  {weather && <Cloud className="h-6 w-6 text-gray-500" />}
                 </div>
               </div>
             </div>
