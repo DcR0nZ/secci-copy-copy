@@ -247,10 +247,10 @@ export default function DashboardPage() {
                   {weather ? (
                     <>
                       <div className="flex items-baseline mt-2">
-                        <p className="text-5xl font-bold">{Math.round(weather.temp)}°</p>
-                        <span className="text-2xl ml-2">C</span>
+                        <p className="text-4xl font-bold">{Math.round(weather.temp)}°</p>
+                        <span className="text-xl ml-2">C</span>
                       </div>
-                      <p className="text-lg mt-2 capitalize opacity-90">{weather.description}</p>
+                      <p className="text-base mt-2 capitalize opacity-90">{weather.description}</p>
                       <div className="flex items-center gap-4 mt-3">
                         <div className="flex items-center gap-2">
                           <Droplets className="h-4 w-4" />
