@@ -293,19 +293,15 @@ export default function Layout({ children, currentPageName }) {
   const location = useLocation();
 
   useEffect(() => {
+    let mounted = true;
+    
     const init = async () => {
       try {
         const currentUser = await base44.auth.me();
+        
+        if (!mounted) return;
+        
         setUser(currentUser);
-
-        console.log('Current user:', {
-          id: currentUser.id,
-          email: currentUser.email,
-          role: currentUser.role,
-          appRole: currentUser.appRole,
-          customerId: currentUser.customerId,
-          customerName: currentUser.customerName
-        });
 
         const needsCustomerId = currentUser.appRole === 'customer' || currentUser.appRole === 'manager' || !currentUser.appRole;
         const isPending = currentUser && currentUser.role !== 'admin' && needsCustomerId && !currentUser.customerId;
@@ -318,7 +314,7 @@ export default function Layout({ children, currentPageName }) {
         const isRootPath = location.pathname === '/' || location.pathname === '/app';
         const isLoginCallback = location.search.includes('code=') || location.search.includes('state=');
         
-        if ((isRootPath || isLoginCallback) && !isPending) {
+        if ((isRootPath || isLoginCallback) && !isPending && currentPageName !== 'Dashboard' && currentPageName !== 'AdminJobs' && currentPageName !== 'DailyJobBoard') {
           let dashboardUrl;
           
           if (currentUser.role === 'admin') {
@@ -342,6 +338,8 @@ export default function Layout({ children, currentPageName }) {
         }
       } catch (e) {
         console.error('Authentication error:', e);
+        if (!mounted) return;
+        
         setError(e);
         if (!window.location.search.includes('code=') && !window.location.search.includes('state=')) {
           const nextUrl = window.location.href;
@@ -349,11 +347,18 @@ export default function Layout({ children, currentPageName }) {
         }
         return;
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
+    
     init();
-  }, [currentPageName, location]);
+    
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const handleLogout = async () => {
     await base44.auth.logout();
