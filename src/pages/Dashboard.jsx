@@ -351,7 +351,7 @@ export default function DashboardPage() {
       <div>
         <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
           <CalendarRange className="h-5 w-5 text-purple-600" />
-          The Week Ahead
+          Weekly Overview
         </h2>
         <p className="text-sm text-gray-600 mb-4">
           Remaining this week (now through {format(addDays(startOfWeek(new Date(), { weekStartsOn: 1 }), 6), 'EEE, MMM d')})
