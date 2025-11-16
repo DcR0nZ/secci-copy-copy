@@ -619,11 +619,11 @@ export default function SchedulerGrid({
                                       justifyContent: 'center',
                                       position: 'relative'
                                     }}>
-                                    {/* Top Placeholder Button */}
+                                    {/* Left Placeholder Button */}
                                     {canCreatePlaceholder && slotJobs.length > 0 && !isDraggingOver && (
                                       <button
                                         onClick={() => onOpenPlaceholderDialog(truck.id, slot.id, blockStart)}
-                                        className="absolute top-1 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-white hover:bg-gray-100 border-2 border-gray-300 rounded-full p-1 z-20 shadow-sm"
+                                        className="absolute left-1 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-white hover:bg-gray-100 border-2 border-gray-300 rounded-full p-1 z-20 shadow-sm"
                                         style={{ width: '24px', height: '24px' }}>
                                         <Plus className="h-3 w-3 text-gray-600" />
                                       </button>
@@ -680,11 +680,11 @@ export default function SchedulerGrid({
                                       ))}
                                     </div>
 
-                                    {/* Bottom Placeholder Button */}
+                                    {/* Right Placeholder Button */}
                                     {canCreatePlaceholder && slotJobs.length > 0 && !isDraggingOver && (
                                       <button
                                         onClick={() => onOpenPlaceholderDialog(truck.id, slot.id, blockStart)}
-                                        className="absolute bottom-1 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-white hover:bg-gray-100 border-2 border-gray-300 rounded-full p-1 z-20 shadow-sm"
+                                        className="absolute right-1 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-white hover:bg-gray-100 border-2 border-gray-300 rounded-full p-1 z-20 shadow-sm"
                                         style={{ width: '24px', height: '24px' }}>
                                         <Plus className="h-3 w-3 text-gray-600" />
                                       </button>
