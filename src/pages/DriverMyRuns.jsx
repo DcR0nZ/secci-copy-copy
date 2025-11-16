@@ -306,8 +306,24 @@ export default function DriverMyRuns() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Card className="max-w-md">
-          <CardContent className="p-6 text-center">
-            <p className="text-gray-600">No truck assigned to your account. Please contact your dispatcher.</p>
+          <CardContent className="p-6 text-center space-y-4">
+            <p className="text-gray-600">Please select your truck to view your runs</p>
+            <Select
+              value=""
+              onValueChange={handleTruckChange}
+              disabled={changingTruck || !isOnline}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select your truck" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ACCO1">ACCO1</SelectItem>
+                <SelectItem value="ACCO2">ACCO2</SelectItem>
+                <SelectItem value="FUSO">FUSO</SelectItem>
+                <SelectItem value="ISUZU">ISUZU</SelectItem>
+                <SelectItem value="UD">UD</SelectItem>
+              </SelectContent>
+            </Select>
           </CardContent>
         </Card>
       </div>
