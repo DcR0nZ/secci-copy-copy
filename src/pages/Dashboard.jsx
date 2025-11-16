@@ -73,7 +73,7 @@ export default function DashboardPage() {
         ]);
 
         const isOutreach = user.appRole === 'outreach';
-        const isCustomer = user.role !== 'admin' && user.appRole !== 'dispatcher' && user.appRole !== 'manager' && user.appRole !== 'outreach';
+        const isCustomer = user.role !== 'admin' && user.appRole !== 'dispatcher' && user.appRole !== 'manager' && user.appRole !== 'outreach' && user.appRole !== 'driver';
         
         // Determine filtering based on user role
         let filteredJobs = allJobs;
