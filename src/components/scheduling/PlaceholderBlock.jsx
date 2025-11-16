@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, GripVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -80,26 +80,39 @@ export default function PlaceholderBlock({ placeholder, onUpdated, isDragging })
           boxShadow: isDragging ? '0 10px 15px -3px rgba(0, 0, 0, 0.1)' : undefined
         }}
       >
-        <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-5 w-5 bg-white/80 hover:bg-white"
-            onClick={() => setShowEdit(true)}
-          >
-            <Pencil className="h-3 w-3" />
-          </Button>
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-5 w-5 bg-white/80 hover:bg-white text-red-600"
-            onClick={() => setShowDelete(true)}
-          >
-            <Trash2 className="h-3 w-3" />
-          </Button>
-        </div>
-        <div className={`font-medium ${colorOption.text} text-[11px] pr-12`}>
-          {placeholder.label}
+        <div className="flex items-start justify-between gap-1 h-full">
+          <div className="flex-1 min-w-0 overflow-hidden">
+            <div className={`font-medium ${colorOption.text} text-[11px]`}>
+              {placeholder.label}
+            </div>
+          </div>
+          <div className="flex flex-col items-center gap-0.5 flex-shrink-0">
+            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-5 w-5 bg-white/80 hover:bg-white"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowEdit(true);
+                }}
+              >
+                <Pencil className="h-3 w-3" />
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-5 w-5 bg-white/80 hover:bg-white text-red-600"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowDelete(true);
+                }}
+              >
+                <Trash2 className="h-3 w-3" />
+              </Button>
+            </div>
+            <GripVertical className="h-2.5 w-2.5 text-gray-500" />
+          </div>
         </div>
       </div>
 
