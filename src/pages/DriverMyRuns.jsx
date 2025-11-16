@@ -527,6 +527,16 @@ export default function DriverMyRuns() {
 
               <div className="space-y-2">
                 <Button
+                  onClick={() => handleStartNavigation(job)}
+                  variant="outline"
+                  className="w-full"
+                >
+                  <Navigation className="h-4 w-4 mr-2" />
+                  Start Navigation
+                  <ExternalLink className="h-3 w-3 ml-2" />
+                </Button>
+
+                <Button
                   onClick={() => handleDelayToggle(job, 'pickup')}
                   variant={pickupDelayActive ? "default" : "outline"}
                   className={`w-full ${pickupDelayActive ? 'bg-green-600 hover:bg-green-700' : ''}`}
