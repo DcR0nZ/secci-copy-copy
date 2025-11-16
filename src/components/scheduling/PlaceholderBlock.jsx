@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, GripVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -26,7 +26,7 @@ const COLOR_OPTIONS = [
   { value: 'pink', label: 'Pink', bg: 'bg-pink-100', text: 'text-pink-800', border: 'border-pink-300' }
 ];
 
-export default function PlaceholderBlock({ placeholder, onUpdated }) {
+export default function PlaceholderBlock({ placeholder, onUpdated, isDragging = false }) {
   const [showEdit, setShowEdit] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
   const [label, setLabel] = useState(placeholder.label);
@@ -73,7 +73,9 @@ export default function PlaceholderBlock({ placeholder, onUpdated }) {
   return (
     <>
       <div
-        className={`${colorOption.bg} ${colorOption.border} border-2 rounded p-2 shadow-sm text-xs transition-all group relative`}
+        className={`${colorOption.bg} ${colorOption.border} border-2 rounded p-2 shadow-sm text-xs transition-all group relative ${
+          isDragging ? 'opacity-50 scale-105 shadow-lg' : ''
+        }`}
         style={{
           minHeight: '60px',
           width: '100%'
@@ -84,7 +86,10 @@ export default function PlaceholderBlock({ placeholder, onUpdated }) {
             size="icon"
             variant="ghost"
             className="h-5 w-5 bg-white/80 hover:bg-white"
-            onClick={() => setShowEdit(true)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowEdit(true);
+            }}
           >
             <Pencil className="h-3 w-3" />
           </Button>
@@ -92,13 +97,19 @@ export default function PlaceholderBlock({ placeholder, onUpdated }) {
             size="icon"
             variant="ghost"
             className="h-5 w-5 bg-white/80 hover:bg-white text-red-600"
-            onClick={() => setShowDelete(true)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowDelete(true);
+            }}
           >
             <Trash2 className="h-3 w-3" />
           </Button>
         </div>
-        <div className={`font-medium ${colorOption.text} text-[11px] pr-12`}>
-          {placeholder.label}
+        <div className="flex items-start justify-between gap-2">
+          <div className={`font-medium ${colorOption.text} text-[11px] flex-1`}>
+            {placeholder.label}
+          </div>
+          <GripVertical className="h-3 w-3 text-gray-500 flex-shrink-0" />
         </div>
       </div>
 
