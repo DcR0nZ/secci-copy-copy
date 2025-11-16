@@ -517,15 +517,25 @@ export default function DriverMyRuns() {
           {isToday && (
             <>
               <Button
-                onClick={() => handleStartNavigation(job)}
+                onClick={() => setPodDialogJob(job)}
                 className="w-full mb-2 bg-blue-600 hover:bg-blue-700"
+                disabled={!isOnline}
               >
-                <Navigation className="h-4 w-4 mr-2" />
-                Start Navigation
-                <ExternalLink className="h-3 w-3 ml-2" />
+                <CheckCircle2 className="h-4 w-4 mr-2" />
+                Upload POD
               </Button>
 
               <div className="space-y-2">
+                <Button
+                  onClick={() => handleStartNavigation(job)}
+                  variant="outline"
+                  className="w-full"
+                >
+                  <Navigation className="h-4 w-4 mr-2" />
+                  Start Navigation
+                  <ExternalLink className="h-3 w-3 ml-2" />
+                </Button>
+
                 <Button
                   onClick={() => handleDelayToggle(job, 'pickup')}
                   variant={pickupDelayActive ? "default" : "outline"}
@@ -556,16 +566,6 @@ export default function DriverMyRuns() {
                   ) : (
                     'Delay on Site'
                   )}
-                </Button>
-
-                <Button
-                  onClick={() => setPodDialogJob(job)}
-                  variant="outline"
-                  className="w-full"
-                  disabled={!isOnline}
-                >
-                  <CheckCircle2 className="h-4 w-4 mr-2" />
-                  Upload POD
                 </Button>
 
                 <Button
