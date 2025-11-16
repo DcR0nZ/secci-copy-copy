@@ -369,6 +369,7 @@ export default function SchedulingBoard() {
     // Navigate to the job's date if needed
     if (job.requestedDate) {
       setSelectedDate(job.requestedDate);
+      updateDateInUrl(job.requestedDate);
     }
   };
 
@@ -420,7 +421,10 @@ export default function SchedulingBoard() {
                 <input
                   type="date"
                   value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
+                  onChange={(e) => {
+                    setSelectedDate(e.target.value);
+                    updateDateInUrl(e.target.value);
+                  }}
                   className="border-none bg-transparent text-sm font-medium focus:outline-none text-center"
                 />
               </div>
@@ -875,7 +879,10 @@ export default function SchedulingBoard() {
                       <input
                         type="date"
                         value={selectedDate}
-                        onChange={(e) => setSelectedDate(e.target.value)}
+                        onChange={(e) => {
+                          setSelectedDate(e.target.value);
+                          updateDateInUrl(e.target.value);
+                        }}
                         className="border-none bg-transparent text-sm font-medium focus:outline-none"
                       />
                     </div>
