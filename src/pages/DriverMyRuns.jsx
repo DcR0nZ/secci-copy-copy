@@ -97,6 +97,10 @@ export default function DriverMyRuns() {
         const myJobIds = myAssignments.map(a => a.jobId);
         const myJobs = allJobs.filter(j => myJobIds.includes(j.id));
         setJobs(myJobs);
+      } else {
+        // No truck assigned - clear assignments and jobs
+        setAssignments([]);
+        setJobs([]);
       }
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -302,18 +306,6 @@ export default function DriverMyRuns() {
     );
   }
 
-  if (!currentUser?.truck) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Card className="max-w-md">
-          <CardContent className="p-6 text-center">
-            <p className="text-gray-600">No truck assigned to your account. Please contact your dispatcher.</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   const JobCard = ({ job }) => {
     const statusOption = STATUS_OPTIONS.find(s => s.value === job.driverStatus);
     const StatusIcon = statusOption?.icon || Radio;
@@ -497,7 +489,19 @@ export default function DriverMyRuns() {
         </div>
       </div>
 
-      {!isOnline && jobs.length === 0 && (
+      {!currentUser?.truck && (
+        <Card className="border-blue-200 bg-blue-50">
+          <CardContent className="p-6 text-center">
+            <TruckIcon className="h-12 w-12 text-blue-500 mx-auto mb-3" />
+            <h3 className="font-semibold text-blue-900 mb-2">No Truck Assigned</h3>
+            <p className="text-sm text-blue-700">
+              Please select a truck from the dropdown above to view your schedule.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {!isOnline && currentUser?.truck && jobs.length === 0 && (
         <Card className="border-orange-200 bg-orange-50">
           <CardContent className="p-6 text-center">
             <WifiOff className="h-12 w-12 text-orange-500 mx-auto mb-3" />
@@ -512,28 +516,30 @@ export default function DriverMyRuns() {
       <LocationTracker />
 
       {/* Today's Jobs */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            Today's Deliveries ({todayJobs.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {todayJobs.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">No deliveries scheduled for today</p>
-          ) : (
-            <div className="grid grid-cols-1 gap-4">
-              {todayJobs.map(job => (
-                <JobCard key={job.id} job={job} />
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {currentUser?.truck && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              Today's Deliveries ({todayJobs.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {todayJobs.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">No deliveries scheduled for today</p>
+            ) : (
+              <div className="grid grid-cols-1 gap-4">
+                {todayJobs.map(job => (
+                  <JobCard key={job.id} job={job} />
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Tomorrow's Jobs */}
-      {tomorrowJobs.length > 0 && (
+      {currentUser?.truck && tomorrowJobs.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -552,7 +558,7 @@ export default function DriverMyRuns() {
       )}
 
       {/* Upcoming Jobs */}
-      {upcomingDates.length > 0 && (
+      {currentUser?.truck && upcomingDates.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle>Upcoming Deliveries</CardTitle>
