@@ -62,7 +62,7 @@ export default function DashboardPage() {
         setCurrentUser(user);
 
         // Check if user has access to this page
-        if (user.role !== 'admin' && user.appRole !== 'dispatcher' && user.appRole !== 'manager' && user.appRole !== 'outreach') {
+        if (user.role !== 'admin' && user.appRole !== 'dispatcher' && user.appRole !== 'manager' && user.appRole !== 'outreach' && user.appRole !== 'driver') {
           window.location.href = createPageUrl('DailyJobBoard');
           return;
         }
