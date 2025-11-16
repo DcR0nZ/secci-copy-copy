@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -27,7 +26,7 @@ const COLOR_OPTIONS = [
   { value: 'pink', label: 'Pink', bg: 'bg-pink-100', text: 'text-pink-800', border: 'border-pink-300' }
 ];
 
-export default function PlaceholderBlock({ placeholder, onUpdated }) {
+export default function PlaceholderBlock({ placeholder, onUpdated, isDragging }) {
   const [showEdit, setShowEdit] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
   const [label, setLabel] = useState(placeholder.label);
@@ -74,10 +73,11 @@ export default function PlaceholderBlock({ placeholder, onUpdated }) {
   return (
     <>
       <div
-        className={`${colorOption.bg} ${colorOption.border} border-2 rounded p-2 shadow-sm text-xs transition-all group relative`}
+        className={`${colorOption.bg} ${colorOption.border} border-2 rounded p-2 shadow-sm text-xs transition-all group relative ${isDragging ? 'opacity-50 scale-105 z-50' : ''}`}
         style={{
           minHeight: '60px',
-          width: '100%'
+          width: '100%',
+          boxShadow: isDragging ? '0 10px 15px -3px rgba(0, 0, 0, 0.1)' : undefined
         }}
       >
         <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">

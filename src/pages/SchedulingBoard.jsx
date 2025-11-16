@@ -182,9 +182,45 @@ export default function SchedulingBoard() {
   }, [fetchData, currentUser]);
 
   const handleDragEnd = async (result) => {
-    const { destination, source, draggableId: jobId } = result;
+    const { destination, source, draggableId } = result;
     if (!destination) return;
 
+    const isPlaceholder = draggableId.startsWith('placeholder-');
+
+    if (isPlaceholder) {
+      // Handle placeholder dragging
+      const placeholderId = draggableId.replace('placeholder-', '');
+      const placeholder = placeholders.find(p => p.id === placeholderId);
+      
+      if (!placeholder) return;
+
+      if (destination.droppableId === 'unscheduled') {
+        // Delete placeholder if dropped in unscheduled
+        await base44.entities.Placeholder.delete(placeholderId);
+        fetchData();
+        return;
+      }
+
+      const parts = destination.droppableId.split('-');
+      const requestedSlotPosition = parseInt(parts[parts.length - 1]);
+      const timeSlotId = parts.slice(1, parts.length - 1).join('-');
+      const truckId = parts[0];
+
+      const finalSlotPosition = requestedSlotPosition <= 2 ? 1 : 3;
+
+      // Update placeholder position
+      await base44.entities.Placeholder.update(placeholderId, {
+        truckId,
+        timeSlotId,
+        slotPosition: finalSlotPosition,
+        date: selectedDate
+      });
+      fetchData();
+      return;
+    }
+
+    // Handle job dragging (existing logic)
+    const jobId = draggableId;
     const sourceAssignment = assignments.find(a => a.jobId === jobId);
     const jobToUpdate = jobs.find(j => j.id === jobId);
 
