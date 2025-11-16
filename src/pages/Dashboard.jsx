@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar, Package, Truck, TrendingUp, Cloud, Droplets, Clock as ClockIcon, AlertTriangle, CalendarRange } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
 import { format, startOfDay, startOfWeek, addDays } from 'date-fns';
 import { createPageUrl } from '@/utils';
 
@@ -27,6 +29,9 @@ export default function DashboardPage() {
   const [weatherError, setWeatherError] = useState(null);
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
+  const [changingTruck, setChangingTruck] = useState(false);
+
+  const { toast } = useToast();
 
   // Update clock every second
   useEffect(() => {
