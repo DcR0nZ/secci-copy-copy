@@ -1,12 +1,12 @@
 import { useEffect } from 'react';
-import { User } from '@/entities/User';
+import { base44 } from '@/api/base44Client';
 import { createPageUrl } from '@/utils';
 
 export default function HomePage() {
   useEffect(() => {
     const redirect = async () => {
       try {
-        const user = await User.me();
+        const user = await base44.auth.me();
         
         // Platform admins go to admin dashboard
         if (user.role === 'admin') {
