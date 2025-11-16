@@ -3,239 +3,133 @@ import { base44 } from '@/api/base44Client';
 
 export default function AddressAutocomplete({ id, value, onChange, placeholder, required }) {
   const inputRef = useRef(null);
-  const autocompleteRef = useRef(null);
-  const listenerRef = useRef(null);
-  const [scriptLoaded, setScriptLoaded] = useState(false);
-  const initAttemptedRef = useRef(false);
+  const [suggestions, setSuggestions] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
+  const debounceTimerRef = useRef(null);
   const mountedRef = useRef(true);
-  const timeoutsRef = useRef([]);
-  const isProcessingAutocomplete = useRef(false);
+  const dropdownRef = useRef(null);
 
-  // Load Google Maps script once
   useEffect(() => {
     mountedRef.current = true;
-    
-    if (window.google?.maps?.places?.Autocomplete) {
-      if (mountedRef.current) {
-        setScriptLoaded(true);
-      }
-      return;
-    }
-
-    const loadScript = async () => {
-      try {
-        const response = await base44.functions.invoke('getGooglePlacesKey');
-        const apiKey = response.data.apiKey;
-
-        if (!mountedRef.current || !apiKey) {
-          return;
-        }
-
-        const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
-        if (existingScript) {
-          const checkGoogle = setInterval(() => {
-            if (!mountedRef.current) {
-              clearInterval(checkGoogle);
-              return;
-            }
-            if (window.google?.maps?.places?.Autocomplete) {
-              clearInterval(checkGoogle);
-              if (mountedRef.current) {
-                setScriptLoaded(true);
-              }
-            }
-          }, 100);
-          
-          const timeout = setTimeout(() => {
-            clearInterval(checkGoogle);
-            if (mountedRef.current && !window.google?.maps?.places?.Autocomplete) {
-              console.error('Google Maps API failed to load');
-            }
-          }, 10000);
-          
-          timeoutsRef.current.push(checkGoogle, timeout);
-          return;
-        }
-
-        const script = document.createElement('script');
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&loading=async`;
-        script.async = true;
-        script.defer = true;
-        
-        script.onload = () => {
-          if (!mountedRef.current) return;
-          
-          const checkGoogle = setInterval(() => {
-            if (!mountedRef.current) {
-              clearInterval(checkGoogle);
-              return;
-            }
-            if (window.google?.maps?.places?.Autocomplete) {
-              clearInterval(checkGoogle);
-              if (mountedRef.current) {
-                console.log('✅ Google Places Autocomplete loaded successfully');
-                setScriptLoaded(true);
-              }
-            }
-          }, 100);
-          
-          const timeout = setTimeout(() => {
-            clearInterval(checkGoogle);
-            if (mountedRef.current && !window.google?.maps?.places?.Autocomplete) {
-              console.error('Google Maps API failed to initialize');
-            }
-          }, 10000);
-          
-          timeoutsRef.current.push(checkGoogle, timeout);
-        };
-        
-        script.onerror = () => {
-          if (mountedRef.current) {
-            console.error('Failed to load Google Maps script');
-          }
-        };
-        
-        document.head.appendChild(script);
-      } catch (error) {
-        if (mountedRef.current) {
-          console.error('Error loading Google Places:', error);
-        }
-      }
-    };
-
-    loadScript();
-
     return () => {
       mountedRef.current = false;
-      timeoutsRef.current.forEach(timer => {
-        if (typeof timer === 'number') {
-          clearTimeout(timer);
-          clearInterval(timer);
-        }
-      });
-      timeoutsRef.current = [];
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
     };
   }, []);
 
-  // Initialize autocomplete when script is loaded
+  // Close dropdown when clicking outside
   useEffect(() => {
-    if (!scriptLoaded || !inputRef.current || autocompleteRef.current || initAttemptedRef.current || !mountedRef.current) {
+    const handleClickOutside = (event) => {
+      if (
+        dropdownRef.current && 
+        !dropdownRef.current.contains(event.target) &&
+        inputRef.current &&
+        !inputRef.current.contains(event.target)
+      ) {
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const searchAddresses = async (query) => {
+    if (!query || query.trim().length < 3) {
+      setSuggestions([]);
+      setShowDropdown(false);
       return;
     }
 
-    if (!window.google?.maps?.places?.Autocomplete) {
-      console.error('Autocomplete not available yet');
-      return;
-    }
-
-    initAttemptedRef.current = true;
-    console.log('🔧 Initializing Google Places Autocomplete...');
-
+    setIsLoading(true);
     try {
-      const queenslandBounds = new window.google.maps.LatLngBounds(
-        new window.google.maps.LatLng(-29.0, 138.0),
-        new window.google.maps.LatLng(-10.0, 154.0)
-      );
+      const response = await base44.functions.invoke('geoscapeAddressSearch', { query });
+      
+      if (!mountedRef.current) return;
 
-      const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, {
-        componentRestrictions: { country: 'au' },
-        bounds: queenslandBounds,
-        fields: ['address_components', 'formatted_address', 'geometry', 'name'],
-        types: ['establishment', 'geocode']
-      });
-
-      autocompleteRef.current = autocomplete;
-      console.log('✅ Autocomplete initialized with establishment and geocode types');
-
-      const listener = autocomplete.addListener('place_changed', () => {
-        console.log('📍 Place changed event fired');
-        
-        if (!mountedRef.current) return;
-        
-        isProcessingAutocomplete.current = true;
-        
-        const place = autocomplete.getPlace();
-        console.log('📍 Place object:', place);
-
-        if (!place.geometry || !place.formatted_address) {
-          console.warn('⚠️ Place missing geometry or address');
-          isProcessingAutocomplete.current = false;
-          return;
-        }
-
-        const addressData = {
-          address: place.formatted_address,
-          latitude: place.geometry.location.lat(),
-          longitude: place.geometry.location.lng()
-        };
-
-        console.log('✅ Address data extracted:', addressData);
-
-        if (onChange && mountedRef.current) {
-          onChange(addressData);
-          console.log('✅ onChange called with address data');
-        }
-        
-        setTimeout(() => {
-          isProcessingAutocomplete.current = false;
-        }, 300);
-      });
-
-      listenerRef.current = listener;
-
-      return () => {
-        if (listenerRef.current && window.google?.maps?.event) {
-          window.google.maps.event.removeListener(listenerRef.current);
-          listenerRef.current = null;
-        }
-        autocompleteRef.current = null;
-        initAttemptedRef.current = false;
-      };
+      if (response.data && response.data.features) {
+        setSuggestions(response.data.features);
+        setShowDropdown(response.data.features.length > 0);
+      } else {
+        setSuggestions([]);
+        setShowDropdown(false);
+      }
     } catch (error) {
+      console.error('Address search error:', error);
+      setSuggestions([]);
+      setShowDropdown(false);
+    } finally {
       if (mountedRef.current) {
-        console.error('Error initializing autocomplete:', error);
+        setIsLoading(false);
       }
-      initAttemptedRef.current = false;
     }
-  }, [scriptLoaded, onChange]);
-
-  // Clean up on unmount
-  useEffect(() => {
-    return () => {
-      mountedRef.current = false;
-      
-      if (listenerRef.current && window.google?.maps?.event) {
-        window.google.maps.event.removeListener(listenerRef.current);
-        listenerRef.current = null;
-      }
-      
-      if (autocompleteRef.current) {
-        autocompleteRef.current = null;
-      }
-      
-      timeoutsRef.current.forEach(timer => {
-        if (typeof timer === 'number') {
-          clearTimeout(timer);
-          clearInterval(timer);
-        }
-      });
-      timeoutsRef.current = [];
-    };
-  }, []);
+  };
 
   const handleInputChange = (e) => {
-    if (!mountedRef.current) return;
-    
-    if (isProcessingAutocomplete.current) {
-      console.log('⏭️ Skipping input change (autocomplete is processing)');
-      return;
-    }
-    
     const newValue = e.target.value;
-    console.log('⌨️ Manual input change:', newValue);
     
+    // Update parent with raw input immediately
     if (onChange) {
       onChange({ address: newValue, latitude: null, longitude: null });
+    }
+
+    // Debounce the API search
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    debounceTimerRef.current = setTimeout(() => {
+      searchAddresses(newValue);
+    }, 300);
+
+    setSelectedIndex(-1);
+  };
+
+  const handleSelectSuggestion = (feature) => {
+    const formattedAddress = feature.properties.formattedAddress || feature.properties.address;
+    const coords = feature.geometry.coordinates;
+
+    if (onChange) {
+      onChange({
+        address: formattedAddress,
+        latitude: coords[1], // GeoJSON uses [lng, lat]
+        longitude: coords[0]
+      });
+    }
+
+    setShowDropdown(false);
+    setSuggestions([]);
+    setSelectedIndex(-1);
+  };
+
+  const handleKeyDown = (e) => {
+    if (!showDropdown || suggestions.length === 0) return;
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setSelectedIndex(prev => 
+          prev < suggestions.length - 1 ? prev + 1 : prev
+        );
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setSelectedIndex(prev => prev > 0 ? prev - 1 : -1);
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (selectedIndex >= 0 && selectedIndex < suggestions.length) {
+          handleSelectSuggestion(suggestions[selectedIndex]);
+        }
+        break;
+      case 'Escape':
+        setShowDropdown(false);
+        setSelectedIndex(-1);
+        break;
     }
   };
 
@@ -245,17 +139,52 @@ export default function AddressAutocomplete({ id, value, onChange, placeholder, 
         ref={inputRef}
         id={id}
         type="text"
-        placeholder={placeholder || 'Start typing address or place name...'}
+        placeholder={placeholder || 'Start typing address...'}
         required={required}
         autoComplete="off"
         value={value || ''}
         onChange={handleInputChange}
+        onKeyDown={handleKeyDown}
+        onFocus={() => {
+          if (suggestions.length > 0) {
+            setShowDropdown(true);
+          }
+        }}
         data-autocomplete-input="true"
         className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       />
-      {!scriptLoaded && (
+      
+      {isLoading && (
         <div className="absolute right-3 top-1/2 -translate-y-1/2">
           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400"></div>
+        </div>
+      )}
+
+      {showDropdown && suggestions.length > 0 && (
+        <div 
+          ref={dropdownRef}
+          className="absolute z-[9999] w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto"
+        >
+          {suggestions.map((feature, index) => {
+            const address = feature.properties.formattedAddress || feature.properties.address;
+            const matchType = feature.properties.matchType;
+            
+            return (
+              <button
+                key={index}
+                type="button"
+                onClick={() => handleSelectSuggestion(feature)}
+                className={`w-full text-left px-4 py-2 hover:bg-gray-100 focus:bg-gray-100 focus:outline-none ${
+                  index === selectedIndex ? 'bg-gray-100' : ''
+                }`}
+              >
+                <div className="text-sm font-medium text-gray-900">{address}</div>
+                {matchType && (
+                  <div className="text-xs text-gray-500 capitalize">{matchType}</div>
+                )}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
