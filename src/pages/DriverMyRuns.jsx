@@ -402,17 +402,15 @@ export default function DriverMyRuns() {
             )}
           </div>
 
-          {isToday && (
-            <Button
-              onClick={() => handleStartNavigation(job)}
-              className="w-full mb-2 bg-blue-600 hover:bg-blue-700"
-              size="sm"
-            >
-              <Navigation className="h-4 w-4 mr-2" />
-              Start Navigation
-              <ExternalLink className="h-3 w-3 ml-2" />
-            </Button>
-          )}
+          <Button
+            onClick={() => handleStartNavigation(job)}
+            className="w-full mb-2 bg-blue-600 hover:bg-blue-700"
+            size="sm"
+          >
+            <Navigation className="h-4 w-4 mr-2" />
+            Start Navigation
+            <ExternalLink className="h-3 w-3 ml-2" />
+          </Button>
 
           {isToday && (
             <div className="grid grid-cols-2 gap-2">
