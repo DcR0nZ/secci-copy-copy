@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from "@/components/ui/use-toast";
 import { ScrollArea } from '@/components/ui/scroll-area';
-import AddressAutocomplete from './AddressAutocomplete';
+
 import { Upload, Loader2, X } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 
@@ -184,15 +183,7 @@ export default function EditJobDialog({ job, open, onOpenChange, onJobUpdated })
     });
   };
 
-  const handleAddressChange = (data) => {
-    console.log('📍 Address changed in EditJobDialog:', data);
-    setFormData(prev => ({
-      ...prev,
-      deliveryLocation: data.address,
-      deliveryLatitude: data.latitude,
-      deliveryLongitude: data.longitude
-    }));
-  };
+
 
   const handleNonStandardChange = (field, value) => {
     setFormData(prev => {
@@ -267,36 +258,13 @@ export default function EditJobDialog({ job, open, onOpenChange, onJobUpdated })
     setAttachments(prev => prev.filter((_, index) => index !== indexToRemove));
   };
 
-  const handleInteractOutside = (e) => {
-    const target = e.target;
-    
-    // Prevent closing when clicking on Google Places autocomplete
-    if (target.closest('.pac-container') || 
-        target.classList.contains('pac-item') ||
-        target.classList.contains('pac-item-query') ||
-        target.closest('[data-autocomplete-wrapper]') ||
-        target.hasAttribute('data-autocomplete-input')) {
-      e.preventDefault();
-      e.stopPropagation();
-      return;
-    }
-  };
+
 
   const selectedDeliveryType = deliveryTypes.find(t => t.id === formData.deliveryTypeId);
   const isUnitsDelivery = selectedDeliveryType?.name?.toLowerCase().includes('unit');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Validation for location coordinates
-    if (!formData.deliveryLocation || !formData.deliveryLatitude || !formData.deliveryLongitude) {
-      toast({
-        title: "Missing Location Coordinates",
-        description: "Please select an address from the suggestions to ensure accurate GPS coordinates.",
-        variant: "destructive",
-      });
-      return;
-    }
     
     setLoading(true);
     try {
@@ -389,11 +357,7 @@ export default function EditJobDialog({ job, open, onOpenChange, onJobUpdated })
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent 
-        className="sm:max-w-[600px]"
-        onPointerDownOutside={handleInteractOutside}
-        onInteractOutside={handleInteractOutside}
-      >
+      <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>Edit Job</DialogTitle>
         </DialogHeader>
@@ -479,23 +443,14 @@ export default function EditJobDialog({ job, open, onOpenChange, onJobUpdated })
                 <label htmlFor="deliveryLocation" className="block text-sm font-medium text-gray-700 mb-1">
                   Delivery Address <span className="text-red-500">*</span>
                 </label>
-                <AddressAutocomplete
+                <Input
                   id="deliveryLocation"
+                  name="deliveryLocation"
                   value={formData.deliveryLocation}
-                  onChange={handleAddressChange}
-                  placeholder="Start typing address..."
+                  onChange={handleChange}
+                  placeholder="Enter delivery address"
                   required
                 />
-                {formData.deliveryLatitude && formData.deliveryLongitude && (
-                  <p className="text-xs text-green-600 mt-1">
-                    ✓ Location coordinates captured ({formData.deliveryLatitude.toFixed(4)}, {formData.deliveryLongitude.toFixed(4)})
-                  </p>
-                )}
-                {formData.deliveryLocation && (!formData.deliveryLatitude || !formData.deliveryLongitude) && (
-                  <p className="text-xs text-orange-600 mt-1">
-                    ⚠ Please select an address from the dropdown to capture GPS coordinates
-                  </p>
-                )}
               </div>
 
               <div>
