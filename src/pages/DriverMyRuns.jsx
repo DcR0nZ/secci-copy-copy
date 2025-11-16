@@ -238,6 +238,29 @@ export default function DriverMyRuns() {
     fetchData(false);
   };
 
+  const handleTruckChange = async (newTruckId) => {
+    setChangingTruck(true);
+    try {
+      await base44.auth.updateMe({ truck: newTruckId });
+      setCurrentUser(prev => ({ ...prev, truck: newTruckId }));
+      
+      toast({
+        title: "Truck Updated",
+        description: `Switched to ${newTruckId}`,
+      });
+
+      await fetchData(false);
+    } catch (error) {
+      toast({
+        title: "Update Failed",
+        description: "Failed to update truck assignment. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setChangingTruck(false);
+    }
+  };
+
   const handleStartNavigation = (job) => {
     if (!job.deliveryLatitude || !job.deliveryLongitude) {
       const address = encodeURIComponent(job.deliveryLocation);
