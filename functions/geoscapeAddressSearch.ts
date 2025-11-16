@@ -24,8 +24,8 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'API key not configured' }, { status: 500 });
         }
 
-        // Build the geocoder URL with query parameters
-        const url = new URL('https://api.psma.com.au/v2/addresses/geocoder');
+        // Build the predictive search URL with query parameters
+        const url = new URL('https://api.psma.com.au/v2/addresses/predictive');
         url.searchParams.set('query', query);
         url.searchParams.set('maxNumberOfResults', '10');
 
