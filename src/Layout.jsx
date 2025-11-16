@@ -311,23 +311,19 @@ export default function Layout({ children, currentPageName }) {
           return;
         }
 
+        // Explicit driver redirect - drivers ALWAYS go to Dashboard on login
+        if (currentUser.appRole === 'driver') {
+          const isRootPath = location.pathname === '/' || location.pathname === '/app';
+          const isLoginCallback = location.search.includes('code=') || location.search.includes('state=');
+          
+          if ((isRootPath || isLoginCallback) && currentPageName !== 'Dashboard') {
+            window.location.href = createPageUrl('Dashboard');
+            return;
+          }
+        }
+
         const isRootPath = location.pathname === '/' || location.pathname === '/app';
         const isLoginCallback = location.search.includes('code=') || location.search.includes('state=');
-        
-        console.log('===== REDIRECT DEBUG =====');
-        console.log('Current User appRole:', currentUser.appRole);
-        console.log('Current User role:', currentUser.role);
-        console.log('Current Page Name:', currentPageName);
-        console.log('Is Root Path:', isRootPath);
-        console.log('Is Login Callback:', isLoginCallback);
-        console.log('Is Pending:', isPending);
-        console.log('=========================');
-        
-        // Explicit driver redirect - send drivers straight to Dashboard
-        if (!isPending && currentUser.appRole === 'driver' && currentPageName !== 'Dashboard') {
-          window.location.href = createPageUrl('Dashboard');
-          return;
-        }
         
         if ((isRootPath || isLoginCallback) && !isPending && currentPageName !== 'Dashboard' && currentPageName !== 'AdminJobs' && currentPageName !== 'DailyJobBoard') {
           let dashboardUrl;
