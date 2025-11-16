@@ -404,12 +404,16 @@ export default function DashboardPage() {
         <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <button
-            onClick={() => window.location.href = createPageUrl('SchedulingBoard')}
+            onClick={() => window.location.href = createPageUrl(currentUser?.appRole === 'driver' ? 'DriverMyRuns' : 'SchedulingBoard')}
             className="p-6 bg-blue-50 hover:bg-blue-100 rounded-lg text-left transition-colors"
           >
             <Calendar className="h-6 w-6 text-blue-600 mb-3" />
-            <p className="font-semibold text-gray-900 mb-1">Open Scheduler</p>
-            <p className="text-sm text-gray-600">Manage delivery schedule</p>
+            <p className="font-semibold text-gray-900 mb-1">
+              {currentUser?.appRole === 'driver' ? 'My Runs' : 'Open Scheduler'}
+            </p>
+            <p className="text-sm text-gray-600">
+              {currentUser?.appRole === 'driver' ? 'View your delivery schedule' : 'Manage delivery schedule'}
+            </p>
           </button>
 
           <button
