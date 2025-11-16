@@ -315,7 +315,7 @@ export default function DriverMyRuns() {
     );
   }
 
-  const JobCard = ({ job }) => {
+  const JobCard = ({ job, isToday = false }) => {
     const statusOption = STATUS_OPTIONS.find(s => s.value === job.driverStatus);
     const StatusIcon = statusOption?.icon || Radio;
     const deliveryType = deliveryTypes.find(dt => dt.id === job.deliveryTypeId);
@@ -412,25 +412,27 @@ export default function DriverMyRuns() {
             <ExternalLink className="h-3 w-3 ml-2" />
           </Button>
 
-          <div className="grid grid-cols-2 gap-2">
-            {STATUS_OPTIONS.filter(s => s.value !== 'COMPLETED').map((statusOpt) => {
-              const Icon = statusOpt.icon;
-              const isActive = job.driverStatus === statusOpt.value;
-              return (
-                <Button
-                  key={statusOpt.value}
-                  onClick={() => handleStatusUpdate(job, statusOpt.value)}
-                  variant={isActive ? "default" : "outline"}
-                  size="sm"
-                  className={isActive ? statusOpt.color : ''}
-                  disabled={!isOnline && statusOpt.value !== 'COMPLETED'}
-                >
-                  <Icon className="h-3 w-3 mr-1" />
-                  {statusOpt.label}
-                </Button>
-              );
-            })}
-          </div>
+          {isToday && (
+            <div className="grid grid-cols-2 gap-2">
+              {STATUS_OPTIONS.filter(s => s.value !== 'COMPLETED').map((statusOpt) => {
+                const Icon = statusOpt.icon;
+                const isActive = job.driverStatus === statusOpt.value;
+                return (
+                  <Button
+                    key={statusOpt.value}
+                    onClick={() => handleStatusUpdate(job, statusOpt.value)}
+                    variant={isActive ? "default" : "outline"}
+                    size="sm"
+                    className={isActive ? statusOpt.color : ''}
+                    disabled={!isOnline && statusOpt.value !== 'COMPLETED'}
+                  >
+                    <Icon className="h-3 w-3 mr-1" />
+                    {statusOpt.label}
+                  </Button>
+                );
+              })}
+            </div>
+          )}
 
           {job.driverStatus === 'PROBLEM' && job.problemDetails && (
             <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">
@@ -539,7 +541,7 @@ export default function DriverMyRuns() {
             ) : (
               <div className="grid grid-cols-1 gap-4">
                 {todayJobs.map(job => (
-                  <JobCard key={job.id} job={job} />
+                  <JobCard key={job.id} job={job} isToday={true} />
                 ))}
               </div>
             )}
