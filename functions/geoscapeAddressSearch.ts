@@ -9,7 +9,8 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { query } = await req.json();
+        const body = await req.json();
+        const query = body.query;
         
         if (!query || query.trim().length < 3) {
             return Response.json({ 
@@ -28,22 +29,30 @@ Deno.serve(async (req) => {
         url.searchParams.set('query', query);
         url.searchParams.set('maxNumberOfResults', '10');
 
+        console.log('Calling Geoscape API:', url.toString());
+
         const response = await fetch(url.toString(), {
+            method: 'GET',
             headers: {
-                'Authorization': apiKey,
-                'Accept': 'application/json'
+                'Authorization': `${apiKey}`,
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
             }
         });
 
+        const responseText = await response.text();
+        console.log('Geoscape response status:', response.status);
+        console.log('Geoscape response:', responseText);
+
         if (!response.ok) {
-            console.error('Geoscape API error:', response.status, await response.text());
             return Response.json({ 
                 error: 'Address search failed',
-                status: response.status 
+                status: response.status,
+                details: responseText
             }, { status: response.status });
         }
 
-        const data = await response.json();
+        const data = JSON.parse(responseText);
         
         // Return the GeoJSON response
         return Response.json(data);
