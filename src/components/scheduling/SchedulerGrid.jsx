@@ -674,19 +674,31 @@ export default function SchedulerGrid({
                                         </div>
                                       ))}
 
-                                      {slotPlaceholders.map((placeholder) => (
-                                        <div
+                                      {slotPlaceholders.map((placeholder, index) => (
+                                        <Draggable
                                           key={placeholder.id}
-                                          style={{
-                                            minHeight: '60px',
-                                            width: '100%',
-                                            maxWidth: '196px'
-                                          }}>
-                                          <PlaceholderBlock
-                                            placeholder={placeholder}
-                                            onUpdated={() => window.location.reload()}
-                                          />
-                                        </div>
+                                          draggableId={`placeholder-${placeholder.id}`}
+                                          index={slotJobs.length + index}
+                                          isDragDisabled={!dragDropEnabled}>
+                                          {(provided, snapshot) => (
+                                            <div
+                                              ref={provided.innerRef}
+                                              {...provided.draggableProps}
+                                              {...provided.dragHandleProps}
+                                              style={{
+                                                ...provided.draggableProps.style,
+                                                minHeight: '60px',
+                                                width: '100%',
+                                                maxWidth: '196px'
+                                              }}>
+                                              <PlaceholderBlock
+                                                placeholder={placeholder}
+                                                onUpdated={() => window.location.reload()}
+                                                isDragging={snapshot.isDragging}
+                                              />
+                                            </div>
+                                          )}
+                                        </Draggable>
                                       ))}
                                     </div>
 
