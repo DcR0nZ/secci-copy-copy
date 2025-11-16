@@ -323,6 +323,12 @@ export default function Layout({ children, currentPageName }) {
         console.log('Is Pending:', isPending);
         console.log('=========================');
         
+        // Explicit driver redirect - send drivers straight to Dashboard
+        if (!isPending && currentUser.appRole === 'driver' && currentPageName !== 'Dashboard') {
+          window.location.href = createPageUrl('Dashboard');
+          return;
+        }
+        
         if ((isRootPath || isLoginCallback) && !isPending && currentPageName !== 'Dashboard' && currentPageName !== 'AdminJobs' && currentPageName !== 'DailyJobBoard') {
           let dashboardUrl;
           
