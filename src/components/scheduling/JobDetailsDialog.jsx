@@ -408,21 +408,24 @@ export default function JobDetailsDialog({ job, open, onOpenChange, onJobUpdated
                       </>
                     )}
 
-                    {canEdit && currentJob.status === 'SCHEDULED' && (
+                    {canEdit && (currentJob.status === 'SCHEDULED' || currentJob.status === 'DELIVERED') && (
                       <Button 
                         onClick={async () => {
                           try {
+                            const newStatus = currentJob.status === 'DELIVERED' ? 'SCHEDULED' : 'DELIVERED';
                             await base44.entities.Job.update(currentJob.id, { 
                               ...currentJob, 
-                              status: 'DELIVERED' 
+                              status: newStatus
                             });
 
                             queryClient.invalidateQueries({ queryKey: ['jobs'] });
                             queryClient.invalidateQueries({ queryKey: ['job', currentJob.id] });
 
                             toast({
-                              title: "Job Completed",
-                              description: "Job marked as delivered successfully.",
+                              title: newStatus === 'DELIVERED' ? "Job Completed" : "Job Reverted",
+                              description: newStatus === 'DELIVERED' 
+                                ? "Job marked as delivered successfully." 
+                                : "Job reverted to scheduled status.",
                             });
 
                             if (onJobUpdated) {
@@ -431,16 +434,27 @@ export default function JobDetailsDialog({ job, open, onOpenChange, onJobUpdated
                           } catch (error) {
                             toast({
                               title: "Error",
-                              description: "Failed to complete job. Please try again.",
+                              description: "Failed to update job status. Please try again.",
                               variant: "destructive",
                             });
                           }
                         }}
                         size="sm" 
-                        className="bg-green-600 hover:bg-green-700"
+                        className={currentJob.status === 'DELIVERED' 
+                          ? "bg-orange-600 hover:bg-orange-700" 
+                          : "bg-green-600 hover:bg-green-700"}
                       >
-                        <CheckCircle2 className="h-4 w-4 mr-2" />
-                        Complete Delivery
+                        {currentJob.status === 'DELIVERED' ? (
+                          <>
+                            <XCircle className="h-4 w-4 mr-2" />
+                            Revert to Scheduled
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle2 className="h-4 w-4 mr-2" />
+                            Complete Delivery
+                          </>
+                        )}
                       </Button>
                     )}
 
