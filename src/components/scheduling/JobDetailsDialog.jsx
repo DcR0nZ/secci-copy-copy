@@ -408,6 +408,42 @@ export default function JobDetailsDialog({ job, open, onOpenChange, onJobUpdated
                       </>
                     )}
 
+                    {canEdit && currentJob.status === 'SCHEDULED' && (
+                      <Button 
+                        onClick={async () => {
+                          try {
+                            await base44.entities.Job.update(currentJob.id, { 
+                              ...currentJob, 
+                              status: 'DELIVERED' 
+                            });
+
+                            queryClient.invalidateQueries({ queryKey: ['jobs'] });
+                            queryClient.invalidateQueries({ queryKey: ['job', currentJob.id] });
+
+                            toast({
+                              title: "Job Completed",
+                              description: "Job marked as delivered successfully.",
+                            });
+
+                            if (onJobUpdated) {
+                              onJobUpdated();
+                            }
+                          } catch (error) {
+                            toast({
+                              title: "Error",
+                              description: "Failed to complete job. Please try again.",
+                              variant: "destructive",
+                            });
+                          }
+                        }}
+                        size="sm" 
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        <CheckCircle2 className="h-4 w-4 mr-2" />
+                        Complete Delivery
+                      </Button>
+                    )}
+
                     {canEdit && currentJob.status !== 'CANCELLED' && currentJob.status !== 'DELIVERED' && (
                       <Button onClick={handleCancel} size="sm" variant="destructive">
                         <XCircle className="h-4 w-4 mr-2" />
