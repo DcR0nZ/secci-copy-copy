@@ -14,7 +14,7 @@ import WeatherToday from './pages/WeatherToday';
 import TestEmails from './pages/TestEmails';
 import Reports from './pages/Reports';
 import LiveTracking from './pages/LiveTracking';
-import Layout from './Layout.jsx';
+import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
@@ -39,5 +39,5 @@ export const PAGES = {
 export const pagesConfig = {
     mainPage: "Dashboard",
     Pages: PAGES,
-    Layout: Layout,
+    Layout: __Layout,
 };
