@@ -94,12 +94,13 @@ export default function CustomerRequestDeliveryPage() {
     setExtractionDocument(file);
     setExtractedData(null);
     e.target.value = '';
+    
+    // Automatically start extraction
+    await performExtraction(file);
   };
 
-  const handleExtractData = async () => {
-    if (!extractionDocument) return;
-
-    setExtractedData(null); // Clear previous extraction data before starting a new one
+  const performExtraction = async (file) => {
+    setExtractedData(null);
     setExtracting(true);
     try {
       toast({
@@ -107,7 +108,7 @@ export default function CustomerRequestDeliveryPage() {
         description: "Uploading and analyzing your document with AI...",
       });
 
-      const { file_url } = await base44.integrations.Core.UploadFile({ file: extractionDocument });
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
 
       const extractionSchema = {
         type: "object",
@@ -249,6 +250,11 @@ export default function CustomerRequestDeliveryPage() {
     } finally {
       setExtracting(false);
     }
+  };
+
+  const handleExtractData = async () => {
+    if (!extractionDocument) return;
+    await performExtraction(extractionDocument);
   };
 
   const handleRemoveDocument = () => {
@@ -503,24 +509,12 @@ export default function CustomerRequestDeliveryPage() {
                       <X className="h-4 w-4" />
                     </Button>
                   </div>
-                  <Button
-                    type="button"
-                    onClick={handleExtractData}
-                    disabled={extracting}
-                    className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
-                  >
-                    {extracting ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Extracting Data with AI...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="h-4 w-4 mr-2" />
-                        Extract Data with AI
-                      </>
-                    )}
-                  </Button>
+                  {extracting && (
+                    <div className="flex items-center justify-center gap-2 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                      <Loader2 className="h-4 w-4 animate-spin text-purple-600" />
+                      <span className="text-sm text-purple-700 font-medium">Extracting data with AI...</span>
+                    </div>
+                  )}
                   {extractedData && (
                     <div className="flex items-start gap-2 p-2 bg-green-50 border border-green-200 rounded-lg">
                       <div className="text-green-600 text-lg">✓</div>
