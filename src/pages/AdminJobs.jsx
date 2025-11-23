@@ -104,6 +104,10 @@ export default function AdminJobsPage() {
       });
     }
 
+    if (showOnlyWithAttachments) {
+      result = result.filter(job => job.attachments && job.attachments.length > 0);
+    }
+
     if (filterBy !== 'all') {
       result = result.sort((a, b) => {
         let compareA, compareB;
