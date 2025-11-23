@@ -301,6 +301,16 @@ export default function AdminJobsPage() {
 
               {/* Filter By Dropdown */}
               <div className="flex gap-2">
+                {(currentUser?.role === 'admin' || currentUser?.appRole === 'dispatcher') && (
+                  <Button
+                    variant={showOnlyWithAttachments ? 'default' : 'outline'}
+                    onClick={() => setShowOnlyWithAttachments(!showOnlyWithAttachments)}
+                    className="gap-2"
+                  >
+                    <Paperclip className="h-4 w-4" />
+                    With Attachments
+                  </Button>
+                )}
                 <div className="w-48">
                   <Select value={filterBy} onValueChange={setFilterBy}>
                     <SelectTrigger>
