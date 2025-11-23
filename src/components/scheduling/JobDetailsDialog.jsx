@@ -603,6 +603,34 @@ export default function JobDetailsDialog({ job, open, onOpenChange, onJobUpdated
                 </Card>
               )}
 
+              {currentJob.sheetList && currentJob.sheetList.length > 0 && (
+                <Card>
+                  <CardContent className="p-4">
+                    <h3 className="font-semibold text-lg mb-3">Sheet List</h3>
+                    <div className="border rounded-lg overflow-hidden">
+                      <table className="w-full text-sm">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="text-left p-3 font-medium text-gray-700">Description</th>
+                            <th className="text-left p-3 font-medium text-gray-700 w-32">Quantity</th>
+                            <th className="text-left p-3 font-medium text-gray-700 w-32">Unit</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {currentJob.sheetList.map((item, index) => (
+                            <tr key={index} className="border-t hover:bg-gray-50">
+                              <td className="p-3">{item.description}</td>
+                              <td className="p-3 font-medium">{item.quantity}</td>
+                              <td className="p-3 text-gray-600">{item.unit}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               {currentJob.nonStandardDelivery && Object.values(currentJob.nonStandardDelivery).some(v => v) && (
                 <Card className="border-orange-200 bg-orange-50">
                   <CardContent className="p-4">

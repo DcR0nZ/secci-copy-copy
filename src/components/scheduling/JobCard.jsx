@@ -93,6 +93,21 @@ export default function JobCard({ job, deliveryTypes }) {
       {job.pickupLocation && (
         <p className="text-xs text-gray-500 mt-1">{job.pickupLocation}</p>
       )}
+      {job.sheetList && job.sheetList.length > 0 && (
+        <div className="mt-2 pt-2 border-t border-gray-200">
+          <p className="text-[10px] font-medium text-gray-500 mb-1">Items: {job.sheetList.length}</p>
+          <div className="text-[10px] text-gray-600 space-y-0.5">
+            {job.sheetList.slice(0, 2).map((item, index) => (
+              <div key={index} className="truncate">
+                {item.quantity} {item.unit} - {item.description}
+              </div>
+            ))}
+            {job.sheetList.length > 2 && (
+              <div className="text-gray-500 italic">+{job.sheetList.length - 2} more...</div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
