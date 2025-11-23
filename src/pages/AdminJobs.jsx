@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -24,6 +23,7 @@ export default function AdminJobsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterBy, setFilterBy] = useState('all');
   const [sortOrder, setSortOrder] = useState('desc');
+  const [showOnlyWithAttachments, setShowOnlyWithAttachments] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
