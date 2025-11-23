@@ -20,7 +20,7 @@ Deno.serve(async (req) => {
 
         // Initialize Gemini
         const apiKey = Deno.env.get("GEMINI_API_KEY");
-        const modelName = Deno.env.get("GEMINI_MODEL") || "gemini-flash-latest";
+        const modelName = Deno.env.get("GEMINI_MODEL") || "gemini-1.5-flash";
         
         if (!apiKey) {
             return Response.json({ error: 'GEMINI_API_KEY not configured' }, { status: 500 });
@@ -58,13 +58,13 @@ Deno.serve(async (req) => {
 
 {
   "customerName": "The customer or company name",
-  "deliveryLocation": "The full delivery address using the following structure: Use the following structure: [{Lot Number} {Street Number} {Street Name} {Street Type}, {Suburb}, {State} {Postcode}]. Include ONLY the address, do NOT include company names or contact names.",
+  "deliveryLocation": "The full delivery address including street, suburb, state and postcode. ONLY the address, do NOT include company names or contact names",
   "poSalesDocketNumber": "Purchase order number, sales order number, docket number, or invoice number",
   "totalUnits": "The number of separate dockets/orders/units being delivered (e.g., if there are 3 dockets, this should be 3)",
   "totalSheetQty": "The TOTAL number of sheets/boards across ALL dockets (e.g., if there are 98 sheets total, this should be 98)",
   "sqm": "Total square meters or m² (as a number, not string)",
   "weightKg": "Total weight in kilograms (as a number, not string)",
-  "siteContactName": "Name of the site contact person or foreman. Dockets uploaded by 'Bayside Plasterboard' will often include this information in the address field",
+  "siteContactName": "Name of the site contact person or foreman",
   "siteContactPhone": "Phone number for the site contact",
   "requestedDate": "Requested delivery date in YYYY-MM-DD format",
   "deliveryNotes": "Any special delivery instructions, notes, or comments",

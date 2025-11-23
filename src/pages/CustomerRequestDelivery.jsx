@@ -112,7 +112,7 @@ export default function CustomerRequestDeliveryPage() {
         properties: {
           deliveryLocation: { 
             type: "string", 
-            description: "The physical delivery street address only (number, street, suburb, state, postcode). DO NOT include company names, business names, or customer names in this field." 
+            description: "The full delivery address including street, suburb, state and postcode" 
           },
           poSalesDocketNumber: { 
             type: "string", 
