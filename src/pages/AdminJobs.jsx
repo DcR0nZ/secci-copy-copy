@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
-import { Search, Filter, X, AlertTriangle } from 'lucide-react';
+import { Search, Filter, X, AlertTriangle, Paperclip } from 'lucide-react';
 import JobDetailsDialog from '../components/scheduling/JobDetailsDialog';
 import { base44 } from '@/api/base44Client';
 
