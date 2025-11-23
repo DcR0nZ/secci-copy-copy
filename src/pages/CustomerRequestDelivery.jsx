@@ -112,7 +112,7 @@ export default function CustomerRequestDeliveryPage() {
         properties: {
           deliveryLocation: { 
             type: "string", 
-            description: "The full delivery address including street, suburb, state and postcode" 
+            description: "Extract ONLY the physical street address in this exact format: {lotStreetNumber} {streetName} {streetType}, {suburb}, {postcode}. Example: '123 Main St, Brisbane, 4000'. DO NOT include any company names, business names, or customer names." 
           },
           poSalesDocketNumber: { 
             type: "string", 
