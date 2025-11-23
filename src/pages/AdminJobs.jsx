@@ -167,7 +167,7 @@ export default function AdminJobsPage() {
     }
 
     setFilteredJobs(result);
-  }, [searchQuery, filterBy, sortOrder, jobs, assignments]);
+  }, [searchQuery, filterBy, sortOrder, showOnlyWithAttachments, jobs, assignments]);
 
   const handleClearFilters = () => {
     setSearchQuery('');
