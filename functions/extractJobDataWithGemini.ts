@@ -20,7 +20,7 @@ Deno.serve(async (req) => {
 
         // Initialize Gemini
         const apiKey = Deno.env.get("GEMINI_API_KEY");
-        const modelName = Deno.env.get("GEMINI_MODEL") || "gemini-1.5-flash";
+        const modelName = Deno.env.get("GEMINI_MODEL") || "gemini-flash-latest";
         
         if (!apiKey) {
             return Response.json({ error: 'GEMINI_API_KEY not configured' }, { status: 500 });
