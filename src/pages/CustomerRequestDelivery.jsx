@@ -331,6 +331,17 @@ export default function CustomerRequestDeliveryPage() {
         (typeof val === 'string' && val.trim() !== '')
       );
 
+      // If there's an extraction document, upload it and add to attachments
+      let finalAttachments = [...attachments];
+      if (extractionDocument) {
+        try {
+          const { file_url } = await base44.integrations.Core.UploadFile({ file: extractionDocument });
+          finalAttachments.push(file_url);
+        } catch (error) {
+          console.error('Failed to upload extraction document:', error);
+        }
+      }
+
       const newJob = await base44.entities.Job.create({
         customerId: currentUser.customerId,
         customerName: currentUser.customerName,
