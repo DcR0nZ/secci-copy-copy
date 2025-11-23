@@ -373,6 +373,12 @@ export default function AdminJobsPage() {
                     Sort by: {filterBy.replace(/([A-Z])/g, ' $1').trim()}
                   </Badge>
                 )}
+                {showOnlyWithAttachments && (
+                  <Badge variant="outline" className="gap-1">
+                    <Paperclip className="h-3 w-3" />
+                    With Attachments
+                  </Badge>
+                )}
                 <span className="text-gray-500">({filteredJobs.length} {filteredJobs.length === 1 ? 'result' : 'results'})</span>
               </div>
             )}
