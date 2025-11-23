@@ -6,8 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useToast } from "@/components/ui/use-toast";
-import { Upload, Loader2, X, FileText, Sparkles } from 'lucide-react';
-import { extractJobDataWithGemini } from '@/functions/extractJobDataWithGemini';
+import { Upload, Loader2, FileText, Sparkles, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -98,22 +97,71 @@ export default function CustomerRequestDeliveryPage() {
   const handleExtractData = async () => {
     if (!extractionDocument) return;
 
-    setExtractedData(null);
+    setExtractedData(null); // Clear previous extraction data before starting a new one
     setExtracting(true);
     try {
       toast({
         title: "Processing Document",
-        description: "Analyzing your document with AI...",
+        description: "Uploading and analyzing your document with AI...",
       });
 
       const { file_url } = await base44.integrations.Core.UploadFile({ file: extractionDocument });
 
-      const result = await extractJobDataWithGemini({ file_url });
+      const extractionSchema = {
+        type: "object",
+        properties: {
+          deliveryLocation: { 
+            type: "string", 
+            description: "Extract ONLY the physical street address in this exact format: {lotStreetNumber} {streetName} {streetType}, {suburb}, {postcode}. Example: '123 Main St, Brisbane, 4000'. DO NOT include any company names, business names, or customer names." 
+          },
+          poSalesDocketNumber: { 
+            type: "string", 
+            description: "Purchase order number, sales order number, docket number, or invoice number" 
+          },
+          totalUnits: { 
+            type: "number", 
+            description: "Total number of units, items, or dockets if specified" 
+          },
+          sqm: { 
+            type: "number", 
+            description: "Total square meters (m²) or area measurement" 
+          },
+          weightKg: { 
+            type: "number", 
+            description: "Total weight in kilograms" 
+          },
+          siteContactName: { 
+            type: "string", 
+            description: "Name of the site contact person or foreman" 
+          },
+          siteContactPhone: { 
+            type: "string", 
+            description: "Phone number for the site contact" 
+          },
+          requestedDate: { 
+            type: "string", 
+            description: "Requested delivery date in YYYY-MM-DD format" 
+          },
+          deliveryNotes: { 
+            type: "string", 
+            description: "Any special delivery instructions, notes, or comments" 
+          },
+          pickupLocation: { 
+            type: "string", 
+            description: "Supplier name, pickup location, or warehouse name" 
+          }
+        }
+      };
 
-      if (result.status === 'success' && result.data) {
-        setExtractedData(result.data);
+      const result = await base44.integrations.Core.ExtractDataFromUploadedFile({
+        file_url: file_url,
+        json_schema: extractionSchema
+      });
+
+      if (result.status === 'success' && result.output) {
+        setExtractedData(result.output);
         
-        const extracted = result.data;
+        const extracted = result.output;
         const updates = {};
 
         if (extracted.pickupLocation) {
@@ -128,7 +176,10 @@ export default function CustomerRequestDeliveryPage() {
           }
         }
 
-        if (extracted.deliveryLocation) updates.deliveryLocation = extracted.deliveryLocation;
+        if (extracted.deliveryLocation) {
+          updates.deliveryLocation = extracted.deliveryLocation;
+          // Geocoding will happen when user accepts the extracted address
+        }
         if (extracted.poSalesDocketNumber) updates.poSalesDocketNumber = extracted.poSalesDocketNumber;
         if (extracted.totalUnits) updates.totalUnits = String(extracted.totalUnits);
         if (extracted.sqm) updates.sqm = String(extracted.sqm);
@@ -152,17 +203,17 @@ export default function CustomerRequestDeliveryPage() {
 
         toast({
           title: "✨ Data Extracted Successfully!",
-          description: "Review the pre-filled information and make any corrections.",
+          description: "Please review the pre-filled information and make any necessary corrections.",
         });
       } else {
-        throw new Error('Failed to extract data from document');
+        throw new Error(result.details || 'Failed to extract data from document');
       }
 
     } catch (error) {
       console.error('Document extraction error:', error);
       toast({
         title: "Extraction Failed",
-        description: error.message || "Could not extract data. Please fill the form manually.",
+        description: error.message || "Could not extract data from the document. Please fill the form manually.",
         variant: "destructive",
       });
     } finally {
@@ -358,24 +409,24 @@ export default function CustomerRequestDeliveryPage() {
         <Card>
           <CardContent className="p-6 space-y-6">
             
-            {/* AI Document Extraction */}
+            {/* AI Document Extraction Section */}
             <div className="bg-gradient-to-r from-purple-50 via-blue-50 to-purple-50 border-2 border-purple-200 rounded-lg p-4 shadow-sm">
               <div className="flex items-center gap-2 mb-3">
                 <Sparkles className="h-5 w-5 text-purple-600 animate-pulse" />
-                <h3 className="font-semibold text-purple-900">✨ AI Document Extraction</h3>
+                <h3 className="font-semibold text-purple-900">✨ Smart Document Extraction</h3>
               </div>
               <p className="text-sm text-purple-700 mb-3">
-                Upload your work order, docket, or invoice and let AI fill the form automatically!
+                Upload your delivery docket, purchase order, work order, or invoice and let AI automatically fill the form for you!
               </p>
               <p className="text-xs text-purple-600 mb-3">
-                Supported: PDF, JPG, PNG (max 10MB)
+                Supported formats: PDF, JPG, PNG (max 10MB)
               </p>
               
               {!extractionDocument ? (
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full border-purple-300 hover:bg-purple-50"
+                  className="w-full border-purple-300 hover:bg-purple-50 hover:border-purple-400"
                   asChild
                 >
                   <label className="cursor-pointer">
@@ -404,7 +455,7 @@ export default function CustomerRequestDeliveryPage() {
                       variant="ghost"
                       size="sm"
                       onClick={handleRemoveDocument}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50 flex-shrink-0"
                     >
                       <X className="h-4 w-4" />
                     </Button>
@@ -413,25 +464,27 @@ export default function CustomerRequestDeliveryPage() {
                     type="button"
                     onClick={handleExtractData}
                     disabled={extracting}
-                    className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                    className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
                   >
                     {extracting ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Extracting with AI...
+                        Extracting Data with AI...
                       </>
                     ) : (
                       <>
                         <Sparkles className="h-4 w-4 mr-2" />
-                        Extract Data
+                        Extract Data with AI
                       </>
                     )}
                   </Button>
                   {extractedData && (
                     <div className="flex items-start gap-2 p-2 bg-green-50 border border-green-200 rounded-lg">
                       <div className="text-green-600 text-lg">✓</div>
-                      <div className="text-xs text-green-700">
-                        <strong>Success!</strong> Review the fields below.
+                      <div className="text-xs text-green-700 flex-1">
+                        <span className="font-medium">Data extracted successfully!</span>
+                        <br />
+                        Review the pre-filled fields below and make any necessary adjustments.
                       </div>
                     </div>
                   )}
