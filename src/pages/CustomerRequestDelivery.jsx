@@ -361,7 +361,7 @@ export default function CustomerRequestDeliveryPage() {
         siteContactName: formData.siteContactName,
         siteContactPhone: formData.siteContactPhone,
         deliveryNotes: formData.deliveryNotes || undefined,
-        attachments: attachments.length > 0 ? attachments : undefined,
+        attachments: finalAttachments.length > 0 ? finalAttachments : undefined,
         status: 'PENDING_APPROVAL',
         nonStandardDelivery: hasNonStandard ? {
           longWalk: formData.nonStandardDelivery.longWalk || false,
