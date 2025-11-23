@@ -222,7 +222,7 @@ export default function AdminJobsPage() {
     ? 'View all your delivery requests and their current status' 
     : 'A complete history of all delivery jobs';
 
-  const hasActiveFilters = searchQuery.trim() || filterBy !== 'all';
+  const hasActiveFilters = searchQuery.trim() || filterBy !== 'all' || showOnlyWithAttachments;
 
   // Helper function to get colors and icon for delivery type
   const getDeliveryTypeStyles = (deliveryType, isDifficult) => {
