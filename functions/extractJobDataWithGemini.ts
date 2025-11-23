@@ -26,6 +26,8 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'GEMINI_API_KEY not configured' }, { status: 500 });
     }
 
+    const modelName = Deno.env.get('GEMINI_MODEL') || 'gemini-1.5-flash-latest';
+
     // Fetch the file
     const fileResponse = await fetch(file_url);
     if (!fileResponse.ok) {
@@ -65,7 +67,7 @@ Only include fields that are clearly present in the document. Return valid JSON 
 
     // Call Gemini API directly
     const geminiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1/models/${modelName}:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: {
