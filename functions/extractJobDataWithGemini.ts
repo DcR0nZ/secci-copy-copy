@@ -1,144 +1,100 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.7.1';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
 import { GoogleGenerativeAI } from 'npm:@google/generative-ai@0.21.0';
 
 Deno.serve(async (req) => {
-    try {
-        const base44 = createClientFromRequest(req);
-        
-        // Verify user is authenticated
-        const user = await base44.auth.me();
-        if (!user) {
-            return Response.json({ error: 'Unauthorized' }, { status: 401 });
-        }
+  try {
+    const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me();
 
-        // Get the file URL from the request
-        const { file_url } = await req.json();
-        
-        if (!file_url) {
-            return Response.json({ error: 'file_url is required' }, { status: 400 });
-        }
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-        // Initialize Gemini
-        const apiKey = Deno.env.get("GEMINI_API_KEY");
-        const modelName = Deno.env.get("GEMINI_MODEL") || "gemini-1.5-flash";
-        
-        if (!apiKey) {
-            return Response.json({ error: 'GEMINI_API_KEY not configured' }, { status: 500 });
-        }
+    const { file_url } = await req.json();
 
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: modelName });
+    if (!file_url) {
+      return Response.json({ error: 'file_url is required' }, { status: 400 });
+    }
 
-        // Fetch the file
-        const fileResponse = await fetch(file_url);
-        if (!fileResponse.ok) {
-            return Response.json({ error: 'Failed to fetch file' }, { status: 400 });
-        }
+    const apiKey = Deno.env.get('GEMINI_API_KEY');
+    if (!apiKey) {
+      return Response.json({ error: 'GEMINI_API_KEY not configured' }, { status: 500 });
+    }
 
-        const fileBuffer = await fileResponse.arrayBuffer();
-        const fileType = fileResponse.headers.get('content-type') || 'application/pdf';
-        
-        // Convert to base64
-        const base64Data = btoa(
-            new Uint8Array(fileBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
-        );
+    // Fetch the file
+    const fileResponse = await fetch(file_url);
+    if (!fileResponse.ok) {
+      return Response.json({ error: 'Failed to fetch file' }, { status: 400 });
+    }
 
-        // Determine mime type
-        let mimeType = fileType;
-        if (file_url.toLowerCase().endsWith('.pdf')) {
-            mimeType = 'application/pdf';
-        } else if (file_url.toLowerCase().match(/\.(jpg|jpeg)$/)) {
-            mimeType = 'image/jpeg';
-        } else if (file_url.toLowerCase().endsWith('.png')) {
-            mimeType = 'image/png';
-        }
+    const fileBuffer = await fileResponse.arrayBuffer();
+    const mimeType = fileResponse.headers.get('content-type') || 'application/pdf';
+    
+    // Convert to base64
+    const base64Data = btoa(String.fromCharCode(...new Uint8Array(fileBuffer)));
 
-        // Create the prompt with clear distinction between dockets and sheets
-        const prompt = `You are analyzing a delivery order document. Extract the following information from this document and return ONLY a valid JSON object with these exact field names:
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+
+    const prompt = `Analyze this work order/delivery document and extract the following information in JSON format:
 
 {
-  "customerName": "The customer or company name",
-  "deliveryLocation": "The full delivery address including street, suburb, state and postcode. ONLY the address, do NOT include company names or contact names",
-  "poSalesDocketNumber": "Purchase order number, sales order number, docket number, or invoice number",
-  "totalUnits": "The number of separate dockets/orders/units being delivered (e.g., if there are 3 dockets, this should be 3)",
-  "totalSheetQty": "The TOTAL number of sheets/boards across ALL dockets (e.g., if there are 98 sheets total, this should be 98)",
-  "sqm": "Total square meters or m² (as a number, not string)",
-  "weightKg": "Total weight in kilograms (as a number, not string)",
+  "deliveryLocation": "Extract ONLY the physical street address in format: {number} {street} {type}, {suburb}, {postcode}. Example: '123 Main St, Brisbane, 4000'. DO NOT include company or customer names.",
+  "poSalesDocketNumber": "Purchase order, sales order, docket, or invoice number",
+  "totalUnits": "Total number of units, items, or dockets (as a number)",
+  "sqm": "Total square meters or area (as a number)",
+  "weightKg": "Total weight in kilograms (as a number)",
   "siteContactName": "Name of the site contact person or foreman",
   "siteContactPhone": "Phone number for the site contact",
   "requestedDate": "Requested delivery date in YYYY-MM-DD format",
-  "deliveryNotes": "Any special delivery instructions, notes, or comments",
+  "deliveryNotes": "Any special delivery instructions or comments",
   "pickupLocation": "Supplier name, pickup location, or warehouse name"
 }
 
-IMPORTANT DISTINCTIONS:
-- "totalUnits" = Number of dockets/separate orders (e.g., 1, 2, 3, etc.)
-- "totalSheetQty" = Total quantity of sheets/boards being delivered (e.g., 50, 98, 150, etc.)
-- These are DIFFERENT values - don't confuse them!
+Only include fields that are clearly present in the document. Return valid JSON only, no markdown formatting.`;
 
-Rules:
-- Return ONLY the JSON object, no additional text or explanation
-- If a field cannot be found, use null for that field
-- For numeric fields (totalUnits, totalSheetQty, sqm, weightKg), use actual numbers not strings
-- For dates, use YYYY-MM-DD format
-- Be thorough and check the entire document carefully
-- For deliveryLocation, extract ONLY the physical address, excluding any company names
-
-Now analyze this document:`;
-
-        // Generate content with the document
-        const result = await model.generateContent([
-            {
-                inlineData: {
-                    mimeType: mimeType,
-                    data: base64Data
-                }
-            },
-            { text: prompt }
-        ]);
-
-        const response = result.response;
-        const text = response.text();
-
-        // Parse the JSON response
-        let extractedData;
-        try {
-            // Remove markdown code blocks if present
-            let jsonText = text.trim();
-            if (jsonText.startsWith('```json')) {
-                jsonText = jsonText.replace(/```json\n?/g, '').replace(/```\n?/g, '');
-            } else if (jsonText.startsWith('```')) {
-                jsonText = jsonText.replace(/```\n?/g, '');
-            }
-            
-            extractedData = JSON.parse(jsonText);
-        } catch (parseError) {
-            console.error('Failed to parse Gemini response:', text);
-            return Response.json({
-                status: 'error',
-                details: 'Failed to parse AI response. Please try again or fill the form manually.',
-                rawResponse: text
-            }, { status: 500 });
+    const result = await model.generateContent([
+      {
+        inlineData: {
+          mimeType,
+          data: base64Data
         }
+      },
+      prompt
+    ]);
 
-        // Clean up the data - remove null values and ensure proper types
-        const cleanedData = {};
-        for (const [key, value] of Object.entries(extractedData)) {
-            if (value !== null && value !== undefined && value !== '') {
-                cleanedData[key] = value;
-            }
-        }
-
-        return Response.json({
-            status: 'success',
-            output: cleanedData
-        });
-
-    } catch (error) {
-        console.error('Gemini extraction error:', error);
-        return Response.json({
-            status: 'error',
-            details: error.message || 'Failed to extract data from document'
-        }, { status: 500 });
+    const response = result.response;
+    const text = response.text();
+    
+    // Clean up markdown code blocks if present
+    let cleanedText = text.trim();
+    if (cleanedText.startsWith('```json')) {
+      cleanedText = cleanedText.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+    } else if (cleanedText.startsWith('```')) {
+      cleanedText = cleanedText.replace(/^```\s*/, '').replace(/\s*```$/, '');
     }
+
+    let extractedData;
+    try {
+      extractedData = JSON.parse(cleanedText);
+    } catch (e) {
+      return Response.json({ 
+        error: 'Failed to parse extraction result', 
+        details: e.message,
+        rawResponse: text 
+      }, { status: 500 });
+    }
+
+    return Response.json({ 
+      status: 'success', 
+      data: extractedData 
+    });
+
+  } catch (error) {
+    console.error('Gemini extraction error:', error);
+    return Response.json({ 
+      error: 'Extraction failed', 
+      details: error.message 
+    }, { status: 500 });
+  }
 });
