@@ -24,23 +24,32 @@ Deno.serve(async (req) => {
 
     const apiKey = Deno.env.get('GEMINI_API_KEY');
     if (!apiKey) {
+      console.error('GEMINI_API_KEY not configured');
       return Response.json({ error: 'GEMINI_API_KEY not configured' }, { status: 500 });
     }
 
     // Fetch the file
+    console.log('Fetching file from:', file_url);
     const fileResponse = await fetch(file_url);
     if (!fileResponse.ok) {
-      return Response.json({ error: 'Failed to fetch file' }, { status: 400 });
+      console.error('Failed to fetch file:', fileResponse.status, fileResponse.statusText);
+      return Response.json({ 
+        error: 'Failed to fetch file', 
+        details: `${fileResponse.status} ${fileResponse.statusText}` 
+      }, { status: 400 });
     }
 
     const fileBuffer = await fileResponse.arrayBuffer();
     const mimeType = fileResponse.headers.get('content-type') || 'application/pdf';
+    console.log('File fetched successfully, size:', fileBuffer.byteLength, 'mime:', mimeType);
     
     // Convert to base64
     const base64Data = btoa(String.fromCharCode(...new Uint8Array(fileBuffer)));
+    console.log('File converted to base64, length:', base64Data.length);
 
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    console.log('Gemini model initialized');
 
     const prompt = `Analyze this work order/delivery document and extract the following information in JSON format:
 
@@ -59,6 +68,7 @@ Deno.serve(async (req) => {
 
 Only include fields that are clearly present in the document. Return valid JSON only, no markdown formatting.`;
 
+    console.log('Sending request to Gemini...');
     const result = await model.generateContent([
       {
         inlineData: {
@@ -68,9 +78,11 @@ Only include fields that are clearly present in the document. Return valid JSON 
       },
       prompt
     ]);
+    console.log('Gemini response received');
 
     const response = result.response;
     const text = response.text();
+    console.log('Gemini raw response:', text);
     
     // Clean up markdown code blocks if present
     let cleanedText = text.trim();
@@ -83,7 +95,10 @@ Only include fields that are clearly present in the document. Return valid JSON 
     let extractedData;
     try {
       extractedData = JSON.parse(cleanedText);
+      console.log('Successfully parsed JSON:', extractedData);
     } catch (e) {
+      console.error('JSON parse error:', e.message);
+      console.error('Cleaned text:', cleanedText);
       return Response.json({ 
         error: 'Failed to parse extraction result', 
         details: e.message,
@@ -91,6 +106,7 @@ Only include fields that are clearly present in the document. Return valid JSON 
       }, { status: 500 });
     }
 
+    console.log('Extraction successful, returning data');
     return Response.json({ 
       status: 'success', 
       data: extractedData 
@@ -98,9 +114,11 @@ Only include fields that are clearly present in the document. Return valid JSON 
 
   } catch (error) {
     console.error('Gemini extraction error:', error);
+    console.error('Error stack:', error.stack);
     return Response.json({ 
       error: 'Extraction failed', 
-      details: error.message 
+      details: error.message,
+      stack: error.stack 
     }, { status: 500 });
   }
 });
