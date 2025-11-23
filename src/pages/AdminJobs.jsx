@@ -173,6 +173,7 @@ export default function AdminJobsPage() {
     setSearchQuery('');
     setFilterBy('all');
     setSortOrder('desc');
+    setShowOnlyWithAttachments(false);
   };
 
   const getAssignmentForJob = (jobId) => {
