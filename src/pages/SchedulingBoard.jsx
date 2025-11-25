@@ -470,10 +470,16 @@ export default function SchedulingBoard() {
               </Button>
             </div>
 
-            <Button variant="outline" size="sm" onClick={goToToday} className="w-full mt-2">
-              Today
-            </Button>
-          </div>
+            <div className="flex gap-2 mt-2">
+              <Button variant="outline" size="sm" onClick={goToToday} className="flex-1">
+                Today
+              </Button>
+              <Button size="sm" onClick={() => setCreateJobOpen(true)} className="flex-1">
+                <Plus className="h-4 w-4 mr-1" />
+                Create Job
+              </Button>
+            </div>
+            </div>
 
           {loading ? (
             <div className="flex items-center justify-center py-20">
