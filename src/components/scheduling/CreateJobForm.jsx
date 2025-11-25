@@ -9,7 +9,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Upload, Loader2, FileText, Sparkles, X, Plus, Trash2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { format } from 'date-fns';
-import { extractJobDataWithGemini } from '@/functions/extractJobDataWithGemini';
+import { extractWithDocumentAI } from '@/functions/extractWithDocumentAI';
 
 
 const TRUCKS = [
@@ -80,6 +80,7 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
   const [extractedData, setExtractedData] = useState(null);
   const [extractedDocumentUrl, setExtractedDocumentUrl] = useState(null);
   const [manualSheetEntry, setManualSheetEntry] = useState({ description: '', quantity: '', unit: 'sheets' });
+  const [extractionLoading, setExtractionLoading] = useState(false);
   
   const { toast } = useToast();
 
@@ -246,6 +247,125 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
     } finally {
       e.target.value = '';
       setUploadingAttachment(false);
+    }
+  };
+
+  const handleDocumentExtraction = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setExtractionLoading(true);
+    try {
+      // Upload the file first
+      const uploadResult = await base44.integrations.Core.UploadFile({ file });
+      const fileUrl = uploadResult.file_url;
+      
+      // Add to attachments
+      setAttachments(prev => [...prev, fileUrl]);
+      setExtractedDocumentUrl(fileUrl);
+
+      // Call Document AI extraction
+      const response = await extractWithDocumentAI({ fileUrl });
+      
+      if (response.data?.success && response.data?.data) {
+        const extracted = response.data.data;
+        setExtractedData(extracted);
+
+        // Auto-fill form fields
+        const updates = {};
+
+        if (extracted.delivery_address) {
+          updates.deliveryLocation = extracted.delivery_address;
+        }
+        if (extracted.delivery_notes) {
+          updates.deliveryNotes = extracted.delivery_notes;
+        }
+        if (extracted.order_number) {
+          updates.poSalesDocketNumber = extracted.order_number;
+        }
+        if (extracted.customer_reference) {
+          // Try to match customer by reference or name
+          if (extracted.customer_name) {
+            const matchedCustomer = customers.find(c => 
+              c.customerName?.toLowerCase().includes(extracted.customer_name.toLowerCase()) ||
+              extracted.customer_name.toLowerCase().includes(c.customerName?.toLowerCase())
+            );
+            if (matchedCustomer) {
+              updates.customerId = matchedCustomer.id;
+            }
+          }
+        }
+        if (extracted.shipping_date) {
+          // Try to parse the date
+          try {
+            const parsedDate = new Date(extracted.shipping_date);
+            if (!isNaN(parsedDate.getTime())) {
+              updates.requestedDate = format(parsedDate, 'yyyy-MM-dd');
+            }
+          } catch (err) {
+            console.warn('Could not parse shipping date:', extracted.shipping_date);
+          }
+        }
+        if (extracted.site_contact) {
+          updates.siteContactName = extracted.site_contact;
+        }
+        if (extracted.total_m2) {
+          updates.sqm = extracted.total_m2;
+        }
+        if (extracted.total_weight) {
+          updates.weightKg = extracted.total_weight;
+        }
+        if (extracted.total_sheets) {
+          updates.totalSheetQty = extracted.total_sheets;
+        }
+
+        // Handle line items
+        if (extracted.line_items && extracted.line_items.length > 0) {
+          const sheetListItems = extracted.line_items.map(item => ({
+            description: item.product_description || item.product_code || '',
+            quantity: item.ordered_quantity ? parseFloat(item.ordered_quantity) || 0 : 0,
+            unit: 'sheets'
+          })).filter(item => item.description);
+          
+          if (sheetListItems.length > 0) {
+            updates.sheetList = sheetListItems;
+          }
+        }
+
+        // Try to match pickup location by supplier name
+        if (extracted.supplier_name) {
+          const matchedLocation = pickupLocations.find(loc => 
+            loc.company?.toLowerCase().includes(extracted.supplier_name.toLowerCase()) ||
+            extracted.supplier_name.toLowerCase().includes(loc.company?.toLowerCase())
+          );
+          if (matchedLocation) {
+            updates.pickupLocationId = matchedLocation.id;
+          }
+        }
+
+        setFormData(prev => ({ ...prev, ...updates }));
+
+        toast({
+          title: "Document Extracted",
+          description: "Form has been auto-filled with extracted data. Please review and edit as needed.",
+        });
+      } else {
+        toast({
+          title: "Extraction Complete",
+          description: "Document processed but no data could be extracted. Please fill the form manually.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Document extraction error:', error);
+      toast({
+        title: "Extraction Failed",
+        description: "Failed to extract data from document. Please fill the form manually.",
+        variant: "destructive",
+      });
+    } finally {
+      e.target.value = '';
+      setExtractionLoading(false);
     }
   };
 
@@ -898,37 +1018,75 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
                   </div>
                 </div>
 
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Attachments</label>
-                  <div className="space-y-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      disabled={uploadingAttachment}
-                      asChild
-                    >
-                      <label className="cursor-pointer flex items-center justify-center">
-                        <input
-                          type="file"
-                          accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                          multiple
-                          onChange={handleAttachmentUpload}
-                          className="hidden"
-                          disabled={uploadingAttachment}
-                        />
-                        {uploadingAttachment ? (
-                          <>
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            Uploading...
-                          </>
-                        ) : (
-                          <>
-                            <Upload className="h-4 w-4 mr-2" />
-                            Upload Files (PDF, Images, Documents)
-                          </>
-                        )}
-                      </label>
-                    </Button>
+                <div className="md:col-span-2 border-t pt-4 mt-2">
+                                      <h3 className="text-sm font-semibold text-gray-900 mb-3">Document AI Extraction</h3>
+                                      <p className="text-xs text-gray-500 mb-3">Upload a delivery docket or order document to auto-fill the form</p>
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        disabled={extractionLoading}
+                                        className="w-full border-dashed border-2 border-blue-300 bg-blue-50 hover:bg-blue-100"
+                                        asChild
+                                      >
+                                        <label className="cursor-pointer flex items-center justify-center py-4">
+                                          <input
+                                            type="file"
+                                            accept=".pdf,.jpg,.jpeg,.png,.tiff,.tif"
+                                            onChange={handleDocumentExtraction}
+                                            className="hidden"
+                                            disabled={extractionLoading}
+                                          />
+                                          {extractionLoading ? (
+                                            <>
+                                              <Loader2 className="h-5 w-5 mr-2 animate-spin text-blue-600" />
+                                              <span className="text-blue-700">Extracting data from document...</span>
+                                            </>
+                                          ) : (
+                                            <>
+                                              <Sparkles className="h-5 w-5 mr-2 text-blue-600" />
+                                              <span className="text-blue-700 font-medium">Upload Document for AI Extraction</span>
+                                            </>
+                                          )}
+                                        </label>
+                                      </Button>
+                                      {extractedData && (
+                                        <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded text-xs text-green-700">
+                                          ✓ Data extracted and form auto-filled. Please review the fields above.
+                                        </div>
+                                      )}
+                                    </div>
+
+                                    <div className="md:col-span-2">
+                                      <label className="block text-sm font-medium text-gray-700 mb-1">Additional Attachments</label>
+                                      <div className="space-y-2">
+                                        <Button
+                                          type="button"
+                                          variant="outline"
+                                          disabled={uploadingAttachment}
+                                          asChild
+                                        >
+                                          <label className="cursor-pointer flex items-center justify-center">
+                                            <input
+                                              type="file"
+                                              accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                                              multiple
+                                              onChange={handleAttachmentUpload}
+                                              className="hidden"
+                                              disabled={uploadingAttachment}
+                                            />
+                                            {uploadingAttachment ? (
+                                              <>
+                                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                                Uploading...
+                                              </>
+                                            ) : (
+                                              <>
+                                                <Upload className="h-4 w-4 mr-2" />
+                                                Upload Additional Files
+                                              </>
+                                            )}
+                                          </label>
+                                        </Button>
                     
                     {attachments.length > 0 && (
                       <div className="space-y-2">
