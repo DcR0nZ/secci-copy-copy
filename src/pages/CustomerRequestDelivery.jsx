@@ -123,7 +123,7 @@ export default function CustomerRequestDeliveryPage() {
           },
           totalUnits: { 
             type: "number", 
-            description: "Total number of units, items, or dockets if specified" 
+            description: "Number of separate dockets, orders, or delivery units being delivered together (typically 1-10, NOT the quantity of sheets/boards). Only extract if explicitly stated as number of dockets or delivery units." 
           },
           sqm: { 
             type: "number", 
