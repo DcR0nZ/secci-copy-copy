@@ -10,7 +10,6 @@ import { Upload, Loader2, FileText, Sparkles, X, Plus, Trash2 } from 'lucide-rea
 import { base44 } from '@/api/base44Client';
 import { format } from 'date-fns';
 import { extractJobDataWithGemini } from '@/functions/extractJobDataWithGemini';
-import { sendToZapier } from '@/functions/sendToZapier';
 
 
 const TRUCKS = [
@@ -80,9 +79,7 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
   const [extracting, setExtracting] = useState(false);
   const [extractedData, setExtractedData] = useState(null);
   const [extractedDocumentUrl, setExtractedDocumentUrl] = useState(null);
-  const [useZapierExtraction, setUseZapierExtraction] = useState(false);
   const [manualSheetEntry, setManualSheetEntry] = useState({ description: '', quantity: '', unit: 'sheets' });
-  const [extractionSessionId, setExtractionSessionId] = useState(null);
   
   const { toast } = useToast();
 
@@ -373,30 +370,6 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
       }
 
       try {
-        await sendToZapier({
-          eventType: 'job_created',
-          data: {
-            jobId: newJob.id,
-            customerName: selectedCustomer.customerName,
-            deliveryType: selectedType.name,
-            deliveryLocation: formData.deliveryLocation,
-            requestedDate: formData.requestedDate,
-            status: jobStatus,
-            isScheduled: isDirectlyScheduled,
-            sqm: formData.sqm,
-            weightKg: formData.weightKg,
-            pickupLocation: `${selectedLocation.company} - ${selectedLocation.name}`,
-            siteContact: {
-              name: formData.siteContactName,
-              phone: formData.siteContactPhone
-            }
-          }
-        });
-      } catch (zapierError) {
-        console.error('Failed to send to Zapier:', zapierError);
-      }
-
-      try {
         if (currentUser?.email) {
           await base44.functions.invoke('sendConfirmNewJobEmail', {
             jobId: newJob.id,
@@ -452,7 +425,6 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
       setExtractionDocument(null);
       setExtractedData(null);
       setExtractedDocumentUrl(null);
-      setExtractionSessionId(null);
 
     } catch (error) {
       toast({
