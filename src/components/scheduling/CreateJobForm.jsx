@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { useToast } from "@/components/ui/use-toast";
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Upload, Loader2, FileText, Sparkles, X } from 'lucide-react';
+import { Upload, Loader2, FileText, Sparkles, X, Plus, Trash2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { format } from 'date-fns';
 import { extractJobDataWithGemini } from '@/functions/extractJobDataWithGemini';
@@ -51,6 +51,7 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
     siteContactName: '',
     siteContactPhone: '',
     deliveryNotes: '',
+    sheetList: [],
     scheduleTruckId: '',
     scheduleDate: '',
     scheduleTimeSlot: '',
@@ -80,6 +81,7 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
   const [extractedData, setExtractedData] = useState(null);
   const [extractedDocumentUrl, setExtractedDocumentUrl] = useState(null);
   const [useZapierExtraction, setUseZapierExtraction] = useState(false);
+  const [manualSheetEntry, setManualSheetEntry] = useState({ description: '', quantity: '', unit: 'sheets' });
   const [extractionSessionId, setExtractionSessionId] = useState(null);
   
   const { toast } = useToast();
@@ -337,6 +339,7 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
         siteContactName: formData.siteContactName,
         siteContactPhone: formData.siteContactPhone,
         deliveryNotes: formData.deliveryNotes || undefined,
+        sheetList: formData.sheetList.length > 0 ? formData.sheetList : undefined,
         attachments: attachments.length > 0 ? attachments : undefined,
         jobPhotos: jobPhotos.length > 0 ? jobPhotos : undefined,
         customerName: selectedCustomer.customerName,
@@ -436,6 +439,7 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
         requestedDate: '', 
         totalUnits: '', totalSheetQty: '', poSalesDocketNumber: '', deliveryWindow: '',
         sqm: '', weightKg: '', siteContactName: '', siteContactPhone: '', deliveryNotes: '',
+        sheetList: [],
         scheduleTruckId: '', scheduleDate: '', scheduleTimeSlot: '', scheduleSlotPosition: '1',
         nonStandardDelivery: {
           longWalk: false, longWalkDistance: '', passUp: false, passDown: false, stairs: false,
@@ -822,6 +826,94 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
                 <div className="md:col-span-2">
                   <label htmlFor="deliveryNotes" className="block text-sm font-medium text-gray-700 mb-1">Delivery Notes</label>
                   <Textarea id="deliveryNotes" name="deliveryNotes" value={formData.deliveryNotes} onChange={handleChange} placeholder="e.g., Site access via Gate 3." />
+                </div>
+
+                <div className="md:col-span-2 border-t pt-4 mt-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Sheet List (Optional)</label>
+                  <p className="text-xs text-gray-500 mb-3">Add itemized list of sheets/boards for this delivery</p>
+                  
+                  {formData.sheetList.length > 0 && (
+                    <div className="mb-3 border rounded-lg overflow-hidden">
+                      <table className="w-full text-sm">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="text-left p-2 font-medium text-gray-700">Description</th>
+                            <th className="text-left p-2 font-medium text-gray-700 w-20">Qty</th>
+                            <th className="text-left p-2 font-medium text-gray-700 w-20">Unit</th>
+                            <th className="w-10"></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {formData.sheetList.map((item, index) => (
+                            <tr key={index} className="border-t">
+                              <td className="p-2">{item.description}</td>
+                              <td className="p-2">{item.quantity}</td>
+                              <td className="p-2">{item.unit}</td>
+                              <td className="p-2">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    setFormData(prev => ({
+                                      ...prev,
+                                      sheetList: prev.sheetList.filter((_, i) => i !== index)
+                                    }));
+                                  }}
+                                  className="text-red-600 hover:bg-red-50 h-7 w-7 p-0"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Item description (e.g. 2400x1200x10mm)"
+                      value={manualSheetEntry.description}
+                      onChange={(e) => setManualSheetEntry(prev => ({ ...prev, description: e.target.value }))}
+                      className="flex-1"
+                    />
+                    <Input
+                      type="number"
+                      placeholder="Qty"
+                      value={manualSheetEntry.quantity}
+                      onChange={(e) => setManualSheetEntry(prev => ({ ...prev, quantity: e.target.value }))}
+                      className="w-20"
+                    />
+                    <Input
+                      placeholder="Unit"
+                      value={manualSheetEntry.unit}
+                      onChange={(e) => setManualSheetEntry(prev => ({ ...prev, unit: e.target.value }))}
+                      className="w-24"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => {
+                        if (manualSheetEntry.description && manualSheetEntry.quantity) {
+                          setFormData(prev => ({
+                            ...prev,
+                            sheetList: [...prev.sheetList, {
+                              description: manualSheetEntry.description,
+                              quantity: Number(manualSheetEntry.quantity),
+                              unit: manualSheetEntry.unit || 'sheets'
+                            }]
+                          }));
+                          setManualSheetEntry({ description: '', quantity: '', unit: 'sheets' });
+                        }
+                      }}
+                      disabled={!manualSheetEntry.description || !manualSheetEntry.quantity}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
 
                 <div className="md:col-span-2">
