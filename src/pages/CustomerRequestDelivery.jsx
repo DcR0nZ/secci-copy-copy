@@ -9,6 +9,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Upload, Loader2, FileText, Sparkles, X, Plus, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { extractWithDocumentAI } from '@/functions/extractWithDocumentAI';
 
 
 export default function CustomerRequestDeliveryPage() {
@@ -110,126 +111,75 @@ export default function CustomerRequestDeliveryPage() {
 
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
 
-      const extractionSchema = {
-        type: "object",
-        properties: {
-          deliveryLocation: { 
-            type: "string", 
-            description: "Extract ONLY the physical street address in this exact format: {lotStreetNumber} {streetName} {streetType}, {suburb}, {postcode}. Example: '123 Main St, Brisbane, 4000'. DO NOT include any company names, business names, or customer names." 
-          },
-          poSalesDocketNumber: { 
-            type: "string", 
-            description: "Purchase order number, sales order number, docket number, or invoice number" 
-          },
-          totalUnits: { 
-            type: "number", 
-            description: "Number of separate dockets, orders, or delivery units being delivered together (typically 1-10, NOT the quantity of sheets/boards). Only extract if explicitly stated as number of dockets or delivery units." 
-          },
-          sqm: { 
-            type: "number", 
-            description: "Total square meters (m²) or area measurement" 
-          },
-          weightKg: { 
-            type: "number", 
-            description: "Total weight in kilograms" 
-          },
-          siteContactName: { 
-            type: "string", 
-            description: "Name of the site contact person or foreman" 
-          },
-          siteContactPhone: { 
-            type: "string", 
-            description: "Phone number for the site contact" 
-          },
-          requestedDate: { 
-            type: "string", 
-            description: "Requested delivery date in YYYY-MM-DD format" 
-          },
-          deliveryNotes: { 
-            type: "string", 
-            description: "Any special delivery instructions, notes, or comments" 
-          },
-          pickupLocation: { 
-            type: "string", 
-            description: "Supplier name, pickup location, or warehouse name" 
-          },
-          sheetList: {
-            type: "array",
-            description: "List of all items from the work order/consignment/docket. Extract every line item with its description, quantity, and unit.",
-            items: {
-              type: "object",
-              properties: {
-                description: {
-                  type: "string",
-                  description: "Full item description (e.g., '2400x1200x10mm Std White Board', '13mm Plasterboard')"
-                },
-                quantity: {
-                  type: "number",
-                  description: "Quantity/number of this item"
-                },
-                unit: {
-                  type: "string",
-                  description: "Unit of measurement (e.g., 'sheets', 'pcs', 'm', 'units')"
-                }
-              }
-            }
-          }
-        }
-      };
+      // Call Document AI extraction
+      const response = await extractWithDocumentAI({ fileUrl: file_url });
 
-      const result = await base44.integrations.Core.ExtractDataFromUploadedFile({
-        file_url: file_url,
-        json_schema: extractionSchema
-      });
-
-      if (result.status === 'success' && result.output) {
-        setExtractedData(result.output);
+      if (response.data?.success && response.data?.data) {
+        const extracted = response.data.data;
+        setExtractedData(extracted);
         
-        const extracted = result.output;
         const updates = {};
 
-        if (extracted.pickupLocation) {
+        // Map Document AI fields to form fields
+        if (extracted.supplier_name) {
           const matchedLocation = pickupLocations.find(loc =>
-            loc.name.toLowerCase().includes(extracted.pickupLocation.toLowerCase()) ||
-            loc.company.toLowerCase().includes(extracted.pickupLocation.toLowerCase()) ||
-            extracted.pickupLocation.toLowerCase().includes(loc.name.toLowerCase()) ||
-            extracted.pickupLocation.toLowerCase().includes(loc.company.toLowerCase())
+            loc.name?.toLowerCase().includes(extracted.supplier_name.toLowerCase()) ||
+            loc.company?.toLowerCase().includes(extracted.supplier_name.toLowerCase()) ||
+            extracted.supplier_name.toLowerCase().includes(loc.name?.toLowerCase() || '') ||
+            extracted.supplier_name.toLowerCase().includes(loc.company?.toLowerCase() || '')
           );
           if (matchedLocation) {
             updates.pickupLocationId = matchedLocation.id;
           }
         }
 
-        if (extracted.deliveryLocation) {
-          updates.deliveryLocation = extracted.deliveryLocation;
-          // Geocoding will happen when user accepts the extracted address
+        if (extracted.delivery_address) {
+          updates.deliveryLocation = extracted.delivery_address;
         }
-        if (extracted.poSalesDocketNumber) updates.poSalesDocketNumber = extracted.poSalesDocketNumber;
-        if (extracted.totalUnits) updates.totalUnits = String(extracted.totalUnits);
-        if (extracted.sqm) updates.sqm = String(extracted.sqm);
-        if (extracted.weightKg) updates.weightKg = String(extracted.weightKg);
-        if (extracted.siteContactName) updates.siteContactName = extracted.siteContactName;
-        if (extracted.siteContactPhone) updates.siteContactPhone = extracted.siteContactPhone;
-        if (extracted.deliveryNotes) updates.deliveryNotes = extracted.deliveryNotes;
-        if (extracted.sheetList && Array.isArray(extracted.sheetList)) {
-          updates.sheetList = extracted.sheetList;
+        if (extracted.order_number || extracted.document_id) {
+          updates.poSalesDocketNumber = extracted.order_number || extracted.document_id;
+        }
+        if (extracted.total_m2) {
+          updates.sqm = String(extracted.total_m2);
+        }
+        if (extracted.total_weight) {
+          updates.weightKg = String(extracted.total_weight);
+        }
+        if (extracted.site_contact) {
+          updates.siteContactName = extracted.site_contact;
+        }
+        if (extracted.delivery_notes) {
+          updates.deliveryNotes = extracted.delivery_notes;
         }
 
-        if (extracted.requestedDate) {
+        // Handle line items -> sheetList conversion
+        if (extracted.line_items && Array.isArray(extracted.line_items) && extracted.line_items.length > 0) {
+          const sheetListItems = extracted.line_items.map(item => ({
+            description: item.product_description || item.product_code || '',
+            quantity: item.ordered_quantity ? parseFloat(item.ordered_quantity) || 0 : 0,
+            unit: 'sheets'
+          })).filter(item => item.description);
+          
+          if (sheetListItems.length > 0) {
+            updates.sheetList = sheetListItems;
+          }
+        }
+
+        if (extracted.shipping_date) {
           try {
-            const date = new Date(extracted.requestedDate);
+            const date = new Date(extracted.shipping_date);
             if (!isNaN(date.getTime())) {
               updates.requestedDate = format(date, 'yyyy-MM-dd');
             }
           } catch (e) {
-            console.log('Could not parse date:', extracted.requestedDate);
+            console.log('Could not parse date:', extracted.shipping_date);
           }
         }
 
         setFormData(prev => ({ 
           ...prev, 
           ...updates,
-          sheetList: extracted.sheetList || prev.sheetList 
+          sheetList: updates.sheetList || prev.sheetList 
         }));
 
         toast({
@@ -237,7 +187,7 @@ export default function CustomerRequestDeliveryPage() {
           description: "Please review the pre-filled information and make any necessary corrections.",
         });
       } else {
-        throw new Error(result.details || 'Failed to extract data from document');
+        throw new Error('Failed to extract data from document');
       }
 
     } catch (error) {
