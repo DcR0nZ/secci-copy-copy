@@ -625,6 +625,15 @@ export default function JobDetailsDialog({ job, open, onOpenChange, onJobUpdated
                             </tr>
                           ))}
                         </tbody>
+                        <tfoot className="bg-gray-100 border-t-2">
+                          <tr>
+                            <td className="p-3 font-semibold text-gray-700">Total</td>
+                            <td className="p-3 font-bold text-gray-900">
+                              {currentJob.sheetList.reduce((sum, item) => sum + (item.quantity || 0), 0)}
+                            </td>
+                            <td className="p-3 text-gray-600">items</td>
+                          </tr>
+                        </tfoot>
                       </table>
                     </div>
                   </CardContent>

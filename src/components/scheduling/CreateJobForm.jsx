@@ -868,6 +868,16 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
                             </tr>
                           ))}
                         </tbody>
+                        <tfoot className="bg-gray-100 border-t-2">
+                          <tr>
+                            <td className="p-2 font-semibold text-gray-700">Total</td>
+                            <td className="p-2 font-semibold text-gray-900">
+                              {formData.sheetList.reduce((sum, item) => sum + (item.quantity || 0), 0)}
+                            </td>
+                            <td className="p-2 text-gray-600">items</td>
+                            <td></td>
+                          </tr>
+                        </tfoot>
                       </table>
                     </div>
                   )}
