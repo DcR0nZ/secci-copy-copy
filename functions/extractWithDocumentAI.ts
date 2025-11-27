@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
 
-const EXTRACTION_API_ENDPOINT = 'https://69284e31dfb5aba9575c1e0e.base44.api/functions/invoke/extractDeliveryData';
+const DOCEXTRACT_AI_FUNCTION_URL = 'https://69284e31dfb5aba9575c1e0e.base44.api/functions/invoke/extractDeliveryData';
 
 Deno.serve(async (req) => {
   try {
@@ -11,82 +11,93 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { fileUrl } = await req.json();
-
-    if (!fileUrl) {
-      return Response.json({ error: 'fileUrl is required' }, { status: 400 });
-    }
-
-    const apiKey = Deno.env.get('EXTRACTION_API_KEY');
-    if (!apiKey) {
+    const DOCEXTRACT_AI_API_KEY = Deno.env.get('EXTRACTION_API_KEY');
+    if (!DOCEXTRACT_AI_API_KEY) {
       return Response.json({ error: 'EXTRACTION_API_KEY not configured' }, { status: 500 });
     }
 
-    // Fetch the file to send as form data
-    console.log('Fetching file from:', fileUrl);
-    const fileResponse = await fetch(fileUrl);
-    if (!fileResponse.ok) {
-      return Response.json({ error: 'Failed to fetch file', details: `Status: ${fileResponse.status}` }, { status: 400 });
+    // Check content type to determine if it's a file upload or JSON with fileUrl
+    const contentType = req.headers.get('content-type') || '';
+    
+    let externalFormData = new FormData();
+    
+    if (contentType.includes('multipart/form-data')) {
+      // Direct file upload
+      const formData = await req.formData();
+      const file = formData.get('file');
+      
+      if (!file) {
+        return Response.json({ error: 'No file provided' }, { status: 400 });
+      }
+      
+      externalFormData.append('file', file);
+    } else {
+      // JSON with fileUrl - fetch and convert to file
+      const { fileUrl } = await req.json();
+
+      if (!fileUrl) {
+        return Response.json({ error: 'fileUrl is required' }, { status: 400 });
+      }
+
+      console.log('Fetching file from:', fileUrl);
+      const fileResponse = await fetch(fileUrl);
+      if (!fileResponse.ok) {
+        return Response.json({ error: 'Failed to fetch file', details: `Status: ${fileResponse.status}` }, { status: 400 });
+      }
+
+      const fileBlob = await fileResponse.blob();
+      const urlParts = fileUrl.split('/');
+      const fileName = urlParts[urlParts.length - 1] || 'document.pdf';
+      
+      externalFormData.append('file', fileBlob, fileName);
     }
 
-    const fileBlob = await fileResponse.blob();
-    
-    // Determine filename from URL
-    const urlParts = fileUrl.split('/');
-    const fileName = urlParts[urlParts.length - 1] || 'document.pdf';
+    console.log('Calling DocExtract AI API...');
 
-    // Create form data with the file
-    const formData = new FormData();
-    formData.append('file', fileBlob, fileName);
-
-    console.log('Calling extraction API...');
-
-    // Call the external extraction API with file upload
-    const extractionResponse = await fetch(EXTRACTION_API_ENDPOINT, {
+    const response = await fetch(DOCEXTRACT_AI_FUNCTION_URL, {
       method: 'POST',
       headers: {
-        'x-api-key': apiKey
+        'x-api-key': DOCEXTRACT_AI_API_KEY,
       },
-      body: formData
+      body: externalFormData,
     });
 
-    if (!extractionResponse.ok) {
-      const errorText = await extractionResponse.text();
-      console.error('Extraction API error status:', extractionResponse.status);
-      console.error('Extraction API error:', errorText);
-      return Response.json({ 
-        error: 'Document extraction failed', 
-        details: errorText,
-        status: extractionResponse.status 
-      }, { status: 500 });
+    const result = await response.json();
+
+    if (!response.ok) {
+      console.error('DocExtract AI error status:', response.status);
+      console.error('DocExtract AI error:', result);
+      throw new Error(result.error || 'DocExtract AI returned an error');
     }
 
-    const extractionResult = await extractionResponse.json();
-    console.log('Extraction API response received');
+    console.log('DocExtract AI response received, validation_status:', result.validation_status);
 
-    // Map the response to our expected format
+    // Map the response output to our expected format
+    const output = result.output || {};
     const extractedData = {
-      customer_name: extractionResult.customer_name || null,
-      customer_reference: extractionResult.customer_reference || null,
-      delivery_address: extractionResult.delivery_address || null,
-      delivery_notes: extractionResult.delivery_notes || null,
-      document_id: extractionResult.document_id || null,
-      order_number: extractionResult.order_number || null,
-      shipping_date: extractionResult.shipping_date || null,
-      line_items: extractionResult.line_items || [],
-      site_contact: extractionResult.site_contact || null,
-      supplier_name: extractionResult.supplier_name || null,
-      total_lengths: extractionResult.total_lengths || null,
-      total_lm: extractionResult.total_lm || null,
-      total_m2: extractionResult.total_m2 || null,
-      total_sheets: extractionResult.total_sheets || null,
-      total_weight: extractionResult.total_weight || null
+      customer_name: output.customer_name || null,
+      customer_reference: output.customer_reference || null,
+      delivery_address: output.delivery_address || null,
+      delivery_notes: output.delivery_notes || null,
+      document_id: output.document_id || null,
+      order_number: output.order_number || null,
+      shipping_date: output.shipping_date || null,
+      line_items: output.line_items || [],
+      site_contact: output.site_contact || null,
+      supplier_name: output.supplier_name || null,
+      total_lengths: output.total_lengths || null,
+      total_lm: output.total_lm || null,
+      total_m2: output.total_m2 || null,
+      total_sheets: output.total_sheets || null,
+      total_weight: output.total_weight || null
     };
 
     return Response.json({
       success: true,
       data: extractedData,
-      rawResponse: extractionResult
+      validation_status: result.validation_status,
+      history_id: result.history_id,
+      rawResponse: result
     });
 
   } catch (error) {
