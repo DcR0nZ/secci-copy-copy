@@ -607,13 +607,15 @@ export default function JobDetailsDialog({ job, open, onOpenChange, onJobUpdated
                 <Card>
                   <CardContent className="p-4">
                     <h3 className="font-semibold text-lg mb-3">Sheet List</h3>
-                    <div className="border rounded-lg overflow-hidden">
+                    <div className="border rounded-lg overflow-hidden overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead className="bg-gray-50">
                           <tr>
                             <th className="text-left p-3 font-medium text-gray-700">Description</th>
-                            <th className="text-left p-3 font-medium text-gray-700 w-32">Quantity</th>
-                            <th className="text-left p-3 font-medium text-gray-700 w-32">Unit</th>
+                            <th className="text-left p-3 font-medium text-gray-700 w-16">Qty</th>
+                            <th className="text-left p-3 font-medium text-gray-700 w-16">M²</th>
+                            <th className="text-left p-3 font-medium text-gray-700 w-20">UOM</th>
+                            <th className="text-left p-3 font-medium text-gray-700 w-20">Weight</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -621,7 +623,9 @@ export default function JobDetailsDialog({ job, open, onOpenChange, onJobUpdated
                             <tr key={index} className="border-t hover:bg-gray-50">
                               <td className="p-3">{item.description}</td>
                               <td className="p-3 font-medium">{item.quantity}</td>
+                              <td className="p-3">{item.m2 || '-'}</td>
                               <td className="p-3 text-gray-600">{item.unit}</td>
+                              <td className="p-3">{item.weight ? `${item.weight}kg` : '-'}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -631,7 +635,13 @@ export default function JobDetailsDialog({ job, open, onOpenChange, onJobUpdated
                             <td className="p-3 font-bold text-gray-900">
                               {currentJob.sheetList.reduce((sum, item) => sum + (item.quantity || 0), 0)}
                             </td>
-                            <td className="p-3 text-gray-600">items</td>
+                            <td className="p-3 font-bold text-gray-900">
+                              {currentJob.sheetList.reduce((sum, item) => sum + (parseFloat(item.m2) || 0), 0).toFixed(2)}
+                            </td>
+                            <td className="p-3"></td>
+                            <td className="p-3 font-bold text-gray-900">
+                              {currentJob.sheetList.reduce((sum, item) => sum + (parseFloat(item.weight) || 0), 0).toFixed(1)}kg
+                            </td>
                           </tr>
                         </tfoot>
                       </table>

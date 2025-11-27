@@ -18,7 +18,7 @@ export default function CustomerRequestDeliveryPage() {
   const [attachments, setAttachments] = useState([]);
   const [uploadingAttachment, setUploadingAttachment] = useState(false);
   const [extractionDocument, setExtractionDocument] = useState(null);
-  const [manualSheetEntry, setManualSheetEntry] = useState({ description: '', quantity: '', unit: 'sheets' });
+  const [manualSheetEntry, setManualSheetEntry] = useState({ description: '', quantity: '', m2: '', unit: 'sheets', weight: '' });
   const [extracting, setExtracting] = useState(false);
   const [extractedData, setExtractedData] = useState(null);
   const [formData, setFormData] = useState({
@@ -743,13 +743,15 @@ export default function CustomerRequestDeliveryPage() {
               <p className="text-xs text-gray-500 mb-3">List of items from the work order/docket. This is automatically extracted from uploaded documents.</p>
 
               {formData.sheetList.length > 0 && (
-                <div className="mb-3 border rounded-lg overflow-hidden">
+                <div className="mb-3 border rounded-lg overflow-hidden overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead className="bg-gray-50">
                       <tr>
                         <th className="text-left p-2 font-medium text-gray-700">Description</th>
-                        <th className="text-left p-2 font-medium text-gray-700 w-24">Quantity</th>
-                        <th className="text-left p-2 font-medium text-gray-700 w-24">Unit</th>
+                        <th className="text-left p-2 font-medium text-gray-700 w-16">Qty</th>
+                        <th className="text-left p-2 font-medium text-gray-700 w-16">M²</th>
+                        <th className="text-left p-2 font-medium text-gray-700 w-20">UOM</th>
+                        <th className="text-left p-2 font-medium text-gray-700 w-20">Weight</th>
                         <th className="w-10"></th>
                       </tr>
                     </thead>
@@ -758,7 +760,9 @@ export default function CustomerRequestDeliveryPage() {
                         <tr key={index} className="border-t">
                           <td className="p-2">{item.description}</td>
                           <td className="p-2">{item.quantity}</td>
+                          <td className="p-2">{item.m2 || '-'}</td>
                           <td className="p-2">{item.unit}</td>
+                          <td className="p-2">{item.weight ? `${item.weight}kg` : '-'}</td>
                           <td className="p-2">
                             <Button
                               type="button"
@@ -770,7 +774,7 @@ export default function CustomerRequestDeliveryPage() {
                                   sheetList: prev.sheetList.filter((_, i) => i !== index)
                                 }));
                               }}
-                              className="text-red-600 hover:bg-red-50"
+                              className="text-red-600 hover:bg-red-50 h-7 w-7 p-0"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -784,7 +788,13 @@ export default function CustomerRequestDeliveryPage() {
                         <td className="p-2 font-semibold text-gray-900">
                           {formData.sheetList.reduce((sum, item) => sum + (item.quantity || 0), 0)}
                         </td>
-                        <td className="p-2 text-gray-600">items</td>
+                        <td className="p-2 font-semibold text-gray-900">
+                          {formData.sheetList.reduce((sum, item) => sum + (parseFloat(item.m2) || 0), 0).toFixed(2)}
+                        </td>
+                        <td className="p-2"></td>
+                        <td className="p-2 font-semibold text-gray-900">
+                          {formData.sheetList.reduce((sum, item) => sum + (parseFloat(item.weight) || 0), 0).toFixed(1)}kg
+                        </td>
                         <td></td>
                       </tr>
                     </tfoot>
@@ -792,25 +802,39 @@ export default function CustomerRequestDeliveryPage() {
                 </div>
               )}
 
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 <Input
                   placeholder="Item description"
                   value={manualSheetEntry.description}
                   onChange={(e) => setManualSheetEntry(prev => ({ ...prev, description: e.target.value }))}
-                  className="flex-1"
+                  className="flex-1 min-w-[150px]"
                 />
                 <Input
                   type="number"
                   placeholder="Qty"
                   value={manualSheetEntry.quantity}
                   onChange={(e) => setManualSheetEntry(prev => ({ ...prev, quantity: e.target.value }))}
+                  className="w-16"
+                />
+                <Input
+                  type="number"
+                  placeholder="M²"
+                  value={manualSheetEntry.m2}
+                  onChange={(e) => setManualSheetEntry(prev => ({ ...prev, m2: e.target.value }))}
+                  className="w-16"
+                />
+                <Input
+                  placeholder="UOM"
+                  value={manualSheetEntry.unit}
+                  onChange={(e) => setManualSheetEntry(prev => ({ ...prev, unit: e.target.value }))}
                   className="w-20"
                 />
                 <Input
-                  placeholder="Unit"
-                  value={manualSheetEntry.unit}
-                  onChange={(e) => setManualSheetEntry(prev => ({ ...prev, unit: e.target.value }))}
-                  className="w-24"
+                  type="number"
+                  placeholder="Weight"
+                  value={manualSheetEntry.weight}
+                  onChange={(e) => setManualSheetEntry(prev => ({ ...prev, weight: e.target.value }))}
+                  className="w-20"
                 />
                 <Button
                   type="button"
@@ -823,10 +847,12 @@ export default function CustomerRequestDeliveryPage() {
                         sheetList: [...prev.sheetList, {
                           description: manualSheetEntry.description,
                           quantity: Number(manualSheetEntry.quantity),
-                          unit: manualSheetEntry.unit || 'sheets'
+                          m2: manualSheetEntry.m2 ? Number(manualSheetEntry.m2) : null,
+                          unit: manualSheetEntry.unit || 'sheets',
+                          weight: manualSheetEntry.weight ? Number(manualSheetEntry.weight) : null
                         }]
                       }));
-                      setManualSheetEntry({ description: '', quantity: '', unit: 'sheets' });
+                      setManualSheetEntry({ description: '', quantity: '', m2: '', unit: 'sheets', weight: '' });
                     }
                   }}
                   disabled={!manualSheetEntry.description || !manualSheetEntry.quantity}
