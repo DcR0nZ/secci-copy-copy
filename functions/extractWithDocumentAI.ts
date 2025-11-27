@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
 
-const EXTRACTION_API_ENDPOINT = 'https://ta-01kb2y1406hz51nyxgzskyet8b-5173.wo-lwkp60ljhjb9vok0sfyxofbdh.w.modal.host/functions/extractDeliveryData';
+const EXTRACTION_API_ENDPOINT = 'https://69284e31dfb5aba9575c1e0e.base44.api/functions/invoke/extractDeliveryData';
 
 Deno.serve(async (req) => {
   try {
@@ -17,15 +17,37 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'fileUrl is required' }, { status: 400 });
     }
 
-    console.log('Calling extraction API with fileUrl:', fileUrl);
+    const apiKey = Deno.env.get('EXTRACTION_API_KEY');
+    if (!apiKey) {
+      return Response.json({ error: 'EXTRACTION_API_KEY not configured' }, { status: 500 });
+    }
 
-    // Call the external extraction API
+    // Fetch the file to send as form data
+    console.log('Fetching file from:', fileUrl);
+    const fileResponse = await fetch(fileUrl);
+    if (!fileResponse.ok) {
+      return Response.json({ error: 'Failed to fetch file', details: `Status: ${fileResponse.status}` }, { status: 400 });
+    }
+
+    const fileBlob = await fileResponse.blob();
+    
+    // Determine filename from URL
+    const urlParts = fileUrl.split('/');
+    const fileName = urlParts[urlParts.length - 1] || 'document.pdf';
+
+    // Create form data with the file
+    const formData = new FormData();
+    formData.append('file', fileBlob, fileName);
+
+    console.log('Calling extraction API...');
+
+    // Call the external extraction API with file upload
     const extractionResponse = await fetch(EXTRACTION_API_ENDPOINT, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'x-api-key': apiKey
       },
-      body: JSON.stringify({ fileUrl })
+      body: formData
     });
 
     if (!extractionResponse.ok) {
