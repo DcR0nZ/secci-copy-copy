@@ -8,7 +8,6 @@ import { base44 } from '@/api/base44Client';
 import { useToast } from "@/components/ui/use-toast";
 import { Upload, Loader2, X, Camera, Image as ImageIcon, AlertCircle, CheckCircle2, WifiOff } from 'lucide-react';
 import { sendPODNotesNotification } from '@/functions/sendPODNotesNotification';
-import { sendToZapier } from '@/functions/sendToZapier';
 import { useOffline } from '../offline/OfflineManager';
 
 const MAX_PHOTOS = 20;
@@ -322,23 +321,6 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
         }
       }
 
-      try {
-        await sendToZapier({
-          eventType: 'job_delivered',
-          data: {
-            jobId: job.id,
-            customerName: job.customerName,
-            deliveryLocation: job.deliveryLocation,
-            deliveryDate: new Date().toISOString(),
-            podNotes: notes,
-            photoCount: uploadedUrls.length,
-            totalPhotoCount: allPodFiles.length
-          }
-        });
-      } catch (zapierError) {
-        console.error('Failed to send to Zapier:', zapierError);
-      }
-
       let finalToastDescription = `${uploadedUrls.length} photo(s) uploaded successfully!`;
       let finalToastTitle = "Delivery Complete!";
       let finalToastVariant = "default";
@@ -479,7 +461,6 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
                       <input
                         type="file"
                         accept="image/*"
-                        multiple
                         capture="environment"
                         onChange={handleFileChange}
                         className="hidden"
