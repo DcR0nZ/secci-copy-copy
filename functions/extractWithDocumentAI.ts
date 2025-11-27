@@ -62,12 +62,29 @@ Deno.serve(async (req) => {
       body: externalFormData,
     });
 
-    const result = await response.json();
+    const responseText = await response.text();
+    console.log('DocExtract AI raw response:', responseText);
+    
+    let result;
+    try {
+      result = JSON.parse(responseText);
+    } catch (parseError) {
+      console.error('Failed to parse DocExtract AI response:', parseError);
+      return Response.json({ 
+        error: 'Invalid response from DocExtract AI', 
+        details: responseText.substring(0, 500),
+        status: response.status 
+      }, { status: 500 });
+    }
 
     if (!response.ok) {
       console.error('DocExtract AI error status:', response.status);
       console.error('DocExtract AI error:', result);
-      throw new Error(result.error || 'DocExtract AI returned an error');
+      return Response.json({ 
+        error: result.error || 'DocExtract AI returned an error', 
+        details: JSON.stringify(result),
+        status: response.status 
+      }, { status: response.status });
     }
 
     console.log('DocExtract AI response received, validation_status:', result.validation_status);
