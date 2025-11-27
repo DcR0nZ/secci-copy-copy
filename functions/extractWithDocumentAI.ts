@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
 
-const DOCEXTRACT_AI_FUNCTION_URL = 'https://69284e31dfb5aba9575c1e0e.base44.api/functions/invoke/extractDeliveryData';
+const DOCEXTRACT_AI_FUNCTION_URL = 'https://delivery-docket-extractor-575c1e0e.base44.app/functions/extractDeliveryData';
 
 Deno.serve(async (req) => {
   try {
