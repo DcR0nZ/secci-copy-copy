@@ -79,7 +79,7 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
   const [extracting, setExtracting] = useState(false);
   const [extractedData, setExtractedData] = useState(null);
   const [extractedDocumentUrl, setExtractedDocumentUrl] = useState(null);
-  const [manualSheetEntry, setManualSheetEntry] = useState({ description: '', quantity: '', unit: 'sheets' });
+  const [manualSheetEntry, setManualSheetEntry] = useState({ description: '', quantity: '', m2: '', unit: 'sheets', weight: '' });
   const [extractionLoading, setExtractionLoading] = useState(false);
   
   const { toast } = useToast();
@@ -925,97 +925,123 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
                   <p className="text-xs text-gray-500 mb-3">Add itemized list of sheets/boards for this delivery</p>
                   
                   {formData.sheetList.length > 0 && (
-                    <div className="mb-3 border rounded-lg overflow-hidden">
-                      <table className="w-full text-sm">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th className="text-left p-2 font-medium text-gray-700">Description</th>
-                            <th className="text-left p-2 font-medium text-gray-700 w-20">Qty</th>
-                            <th className="text-left p-2 font-medium text-gray-700 w-20">Unit</th>
-                            <th className="w-10"></th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {formData.sheetList.map((item, index) => (
-                            <tr key={index} className="border-t">
-                              <td className="p-2">{item.description}</td>
-                              <td className="p-2">{item.quantity}</td>
-                              <td className="p-2">{item.unit}</td>
-                              <td className="p-2">
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => {
-                                    setFormData(prev => ({
-                                      ...prev,
-                                      sheetList: prev.sheetList.filter((_, i) => i !== index)
-                                    }));
-                                  }}
-                                  className="text-red-600 hover:bg-red-50 h-7 w-7 p-0"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                        <tfoot className="bg-gray-100 border-t-2">
-                          <tr>
-                            <td className="p-2 font-semibold text-gray-700">Total</td>
-                            <td className="p-2 font-semibold text-gray-900">
-                              {formData.sheetList.reduce((sum, item) => sum + (item.quantity || 0), 0)}
-                            </td>
-                            <td className="p-2 text-gray-600">items</td>
-                            <td></td>
-                          </tr>
-                        </tfoot>
-                      </table>
-                    </div>
-                  )}
+                                            <div className="mb-3 border rounded-lg overflow-hidden overflow-x-auto">
+                                              <table className="w-full text-sm">
+                                                <thead className="bg-gray-50">
+                                                  <tr>
+                                                    <th className="text-left p-2 font-medium text-gray-700">Description</th>
+                                                    <th className="text-left p-2 font-medium text-gray-700 w-16">Qty</th>
+                                                    <th className="text-left p-2 font-medium text-gray-700 w-16">M²</th>
+                                                    <th className="text-left p-2 font-medium text-gray-700 w-20">UOM</th>
+                                                    <th className="text-left p-2 font-medium text-gray-700 w-20">Weight</th>
+                                                    <th className="w-10"></th>
+                                                  </tr>
+                                                </thead>
+                                                <tbody>
+                                                  {formData.sheetList.map((item, index) => (
+                                                    <tr key={index} className="border-t">
+                                                      <td className="p-2">{item.description}</td>
+                                                      <td className="p-2">{item.quantity}</td>
+                                                      <td className="p-2">{item.m2 || '-'}</td>
+                                                      <td className="p-2">{item.unit}</td>
+                                                      <td className="p-2">{item.weight ? `${item.weight}kg` : '-'}</td>
+                                                      <td className="p-2">
+                                                        <Button
+                                                          type="button"
+                                                          variant="ghost"
+                                                          size="sm"
+                                                          onClick={() => {
+                                                            setFormData(prev => ({
+                                                              ...prev,
+                                                              sheetList: prev.sheetList.filter((_, i) => i !== index)
+                                                            }));
+                                                          }}
+                                                          className="text-red-600 hover:bg-red-50 h-7 w-7 p-0"
+                                                        >
+                                                          <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                      </td>
+                                                    </tr>
+                                                  ))}
+                                                </tbody>
+                                                <tfoot className="bg-gray-100 border-t-2">
+                                                  <tr>
+                                                    <td className="p-2 font-semibold text-gray-700">Total</td>
+                                                    <td className="p-2 font-semibold text-gray-900">
+                                                      {formData.sheetList.reduce((sum, item) => sum + (item.quantity || 0), 0)}
+                                                    </td>
+                                                    <td className="p-2 font-semibold text-gray-900">
+                                                      {formData.sheetList.reduce((sum, item) => sum + (parseFloat(item.m2) || 0), 0).toFixed(2)}
+                                                    </td>
+                                                    <td className="p-2"></td>
+                                                    <td className="p-2 font-semibold text-gray-900">
+                                                      {formData.sheetList.reduce((sum, item) => sum + (parseFloat(item.weight) || 0), 0).toFixed(1)}kg
+                                                    </td>
+                                                    <td></td>
+                                                  </tr>
+                                                </tfoot>
+                                              </table>
+                                            </div>
+                                          )}
 
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Item description (e.g. 2400x1200x10mm)"
-                      value={manualSheetEntry.description}
-                      onChange={(e) => setManualSheetEntry(prev => ({ ...prev, description: e.target.value }))}
-                      className="flex-1"
-                    />
-                    <Input
-                      type="number"
-                      placeholder="Qty"
-                      value={manualSheetEntry.quantity}
-                      onChange={(e) => setManualSheetEntry(prev => ({ ...prev, quantity: e.target.value }))}
-                      className="w-20"
-                    />
-                    <Input
-                      placeholder="Unit"
-                      value={manualSheetEntry.unit}
-                      onChange={(e) => setManualSheetEntry(prev => ({ ...prev, unit: e.target.value }))}
-                      className="w-24"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      onClick={() => {
-                        if (manualSheetEntry.description && manualSheetEntry.quantity) {
-                          setFormData(prev => ({
-                            ...prev,
-                            sheetList: [...prev.sheetList, {
-                              description: manualSheetEntry.description,
-                              quantity: Number(manualSheetEntry.quantity),
-                              unit: manualSheetEntry.unit || 'sheets'
-                            }]
-                          }));
-                          setManualSheetEntry({ description: '', quantity: '', unit: 'sheets' });
-                        }
-                      }}
-                      disabled={!manualSheetEntry.description || !manualSheetEntry.quantity}
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <div className="flex gap-2 flex-wrap">
+                                            <Input
+                                              placeholder="Item description"
+                                              value={manualSheetEntry.description}
+                                              onChange={(e) => setManualSheetEntry(prev => ({ ...prev, description: e.target.value }))}
+                                              className="flex-1 min-w-[150px]"
+                                            />
+                                            <Input
+                                              type="number"
+                                              placeholder="Qty"
+                                              value={manualSheetEntry.quantity}
+                                              onChange={(e) => setManualSheetEntry(prev => ({ ...prev, quantity: e.target.value }))}
+                                              className="w-16"
+                                            />
+                                            <Input
+                                              type="number"
+                                              placeholder="M²"
+                                              value={manualSheetEntry.m2}
+                                              onChange={(e) => setManualSheetEntry(prev => ({ ...prev, m2: e.target.value }))}
+                                              className="w-16"
+                                            />
+                                            <Input
+                                              placeholder="UOM"
+                                              value={manualSheetEntry.unit}
+                                              onChange={(e) => setManualSheetEntry(prev => ({ ...prev, unit: e.target.value }))}
+                                              className="w-20"
+                                            />
+                                            <Input
+                                              type="number"
+                                              placeholder="Weight"
+                                              value={manualSheetEntry.weight}
+                                              onChange={(e) => setManualSheetEntry(prev => ({ ...prev, weight: e.target.value }))}
+                                              className="w-20"
+                                            />
+                                            <Button
+                                              type="button"
+                                              variant="outline"
+                                              size="icon"
+                                              onClick={() => {
+                                                if (manualSheetEntry.description && manualSheetEntry.quantity) {
+                                                  setFormData(prev => ({
+                                                    ...prev,
+                                                    sheetList: [...prev.sheetList, {
+                                                      description: manualSheetEntry.description,
+                                                      quantity: Number(manualSheetEntry.quantity),
+                                                      m2: manualSheetEntry.m2 ? Number(manualSheetEntry.m2) : null,
+                                                      unit: manualSheetEntry.unit || 'sheets',
+                                                      weight: manualSheetEntry.weight ? Number(manualSheetEntry.weight) : null
+                                                    }]
+                                                  }));
+                                                  setManualSheetEntry({ description: '', quantity: '', m2: '', unit: 'sheets', weight: '' });
+                                                }
+                                              }}
+                                              disabled={!manualSheetEntry.description || !manualSheetEntry.quantity}
+                                            >
+                                              <Plus className="h-4 w-4" />
+                                            </Button>
+                                          </div>
                 </div>
 
                 <div className="md:col-span-2 border-t pt-4 mt-2">
