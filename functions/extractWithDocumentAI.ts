@@ -66,13 +66,36 @@ Deno.serve(async (req) => {
     }
 
     // Fetch the file and convert to base64
+    console.log('Fetching file from:', fileUrl);
     const fileResponse = await fetch(fileUrl);
     if (!fileResponse.ok) {
-      return Response.json({ error: 'Failed to fetch file' }, { status: 400 });
+      console.error('Failed to fetch file, status:', fileResponse.status);
+      return Response.json({ error: 'Failed to fetch file', details: `Status: ${fileResponse.status}` }, { status: 400 });
     }
 
     const fileBuffer = await fileResponse.arrayBuffer();
-    const base64Content = btoa(String.fromCharCode(...new Uint8Array(fileBuffer)));
+    console.log('File size:', fileBuffer.byteLength, 'bytes');
+    
+    // Check file size limit (Document AI has a 20MB limit for inline documents)
+    const maxSize = 20 * 1024 * 1024; // 20MB
+    if (fileBuffer.byteLength > maxSize) {
+      return Response.json({ 
+        error: 'File too large', 
+        details: 'Document AI supports files up to 20MB. Please upload a smaller file.' 
+      }, { status: 400 });
+    }
+
+    // Convert to base64 in chunks to avoid call stack issues with large files
+    const uint8Array = new Uint8Array(fileBuffer);
+    let base64Content = '';
+    const chunkSize = 32768; // Process in 32KB chunks
+    for (let i = 0; i < uint8Array.length; i += chunkSize) {
+      const chunk = uint8Array.slice(i, i + chunkSize);
+      base64Content += String.fromCharCode.apply(null, chunk);
+    }
+    base64Content = btoa(base64Content);
+    
+    console.log('Base64 content length:', base64Content.length);
 
     // Determine mime type
     let mimeType = 'application/pdf';
@@ -86,9 +109,12 @@ Deno.serve(async (req) => {
     }
 
     // Get access token
+    console.log('Getting access token...');
     const accessToken = await getAccessToken();
+    console.log('Access token obtained');
 
     // Call Document AI
+    console.log('Calling Document AI endpoint...');
     const docAIResponse = await fetch(DOC_AI_ENDPOINT, {
       method: 'POST',
       headers: {
@@ -105,11 +131,17 @@ Deno.serve(async (req) => {
 
     if (!docAIResponse.ok) {
       const errorText = await docAIResponse.text();
+      console.error('Document AI error status:', docAIResponse.status);
       console.error('Document AI error:', errorText);
-      return Response.json({ error: 'Document AI processing failed', details: errorText }, { status: 500 });
+      return Response.json({ 
+        error: 'Document AI processing failed', 
+        details: errorText,
+        status: docAIResponse.status 
+      }, { status: 500 });
     }
 
     const docAIResult = await docAIResponse.json();
+    console.log('Document AI response received, entities count:', docAIResult.document?.entities?.length || 0);
 
     // Extract entities from Document AI response
     const extractedData = {
