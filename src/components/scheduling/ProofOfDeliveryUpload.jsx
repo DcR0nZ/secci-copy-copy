@@ -307,6 +307,7 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
         driverStatus: 'COMPLETED'
       });
 
+      // Send notification - wrapped in its own try/catch so it doesn't affect main flow
       if (notes && notes.trim()) {
         try {
           await sendPODNotesNotification({
@@ -321,6 +322,7 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
         }
       }
 
+      // Show success toast
       let finalToastDescription = `${uploadedUrls.length} photo(s) uploaded successfully!`;
       let finalToastTitle = "Delivery Complete!";
       let finalToastVariant = "default";
@@ -329,6 +331,7 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
         finalToastTitle = "Delivery with Warnings";
         finalToastDescription += ` Some issues were encountered during upload.`;
         finalToastVariant = "warning";
+        setErrors(currentSubmissionErrors);
       }
 
       toast({
@@ -337,32 +340,45 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
         variant: finalToastVariant,
       });
 
-      if (currentSubmissionErrors.length > 0) {
-        setErrors(currentSubmissionErrors);
-      }
-
-      onPODUploaded();
-      
-      if (uploadedUrls.length > 0) {
-        onOpenChange(false);
-        setPhotos([]);
-        setPhotoPreviews([]);
-        setNotes('');
-        setErrors([]);
-      }
-
-    } catch (error) {
-      toast({
-        title: "Submission Failed",
-        description: error.message || "Failed to submit proof of delivery. Please try again.",
-        variant: "destructive",
-      });
-      console.error('POD submission error:', error);
-      setProcessingIndex(-1);
-    } finally {
+      // Reset state and close dialog - wrap in try/catch to prevent callback errors from showing failure
+      setPhotos([]);
+      setPhotoPreviews([]);
+      setNotes('');
+      setErrors([]);
       setUploading(false);
       setUploadProgress(0);
       setProcessingIndex(-1);
+
+      // Call parent callbacks last - these may trigger re-renders or errors we don't control
+      try {
+        if (onPODUploaded && typeof onPODUploaded === 'function') {
+          onPODUploaded();
+        }
+      } catch (callbackError) {
+        console.error('Error in onPODUploaded callback:', callbackError);
+      }
+
+      try {
+        if (uploadedUrls.length > 0 && onOpenChange && typeof onOpenChange === 'function') {
+          onOpenChange(false);
+        }
+      } catch (callbackError) {
+        console.error('Error in onOpenChange callback:', callbackError);
+      }
+
+      return; // Exit successfully - don't fall through to catch block
+
+    } catch (error) {
+      console.error('POD submission error:', error);
+      const errorMessage = error?.message || String(error) || "Failed to submit proof of delivery. Please try again.";
+      toast({
+        title: "Submission Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      setProcessingIndex(-1);
+      setUploading(false);
+      setUploadProgress(0);
     }
   };
 
