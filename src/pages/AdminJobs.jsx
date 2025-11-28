@@ -207,6 +207,7 @@ export default function AdminJobsPage() {
       SCHEDULED: 'bg-indigo-100 text-indigo-800',
       IN_TRANSIT: 'bg-purple-100 text-purple-800',
       DELIVERED: 'bg-green-100 text-green-800',
+      RETURNED: 'bg-black text-white',
       CANCELLED: 'bg-gray-100 text-gray-800',
     };
     return colors[status] || 'bg-gray-100 text-gray-800';
