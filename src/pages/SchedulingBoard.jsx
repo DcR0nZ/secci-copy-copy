@@ -112,7 +112,7 @@ export default function SchedulingBoard() {
       
       const [allAvailableJobs, todaysAssignments, allDeliveryTypes, todaysPlaceholders, readStatusList, allPickupLocations] = await Promise.all([
         base44.entities.Job.filter({ 
-          status: { $in: ['PENDING_APPROVAL', 'APPROVED', 'SCHEDULED', 'DELIVERED'] }
+          status: { $in: ['PENDING_APPROVAL', 'APPROVED', 'SCHEDULED', 'DELIVERED', 'RETURNED'] }
         }),
         base44.entities.Assignment.filter({ date: format(date, 'yyyy-MM-dd') }),
         base44.entities.DeliveryType.list(),
