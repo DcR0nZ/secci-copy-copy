@@ -1,12 +1,13 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, ArrowUp, Construction } from 'lucide-react';
+import { AlertTriangle, ArrowUp, Construction, ArrowLeft } from 'lucide-react';
 
 export default function JobCard({ job, deliveryTypes }) {
   const deliveryType = deliveryTypes?.find(dt => dt.id === job.deliveryTypeId);
   const isUnitDelivery = deliveryType?.code && ['UNITUP', 'UNITDWN', 'CRANE'].includes(deliveryType.code);
   const isUnitUp = deliveryType?.code === 'UNITUP';
   const isCrane = deliveryType?.code === 'CRANE';
+  const isReturned = job.status === 'RETURNED' || job.isReturned;
   
   const hasNonStandard = job.nonStandardDelivery && Object.entries(job.nonStandardDelivery).some(([key, value]) => {
     if (key === 'longWalkDistance' || key === 'stairsCount' || key === 'otherDetails') return false;
@@ -16,7 +17,11 @@ export default function JobCard({ job, deliveryTypes }) {
   let bgClass = 'bg-white';
   let borderClass = 'border-gray-300';
   
-  if (job.isDifficultDelivery) {
+  // Returned jobs are always black
+  if (isReturned) {
+    bgClass = 'bg-gray-900';
+    borderClass = 'border-gray-900';
+  } else if (job.isDifficultDelivery) {
     bgClass = 'bg-orange-50';
     borderClass = 'border-orange-400';
   } else if (isUnitUp) {
@@ -39,7 +44,14 @@ export default function JobCard({ job, deliveryTypes }) {
     >
       <div className="flex justify-between items-start gap-2 mb-2">
         <div className="flex-1 min-w-0">
-          {deliveryType?.code && (
+          {isReturned ? (
+            <div className="mb-1">
+              <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-white text-gray-900 flex items-center gap-1 w-fit">
+                <ArrowLeft className="h-3 w-3" />
+                RETURNED
+              </span>
+            </div>
+          ) : deliveryType?.code && (
             <div className="mb-1">
               <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${
                 deliveryType.code === 'UNITUP' ? 'bg-[#145DDB] text-white' :
@@ -52,8 +64,8 @@ export default function JobCard({ job, deliveryTypes }) {
               </span>
             </div>
           )}
-          <span className="font-semibold text-sm text-gray-900 block">{job.customerName}</span>
-          <p className="text-xs text-gray-500 mt-1">{job.deliveryTypeName}</p>
+          <span className={`font-semibold text-sm block ${isReturned ? 'text-white' : 'text-gray-900'}`}>{job.customerName}</span>
+          <p className={`text-xs mt-1 ${isReturned ? 'text-gray-400' : 'text-gray-500'}`}>{job.deliveryTypeName}</p>
         </div>
         <div className="flex flex-col gap-1 items-end">
           {job.sqm && (
@@ -89,9 +101,9 @@ export default function JobCard({ job, deliveryTypes }) {
           )}
         </div>
       </div>
-      <p className="text-xs text-gray-600 truncate">{job.deliveryLocation}</p>
+      <p className={`text-xs truncate ${isReturned ? 'text-gray-400' : 'text-gray-600'}`}>{job.deliveryLocation}</p>
       {job.pickupLocation && (
-        <p className="text-xs text-gray-500 mt-1">{job.pickupLocation}</p>
+        <p className={`text-xs mt-1 ${isReturned ? 'text-gray-500' : 'text-gray-500'}`}>{job.pickupLocation}</p>
       )}
       {job.sheetList && job.sheetList.length > 0 && (
         <div className="mt-2 pt-2 border-t border-gray-200">
