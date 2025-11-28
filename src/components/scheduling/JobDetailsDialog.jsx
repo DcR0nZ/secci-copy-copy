@@ -34,7 +34,7 @@ import { base44 } from '@/api/base44Client';
 import { useToast } from '@/components/ui/use-toast';
 import ProofOfDeliveryUpload from './ProofOfDeliveryUpload';
 import ScheduleJobDialog from './ScheduleJobDialog';
-import ReturnJobDialog from './ReturnJobDialog';
+import ReturnJobDialog from './ReturnJobDialog.jsx';
 import EditJobDialog from './EditJobDialog';
 import JobActivityLog from './JobActivityLog';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -317,6 +317,7 @@ export default function JobDetailsDialog({ job, open, onOpenChange, onJobUpdated
       SCHEDULED: 'bg-indigo-100 text-indigo-800',
       IN_TRANSIT: 'bg-purple-100 text-purple-800',
       DELIVERED: 'bg-green-100 text-green-800',
+      RETURNED: 'bg-black text-white',
       CANCELLED: 'bg-gray-100 text-gray-800',
     };
     return colors[status] || 'bg-gray-100 text-gray-800';
@@ -737,30 +738,46 @@ export default function JobDetailsDialog({ job, open, onOpenChange, onJobUpdated
               )}
 
               {currentJob.isReturned && (
-                <Card className="border-red-200 bg-red-50">
+                <Card className="border-gray-900 bg-gray-900">
                   <CardContent className="p-4">
-                    <h3 className="font-semibold text-lg mb-3 flex items-center gap-2 text-red-900">
+                    <h3 className="font-semibold text-lg mb-3 flex items-center gap-2 text-white">
                       <ArrowLeft className="h-5 w-5" />
                       Job Returned
                     </h3>
-                    <div className="space-y-2 text-sm">
+                    <div className="space-y-3 text-sm">
                       <div>
-                        <p className="text-gray-600">Reason</p>
-                        <p className="font-medium">{currentJob.returnReason}</p>
+                        <p className="text-gray-400">Reason</p>
+                        <p className="font-medium text-white">{currentJob.returnReason}</p>
                       </div>
-                      {currentJob.returnNotes && (
+                      {currentJob.returnPhotos && currentJob.returnPhotos.length > 0 && (
                         <div>
-                          <p className="text-gray-600">Notes</p>
-                          <p className="font-medium">{currentJob.returnNotes}</p>
+                          <p className="text-gray-400 mb-2">Site Photos</p>
+                          <div className="grid grid-cols-4 gap-2">
+                            {currentJob.returnPhotos.map((photo, index) => (
+                              <img
+                                key={index}
+                                src={photo}
+                                alt={`Return photo ${index + 1}`}
+                                className="w-full aspect-square object-cover rounded cursor-pointer hover:opacity-80"
+                                onClick={() => setFullScreenImage(photo)}
+                              />
+                            ))}
+                          </div>
                         </div>
                       )}
-                      <div>
-                        <p className="text-gray-600">Returned By</p>
-                        <p className="font-medium">{currentJob.returnedBy}</p>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-gray-400">Returned By</p>
+                          <p className="font-medium text-white">{currentJob.returnedByName || currentJob.returnedBy}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-400">Truck</p>
+                          <p className="font-medium text-white">{currentJob.returnedTruckId || 'N/A'}</p>
+                        </div>
                       </div>
                       <div>
-                        <p className="text-gray-600">Returned Date</p>
-                        <p className="font-medium">{format(new Date(currentJob.returnedDate), 'MMM dd, yyyy HH:mm')}</p>
+                        <p className="text-gray-400">Returned Date</p>
+                        <p className="font-medium text-white">{currentJob.returnedDate ? format(new Date(currentJob.returnedDate), 'MMM dd, yyyy HH:mm') : 'N/A'}</p>
                       </div>
                     </div>
                   </CardContent>
@@ -1008,9 +1025,10 @@ export default function JobDetailsDialog({ job, open, onOpenChange, onJobUpdated
 
         <ReturnJobDialog
           job={currentJob}
+          assignment={assignment}
           open={returnDialogOpen}
           onOpenChange={setReturnDialogOpen}
-          onJobReturned={() => {
+          onComplete={() => {
             setReturnDialogOpen(false);
             queryClient.invalidateQueries({ queryKey: ['jobs'] });
             queryClient.invalidateQueries({ queryKey: ['job', currentJob.id] });
