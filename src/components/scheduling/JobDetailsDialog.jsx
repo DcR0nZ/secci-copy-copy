@@ -34,7 +34,7 @@ import { base44 } from '@/api/base44Client';
 import { useToast } from '@/components/ui/use-toast';
 import ProofOfDeliveryUpload from './ProofOfDeliveryUpload';
 import ScheduleJobDialog from './ScheduleJobDialog';
-import ReturnJobDialog from './ReturnJobDialog.jsx';
+import ReturnJobDialog from './ReturnJobDialog';
 import EditJobDialog from './EditJobDialog';
 import JobActivityLog from './JobActivityLog';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
