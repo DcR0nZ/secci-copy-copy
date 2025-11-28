@@ -34,6 +34,7 @@ import {
 
 import ChatWidget from './components/chat/ChatWidget';
 import { OfflineProvider } from './components/offline/OfflineManager';
+import ReturnedJobAlert from './components/scheduling/ReturnedJobAlert';
 
 const NavLink = ({ to, icon: Icon, children, collapsed, onClick }) => {
   const location = useLocation();
@@ -290,6 +291,8 @@ export default function Layout({ children, currentPageName }) {
   const [error, setError] = useState(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [returnedJobs, setReturnedJobs] = useState([]);
+  const [showReturnedAlert, setShowReturnedAlert] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
@@ -302,6 +305,48 @@ export default function Layout({ children, currentPageName }) {
         if (!mounted) return;
         
         setUser(currentUser);
+
+        // Check for returned jobs that need alerts (for admin, dispatcher, manager, customer)
+        const shouldCheckReturned = currentUser.role === 'admin' || 
+          currentUser.appRole === 'dispatcher' || 
+          currentUser.appRole === 'manager' ||
+          currentUser.appRole === 'customer';
+        
+        if (shouldCheckReturned) {
+          try {
+            const allJobs = await base44.entities.Job.filter({ status: 'RETURNED' });
+            
+            // Filter jobs that this user should see alerts for
+            const jobsForUser = allJobs.filter(job => {
+              // Skip if user already dismissed this alert
+              const dismissedBy = job.returnAlertDismissedBy || [];
+              if (dismissedBy.includes(currentUser.id)) return false;
+              
+              // Skip if user chose "remind later" in the same session
+              // (returnAlertRemindLater is cleared on new login, so this works)
+              const remindLater = job.returnAlertRemindLater || [];
+              // For remind later, we show it again (it's stored to track per-session dismissal)
+              // But we want to show it on next login, so we actually DON'T filter these out
+              
+              // Check if user should see this job
+              if (currentUser.role === 'admin' || currentUser.appRole === 'dispatcher') {
+                return true; // Admin and dispatchers see all
+              }
+              if (currentUser.appRole === 'manager' || currentUser.appRole === 'customer') {
+                // Customers and managers only see their own jobs
+                return job.customerId === currentUser.customerId;
+              }
+              return false;
+            });
+            
+            if (jobsForUser.length > 0) {
+              setReturnedJobs(jobsForUser);
+              setShowReturnedAlert(true);
+            }
+          } catch (e) {
+            console.error('Failed to check returned jobs:', e);
+          }
+        }
 
         const needsCustomerId = currentUser.appRole === 'customer' || currentUser.appRole === 'manager' || !currentUser.appRole;
         const isPending = currentUser && currentUser.role !== 'admin' && needsCustomerId && !currentUser.customerId;
@@ -628,6 +673,28 @@ export default function Layout({ children, currentPageName }) {
 
       <ChatWidget />
       <Toaster />
+      
+      {/* Returned Job Alert Popup */}
+      {showReturnedAlert && returnedJobs.length > 0 && user && (
+        <ReturnedJobAlert
+          returnedJobs={returnedJobs}
+          user={user}
+          onDismiss={() => setShowReturnedAlert(false)}
+          onJobsUpdated={() => {
+            // Refresh the returned jobs list
+            base44.entities.Job.filter({ status: 'RETURNED' }).then(jobs => {
+              const dismissedBy = jobs.filter(job => {
+                const dismissed = job.returnAlertDismissedBy || [];
+                return !dismissed.includes(user.id);
+              });
+              setReturnedJobs(dismissedBy);
+              if (dismissedBy.length === 0) {
+                setShowReturnedAlert(false);
+              }
+            });
+          }}
+        />
+      )}
     </OfflineProvider>
   );
 }
