@@ -16,64 +16,87 @@ const TARGET_SIZE = 2 * 1024 * 1024; // 2MB target after compression
 
 const compressImage = async (file) => {
   return new Promise((resolve, reject) => {
+    // Set a timeout to prevent hanging
+    const timeout = setTimeout(() => {
+      reject(new Error('Compression timeout'));
+    }, 30000); // 30 second timeout
+
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = (event) => {
       const img = new Image();
       img.src = event.target.result;
       img.onload = () => {
-        const canvas = document.createElement('canvas');
-        let width = img.width;
-        let height = img.height;
+        try {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
 
-        // Calculate new dimensions (max 1920px width/height)
-        const maxDimension = 1920;
-        if (width > height && width > maxDimension) {
-          height = (height * maxDimension) / width;
-          width = maxDimension;
-        } else if (height > maxDimension) {
-          width = (width * maxDimension) / height;
-          height = maxDimension;
+          // Calculate new dimensions (max 1920px width/height)
+          const maxDimension = 1920;
+          if (width > height && width > maxDimension) {
+            height = (height * maxDimension) / width;
+            width = maxDimension;
+          } else if (height > maxDimension) {
+            width = (width * maxDimension) / height;
+            height = maxDimension;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            clearTimeout(timeout);
+            reject(new Error('Failed to get canvas context'));
+            return;
+          }
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // Try different quality levels to reach target size
+          let quality = 0.8;
+          const tryCompress = () => {
+            canvas.toBlob(
+              (blob) => {
+                if (!blob) {
+                  clearTimeout(timeout);
+                  reject(new Error('Compression failed - no blob created'));
+                  return;
+                }
+
+                // Only reduce quality if blob size is still too big AND quality is above threshold
+                if (blob.size > TARGET_SIZE && quality > 0.5) { 
+                  quality -= 0.1;
+                  tryCompress();
+                } else {
+                  clearTimeout(timeout);
+                  const compressedFile = new File([blob], file.name || 'photo.jpg', {
+                    type: 'image/jpeg',
+                    lastModified: Date.now(),
+                  });
+                  resolve(compressedFile);
+                }
+              },
+              'image/jpeg',
+              quality
+            );
+          };
+
+          tryCompress();
+        } catch (err) {
+          clearTimeout(timeout);
+          reject(err);
         }
-
-        canvas.width = width;
-        canvas.height = height;
-
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
-
-        // Try different quality levels to reach target size
-        let quality = 0.8;
-        const tryCompress = () => {
-          canvas.toBlob(
-            (blob) => {
-              if (!blob) {
-                reject(new Error('Compression failed'));
-                return;
-              }
-
-              // Only reduce quality if blob size is still too big AND quality is above threshold
-              if (blob.size > TARGET_SIZE && quality > 0.5) { 
-                quality -= 0.1;
-                tryCompress();
-              } else {
-                const compressedFile = new File([blob], file.name, {
-                  type: 'image/jpeg',
-                  lastModified: Date.now(),
-                });
-                resolve(compressedFile);
-              }
-            },
-            'image/jpeg',
-            quality
-          );
-        };
-
-        tryCompress();
       };
-      img.onerror = () => reject(new Error('Failed to load image'));
+      img.onerror = () => {
+        clearTimeout(timeout);
+        reject(new Error('Failed to load image'));
+      };
     };
-    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.onerror = () => {
+      clearTimeout(timeout);
+      reject(new Error('Failed to read file'));
+    };
   });
 };
 
