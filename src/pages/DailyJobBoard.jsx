@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Calendar, User, Truck, Clock, AlertTriangle, Plus, CheckCircle2, Package, RefreshCw } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, User, Truck, Clock, AlertTriangle, Plus, CheckCircle2, Package, RefreshCw, ArrowLeft } from 'lucide-react';
 import { format, addDays, subDays } from 'date-fns';
 import { createPageUrl } from '@/utils';
 import CreateJobForm from '../components/scheduling/CreateJobForm';
@@ -50,11 +49,11 @@ export default function DailyJobBoard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Filter out cancelled jobs for all users
+  // Filter out cancelled jobs for all users - include RETURNED status
   const { data: jobs = [], isLoading: jobsLoading, isFetching: jobsFetching } = useQuery({
     queryKey: ['jobs', 'realtime'],
     queryFn: () => base44.entities.Job.filter({ 
-      status: { $in: ['PENDING_APPROVAL', 'APPROVED', 'SCHEDULED', 'DELIVERED'] }
+      status: { $in: ['PENDING_APPROVAL', 'APPROVED', 'SCHEDULED', 'DELIVERED', 'RETURNED'] }
     }),
     staleTime: 0,
   });
@@ -437,6 +436,12 @@ export default function DailyJobBoard() {
                                         DELIVERED
                                       </Badge>
                                     )}
+                                    {(item.job.status === 'RETURNED' || item.job.isReturned) && (
+                                      <Badge className="bg-black text-white text-xs mt-2">
+                                        <ArrowLeft className="h-3 w-3 mr-1" />
+                                        RETURNED
+                                      </Badge>
+                                    )}
                                     {item.job.podNotes && item.job.podNotes.trim().length > 0 && (
                                       <Badge className="bg-blue-500 text-white text-xs mt-2">
                                         <AlertTriangle className="h-3 w-3 mr-1" />POD Notes
@@ -665,6 +670,12 @@ export default function DailyJobBoard() {
                                   <Badge className="bg-green-600 text-white text-xs mt-2">
                                     <CheckCircle2 className="h-3 w-3 mr-1" />
                                     DELIVERED
+                                  </Badge>
+                                )}
+                                {(item.job.status === 'RETURNED' || item.job.isReturned) && (
+                                  <Badge className="bg-black text-white text-xs mt-2">
+                                    <ArrowLeft className="h-3 w-3 mr-1" />
+                                    RETURNED
                                   </Badge>
                                 )}
                                 {item.job.podNotes && item.job.podNotes.trim().length > 0 && (
