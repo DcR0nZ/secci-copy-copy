@@ -213,23 +213,42 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
       for (let i = 0; i < photos.length; i++) {
         setProcessingIndex(i);
         const photo = photos[i];
+        const photoName = photo.name || `photo-${i + 1}.jpg`;
 
         try {
           let fileToProcess = photo;
-          if (photo.type.startsWith('image/') && photo.size > TARGET_SIZE) {
+          
+          // Only compress if file is larger than target and is an image
+          if (photo.type && photo.type.startsWith('image/') && photo.size > TARGET_SIZE) {
             try {
               fileToProcess = await compressImage(photo);
-              console.log(`Compressed ${photo.name}: ${(photo.size / 1024 / 1024).toFixed(2)}MB → ${(fileToProcess.size / 1024 / 1024).toFixed(2)}MB`);
+              console.log(`Compressed ${photoName}: ${(photo.size / 1024 / 1024).toFixed(2)}MB → ${(fileToProcess.size / 1024 / 1024).toFixed(2)}MB`);
             } catch (compressionError) {
-              console.error(`Compression failed for photo ${photo.name}. Attempting to use original file.`, compressionError);
-              currentSubmissionErrors.push(`Photo ${i + 1} (${photo.name}): Compression failed. Using original.`);
+              console.warn(`Compression failed for photo ${photoName}. Using original file.`, compressionError);
+              // Continue with original file, don't add to errors unless it's critical
+              fileToProcess = photo;
             }
           }
 
-          const reader = new FileReader();
+          // Convert to data URL with timeout protection
           const dataURL = await new Promise((resolve, reject) => {
-            reader.onload = (e) => resolve(e.target.result);
-            reader.onerror = (e) => reject(e);
+            const readTimeout = setTimeout(() => {
+              reject(new Error('File read timeout'));
+            }, 15000); // 15 second timeout for reading
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              clearTimeout(readTimeout);
+              if (e.target.result) {
+                resolve(e.target.result);
+              } else {
+                reject(new Error('Empty file result'));
+              }
+            };
+            reader.onerror = (e) => {
+              clearTimeout(readTimeout);
+              reject(new Error('File read error'));
+            };
             reader.readAsDataURL(fileToProcess);
           });
           
@@ -238,8 +257,8 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
           const progress = ((i + 1) / totalPhotos) * 50;
           setUploadProgress(Math.round(progress));
         } catch (error) {
-          console.error(`Failed to prepare photo ${i + 1} (${photo.name}):`, error);
-          currentSubmissionErrors.push(`Photo ${i + 1} (${photo.name}): ${error.message || 'Processing failed'}`);
+          console.error(`Failed to prepare photo ${i + 1} (${photoName}):`, error);
+          currentSubmissionErrors.push(`Photo ${i + 1} (${photoName}): ${error.message || 'Processing failed'}`);
         }
       }
 
