@@ -6,10 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { useToast } from "@/components/ui/use-toast";
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Upload, Loader2, FileText, Sparkles, X, Plus, Trash2 } from 'lucide-react';
+import { Upload, Loader2, X, Plus, Trash2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
-import { format } from 'date-fns';
-import { processDeliveryDocument } from '@/functions/processDeliveryDocument';
 
 
 const TRUCKS = [
@@ -75,12 +73,7 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
   const [uploadingAttachment, setUploadingAttachment] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const [extractionDocument, setExtractionDocument] = useState(null);
-  const [extracting, setExtracting] = useState(false);
-  const [extractedData, setExtractedData] = useState(null);
-  const [extractedDocumentUrl, setExtractedDocumentUrl] = useState(null);
   const [manualSheetEntry, setManualSheetEntry] = useState({ description: '', quantity: '', m2: '', unit: 'sheets', weight: '' });
-  const [extractionLoading, setExtractionLoading] = useState(false);
   
   const { toast } = useToast();
 
@@ -250,124 +243,6 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
     }
   };
 
-  const handleDocumentExtraction = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setExtractionLoading(true);
-    try {
-      // Upload the file to our storage first for attachments
-      const uploadResult = await base44.integrations.Core.UploadFile({ file });
-      const fileUrl = uploadResult.file_url;
-      
-      // Add to attachments
-      setAttachments(prev => [...prev, fileUrl]);
-      setExtractedDocumentUrl(fileUrl);
-
-      // Send file URL to DocExtract AI via backend function
-      const response = await processDeliveryDocument({ fileUrl });
-      
-      if (response.data?.success && response.data?.data) {
-        const extracted = response.data.data;
-        setExtractedData(extracted);
-
-        // Auto-fill form fields from external extraction response
-        const updates = {};
-
-        // Map DocExtract AI response fields to form fields
-        if (extracted.delivery_address) {
-          updates.deliveryLocation = extracted.delivery_address;
-        }
-        if (extracted.delivery_notes) {
-          updates.deliveryNotes = extracted.delivery_notes;
-        }
-        if (extracted.order_number) {
-          updates.poSalesDocketNumber = extracted.order_number;
-        }
-        if (extracted.customer_name) {
-          const matchedCustomer = customers.find(c => 
-            c.customerName?.toLowerCase().includes(extracted.customer_name.toLowerCase()) ||
-            extracted.customer_name.toLowerCase().includes(c.customerName?.toLowerCase())
-          );
-          if (matchedCustomer) {
-            updates.customerId = matchedCustomer.id;
-          }
-        }
-        if (extracted.shipping_date) {
-          try {
-            const parsedDate = new Date(extracted.shipping_date);
-            if (!isNaN(parsedDate.getTime())) {
-              updates.requestedDate = format(parsedDate, 'yyyy-MM-dd');
-            }
-          } catch (err) {
-            console.warn('Could not parse shipping date');
-          }
-        }
-        if (extracted.site_contact) {
-          updates.siteContactName = extracted.site_contact;
-        }
-        if (extracted.total_m2) {
-          updates.sqm = extracted.total_m2;
-        }
-        if (extracted.total_weight) {
-          updates.weightKg = extracted.total_weight;
-        }
-        if (extracted.total_sheets) {
-          updates.totalSheetQty = extracted.total_sheets;
-        }
-
-        // Handle line items from external extraction
-        if (extracted.line_items && extracted.line_items.length > 0) {
-          const sheetListItems = extracted.line_items.map(item => ({
-            description: item.product_description || item.product_code || item.description || '',
-            quantity: item.ordered_quantity ? parseFloat(item.ordered_quantity) || 0 : (item.quantity || 0),
-            unit: item.unit || 'sheets',
-            m2: item.m2 || null,
-            weight: item.weight || null
-          })).filter(item => item.description);
-          
-          if (sheetListItems.length > 0) {
-            updates.sheetList = sheetListItems;
-          }
-        }
-
-        // Try to match pickup location by supplier name
-        if (extracted.supplier_name) {
-          const matchedLocation = pickupLocations.find(loc => 
-            loc.company?.toLowerCase().includes(extracted.supplier_name.toLowerCase()) ||
-            extracted.supplier_name.toLowerCase().includes(loc.company?.toLowerCase())
-          );
-          if (matchedLocation) {
-            updates.pickupLocationId = matchedLocation.id;
-          }
-        }
-
-        setFormData(prev => ({ ...prev, ...updates }));
-
-        toast({
-          title: "Document Extracted",
-          description: "Form has been auto-filled with extracted data. Please review and edit as needed.",
-        });
-      } else {
-        toast({
-          title: "Extraction Complete",
-          description: "Document processed but no data could be extracted. Please fill the form manually.",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      console.error('Document extraction error:', error);
-      toast({
-        title: "Extraction Failed",
-        description: "Failed to extract data from document. Please fill the form manually.",
-        variant: "destructive",
-      });
-    } finally {
-      e.target.value = '';
-      setExtractionLoading(false);
-    }
-  };
-
   const handleRemoveAttachment = (indexToRemove) => {
     setAttachments(prev => prev.filter((_, index) => index !== indexToRemove));
   };
@@ -376,8 +251,6 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
   const isUnitsDelivery = selectedDeliveryType?.name?.toLowerCase().includes('unit');
   const canScheduleDirectly = currentUser && (currentUser.role === 'admin' || currentUser.appRole === 'dispatcher');
   const selectedCustomer = customers.find(c => c.id === formData.customerId);
-
-
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -428,16 +301,6 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
         return false;
       });
 
-      const jobPhotos = [];
-      if (extractedDocumentUrl && currentUser?.email) {
-        jobPhotos.push({
-          url: extractedDocumentUrl,
-          caption: 'Scanned Delivery Docket',
-          timestamp: new Date().toISOString(),
-          uploadedBy: currentUser.email
-        });
-      }
-
       const newJob = await base44.entities.Job.create({
         customerId: formData.customerId,
         deliveryTypeId: formData.deliveryTypeId,
@@ -457,7 +320,6 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
         deliveryNotes: formData.deliveryNotes || undefined,
         sheetList: formData.sheetList.length > 0 ? formData.sheetList : undefined,
         attachments: attachments.length > 0 ? attachments : undefined,
-        jobPhotos: jobPhotos.length > 0 ? jobPhotos : undefined,
         customerName: selectedCustomer.customerName,
         deliveryTypeName: selectedType.name,
         pickupLocation: `${selectedLocation.company} - ${selectedLocation.name}`,
@@ -541,9 +403,6 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
       setDocketNumbers([]);
       setDocketNotes([]);
       setAttachments([]);
-      setExtractionDocument(null);
-      setExtractedData(null);
-      setExtractedDocumentUrl(null);
 
     } catch (error) {
       toast({
@@ -924,195 +783,157 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
                   <p className="text-xs text-gray-500 mb-3">Add itemized list of sheets/boards for this delivery</p>
                   
                   {formData.sheetList.length > 0 && (
-                                            <div className="mb-3 border rounded-lg overflow-hidden overflow-x-auto">
-                                              <table className="w-full text-sm">
-                                                <thead className="bg-gray-50">
-                                                  <tr>
-                                                    <th className="text-left p-2 font-medium text-gray-700">Description</th>
-                                                    <th className="text-left p-2 font-medium text-gray-700 w-16">Qty</th>
-                                                    <th className="text-left p-2 font-medium text-gray-700 w-16">M²</th>
-                                                    <th className="text-left p-2 font-medium text-gray-700 w-20">UOM</th>
-                                                    <th className="text-left p-2 font-medium text-gray-700 w-20">Weight</th>
-                                                    <th className="w-10"></th>
-                                                  </tr>
-                                                </thead>
-                                                <tbody>
-                                                  {formData.sheetList.map((item, index) => (
-                                                    <tr key={index} className="border-t">
-                                                      <td className="p-2">{item.description}</td>
-                                                      <td className="p-2">{item.quantity}</td>
-                                                      <td className="p-2">{item.m2 || '-'}</td>
-                                                      <td className="p-2">{item.unit}</td>
-                                                      <td className="p-2">{item.weight ? `${item.weight}kg` : '-'}</td>
-                                                      <td className="p-2">
-                                                        <Button
-                                                          type="button"
-                                                          variant="ghost"
-                                                          size="sm"
-                                                          onClick={() => {
-                                                            setFormData(prev => ({
-                                                              ...prev,
-                                                              sheetList: prev.sheetList.filter((_, i) => i !== index)
-                                                            }));
-                                                          }}
-                                                          className="text-red-600 hover:bg-red-50 h-7 w-7 p-0"
-                                                        >
-                                                          <Trash2 className="h-4 w-4" />
-                                                        </Button>
-                                                      </td>
-                                                    </tr>
-                                                  ))}
-                                                </tbody>
-                                                <tfoot className="bg-gray-100 border-t-2">
-                                                  <tr>
-                                                    <td className="p-2 font-semibold text-gray-700">Total</td>
-                                                    <td className="p-2 font-semibold text-gray-900">
-                                                      {formData.sheetList.reduce((sum, item) => sum + (item.quantity || 0), 0)}
-                                                    </td>
-                                                    <td className="p-2 font-semibold text-gray-900">
-                                                      {formData.sheetList.reduce((sum, item) => sum + (parseFloat(item.m2) || 0), 0).toFixed(2)}
-                                                    </td>
-                                                    <td className="p-2"></td>
-                                                    <td className="p-2 font-semibold text-gray-900">
-                                                      {formData.sheetList.reduce((sum, item) => sum + (parseFloat(item.weight) || 0), 0).toFixed(1)}kg
-                                                    </td>
-                                                    <td></td>
-                                                  </tr>
-                                                </tfoot>
-                                              </table>
-                                            </div>
-                                          )}
+                    <div className="mb-3 border rounded-lg overflow-hidden overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="text-left p-2 font-medium text-gray-700">Description</th>
+                            <th className="text-left p-2 font-medium text-gray-700 w-16">Qty</th>
+                            <th className="text-left p-2 font-medium text-gray-700 w-16">M²</th>
+                            <th className="text-left p-2 font-medium text-gray-700 w-20">UOM</th>
+                            <th className="text-left p-2 font-medium text-gray-700 w-20">Weight</th>
+                            <th className="w-10"></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {formData.sheetList.map((item, index) => (
+                            <tr key={index} className="border-t">
+                              <td className="p-2">{item.description}</td>
+                              <td className="p-2">{item.quantity}</td>
+                              <td className="p-2">{item.m2 || '-'}</td>
+                              <td className="p-2">{item.unit}</td>
+                              <td className="p-2">{item.weight ? `${item.weight}kg` : '-'}</td>
+                              <td className="p-2">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    setFormData(prev => ({
+                                      ...prev,
+                                      sheetList: prev.sheetList.filter((_, i) => i !== index)
+                                    }));
+                                  }}
+                                  className="text-red-600 hover:bg-red-50 h-7 w-7 p-0"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                        <tfoot className="bg-gray-100 border-t-2">
+                          <tr>
+                            <td className="p-2 font-semibold text-gray-700">Total</td>
+                            <td className="p-2 font-semibold text-gray-900">
+                              {formData.sheetList.reduce((sum, item) => sum + (item.quantity || 0), 0)}
+                            </td>
+                            <td className="p-2 font-semibold text-gray-900">
+                              {formData.sheetList.reduce((sum, item) => sum + (parseFloat(item.m2) || 0), 0).toFixed(2)}
+                            </td>
+                            <td className="p-2"></td>
+                            <td className="p-2 font-semibold text-gray-900">
+                              {formData.sheetList.reduce((sum, item) => sum + (parseFloat(item.weight) || 0), 0).toFixed(1)}kg
+                            </td>
+                            <td></td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                  )}
 
                   <div className="flex gap-2 flex-wrap">
-                                            <Input
-                                              placeholder="Item description"
-                                              value={manualSheetEntry.description}
-                                              onChange={(e) => setManualSheetEntry(prev => ({ ...prev, description: e.target.value }))}
-                                              className="flex-1 min-w-[150px]"
-                                            />
-                                            <Input
-                                              type="number"
-                                              placeholder="Qty"
-                                              value={manualSheetEntry.quantity}
-                                              onChange={(e) => setManualSheetEntry(prev => ({ ...prev, quantity: e.target.value }))}
-                                              className="w-16"
-                                            />
-                                            <Input
-                                              type="number"
-                                              placeholder="M²"
-                                              value={manualSheetEntry.m2}
-                                              onChange={(e) => setManualSheetEntry(prev => ({ ...prev, m2: e.target.value }))}
-                                              className="w-16"
-                                            />
-                                            <Input
-                                              placeholder="UOM"
-                                              value={manualSheetEntry.unit}
-                                              onChange={(e) => setManualSheetEntry(prev => ({ ...prev, unit: e.target.value }))}
-                                              className="w-20"
-                                            />
-                                            <Input
-                                              type="number"
-                                              placeholder="Weight"
-                                              value={manualSheetEntry.weight}
-                                              onChange={(e) => setManualSheetEntry(prev => ({ ...prev, weight: e.target.value }))}
-                                              className="w-20"
-                                            />
-                                            <Button
-                                              type="button"
-                                              variant="outline"
-                                              size="icon"
-                                              onClick={() => {
-                                                if (manualSheetEntry.description && manualSheetEntry.quantity) {
-                                                  setFormData(prev => ({
-                                                    ...prev,
-                                                    sheetList: [...prev.sheetList, {
-                                                      description: manualSheetEntry.description,
-                                                      quantity: Number(manualSheetEntry.quantity),
-                                                      m2: manualSheetEntry.m2 ? Number(manualSheetEntry.m2) : null,
-                                                      unit: manualSheetEntry.unit || 'sheets',
-                                                      weight: manualSheetEntry.weight ? Number(manualSheetEntry.weight) : null
-                                                    }]
-                                                  }));
-                                                  setManualSheetEntry({ description: '', quantity: '', m2: '', unit: 'sheets', weight: '' });
-                                                }
-                                              }}
-                                              disabled={!manualSheetEntry.description || !manualSheetEntry.quantity}
-                                            >
-                                              <Plus className="h-4 w-4" />
-                                            </Button>
-                                          </div>
+                    <Input
+                      placeholder="Item description"
+                      value={manualSheetEntry.description}
+                      onChange={(e) => setManualSheetEntry(prev => ({ ...prev, description: e.target.value }))}
+                      className="flex-1 min-w-[150px]"
+                    />
+                    <Input
+                      type="number"
+                      placeholder="Qty"
+                      value={manualSheetEntry.quantity}
+                      onChange={(e) => setManualSheetEntry(prev => ({ ...prev, quantity: e.target.value }))}
+                      className="w-16"
+                    />
+                    <Input
+                      type="number"
+                      placeholder="M²"
+                      value={manualSheetEntry.m2}
+                      onChange={(e) => setManualSheetEntry(prev => ({ ...prev, m2: e.target.value }))}
+                      className="w-16"
+                    />
+                    <Input
+                      placeholder="UOM"
+                      value={manualSheetEntry.unit}
+                      onChange={(e) => setManualSheetEntry(prev => ({ ...prev, unit: e.target.value }))}
+                      className="w-20"
+                    />
+                    <Input
+                      type="number"
+                      placeholder="Weight"
+                      value={manualSheetEntry.weight}
+                      onChange={(e) => setManualSheetEntry(prev => ({ ...prev, weight: e.target.value }))}
+                      className="w-20"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => {
+                        if (manualSheetEntry.description && manualSheetEntry.quantity) {
+                          setFormData(prev => ({
+                            ...prev,
+                            sheetList: [...prev.sheetList, {
+                              description: manualSheetEntry.description,
+                              quantity: Number(manualSheetEntry.quantity),
+                              m2: manualSheetEntry.m2 ? Number(manualSheetEntry.m2) : null,
+                              unit: manualSheetEntry.unit || 'sheets',
+                              weight: manualSheetEntry.weight ? Number(manualSheetEntry.weight) : null
+                            }]
+                          }));
+                          setManualSheetEntry({ description: '', quantity: '', m2: '', unit: 'sheets', weight: '' });
+                        }
+                      }}
+                      disabled={!manualSheetEntry.description || !manualSheetEntry.quantity}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
 
-                <div className="md:col-span-2 border-t pt-4 mt-2">
-                                      <h3 className="text-sm font-semibold text-gray-900 mb-3">Document AI Extraction</h3>
-                                      <p className="text-xs text-gray-500 mb-3">Upload a delivery docket or order document to auto-fill the form</p>
-                                      <Button
-                                        type="button"
-                                        variant="outline"
-                                        disabled={extractionLoading}
-                                        className="w-full border-dashed border-2 border-blue-300 bg-blue-50 hover:bg-blue-100"
-                                        asChild
-                                      >
-                                        <label className="cursor-pointer flex items-center justify-center py-4">
-                                          <input
-                                            type="file"
-                                            accept=".pdf,.jpg,.jpeg,.png,.tiff,.tif"
-                                            onChange={handleDocumentExtraction}
-                                            className="hidden"
-                                            disabled={extractionLoading}
-                                          />
-                                          {extractionLoading ? (
-                                            <>
-                                              <Loader2 className="h-5 w-5 mr-2 animate-spin text-blue-600" />
-                                              <span className="text-blue-700">Extracting data from document...</span>
-                                            </>
-                                          ) : (
-                                            <>
-                                              <Sparkles className="h-5 w-5 mr-2 text-blue-600" />
-                                              <span className="text-blue-700 font-medium">Upload Document for AI Extraction</span>
-                                            </>
-                                          )}
-                                        </label>
-                                      </Button>
-                                      {extractedData && (
-                                        <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded text-xs text-green-700">
-                                          ✓ Data extracted and form auto-filled. Please review the fields above.
-                                        </div>
-                                      )}
-                                    </div>
-
-                                    <div className="md:col-span-2">
-                                      <label className="block text-sm font-medium text-gray-700 mb-1">Additional Attachments</label>
-                                      <div className="space-y-2">
-                                        <Button
-                                          type="button"
-                                          variant="outline"
-                                          disabled={uploadingAttachment}
-                                          asChild
-                                        >
-                                          <label className="cursor-pointer flex items-center justify-center">
-                                            <input
-                                              type="file"
-                                              accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                                              multiple
-                                              onChange={handleAttachmentUpload}
-                                              className="hidden"
-                                              disabled={uploadingAttachment}
-                                            />
-                                            {uploadingAttachment ? (
-                                              <>
-                                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                                Uploading...
-                                              </>
-                                            ) : (
-                                              <>
-                                                <Upload className="h-4 w-4 mr-2" />
-                                                Upload Additional Files
-                                              </>
-                                            )}
-                                          </label>
-                                        </Button>
-                    
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Attachments</label>
+                  <div className="space-y-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={uploadingAttachment}
+                      asChild
+                    >
+                      <label className="cursor-pointer flex items-center justify-center">
+                        <input
+                          type="file"
+                          accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                          multiple
+                          onChange={handleAttachmentUpload}
+                          className="hidden"
+                          disabled={uploadingAttachment}
+                        />
+                        {uploadingAttachment ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Uploading...
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="h-4 w-4 mr-2" />
+                            Upload Files
+                          </>
+                        )}
+                      </label>
+                    </Button>
+  
                     {attachments.length > 0 && (
                       <div className="space-y-2">
                         {attachments.map((url, index) => {
