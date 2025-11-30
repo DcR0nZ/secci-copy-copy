@@ -97,9 +97,13 @@ export default function CustomerRequestDeliveryPage() {
       setAttachments(prev => [...prev, file_url]);
 
       const response = await extractDeliveryData({ fileUrl: file_url });
+      console.log('Extraction response:', response);
 
-      if (response.data?.success && response.data?.data) {
-        const extracted = response.data.data;
+      // Handle both response.data and direct response formats
+      const responseData = response.data || response;
+      
+      if (responseData?.success && responseData?.data) {
+        const extracted = responseData.data;
         setExtractedData(extracted);
         
         const updates = {};
@@ -179,9 +183,10 @@ export default function CustomerRequestDeliveryPage() {
 
     } catch (error) {
       console.error('Document extraction error:', error);
+      const errorMsg = error?.response?.data?.error || error?.response?.data?.details || error.message || "Could not extract data from the document.";
       toast({
         title: "Extraction Failed",
-        description: error.message || "Could not extract data from the document. Please fill the form manually.",
+        description: errorMsg + " Please fill the form manually.",
         variant: "destructive",
       });
     } finally {

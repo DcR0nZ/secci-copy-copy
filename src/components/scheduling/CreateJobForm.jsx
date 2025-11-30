@@ -263,9 +263,13 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
       setAttachments(prev => [...prev, fileUrl]);
 
       const response = await extractDeliveryData({ fileUrl });
+      console.log('Extraction response:', response);
       
-      if (response.data?.success && response.data?.data) {
-        const extracted = response.data.data;
+      // Handle both response.data and direct response formats
+      const responseData = response.data || response;
+      
+      if (responseData?.success && responseData?.data) {
+        const extracted = responseData.data;
         setExtractedData(extracted);
 
         const updates = {};
