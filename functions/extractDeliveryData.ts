@@ -77,7 +77,7 @@ Deno.serve(async (req) => {
 {
   "customer_name": "customer that has uploaded the docket",
   "customer_reference": "usually present for subcontract work (Bayside Plasterboard) where the customer that has requested the delivery will not be the one to receive the delivery ",
-  "delivery_address": "full delivery address only. do not include any company names, or anything other than the full delivery address e.g. 'Lot 1044 (22) Fake Street, Brisbane City'",
+  "delivery_address": "full delivery address only",
   "order_number": "PO number, sales order, docket number, or reference number",
   "supplier_name": "supplier or vendor name",
   "shipping_date": "delivery date in YYYY-MM-DD format",
@@ -127,6 +127,7 @@ Extract ALL line items. Use null for missing fields. Return ONLY valid JSON.`;
                     4. For dates, convert to YYYY-MM-DD format.
                     5. Do not hallucinate data - only extract what you can see.
                     6. Handle various document layouts (invoices, dockets, work orders, purchase orders).
+                    7. Do not include any company names, or anything other than the full delivery address e.g. 'Lot 1044 (22) Fake Street, Brisbane City'
                 `
             },
         });
