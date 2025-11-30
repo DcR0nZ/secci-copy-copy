@@ -270,38 +270,35 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
       
       const response = await externalDocExtract(formData);
       
-      if (response.data?.success && response.data?.document) {
-        const doc = response.data.document;
-        const extracted = doc.extracted_data || {};
+      if (response.data?.success && response.data?.data) {
+        const extracted = response.data.data;
         setExtractedData(extracted);
 
         // Auto-fill form fields from external extraction response
         const updates = {};
 
-        // Map external API response fields to form fields
-        if (extracted.delivery_address || doc.delivery_address) {
-          updates.deliveryLocation = extracted.delivery_address || doc.delivery_address;
+        // Map DocExtract AI response fields to form fields
+        if (extracted.delivery_address) {
+          updates.deliveryLocation = extracted.delivery_address;
         }
         if (extracted.delivery_notes) {
           updates.deliveryNotes = extracted.delivery_notes;
         }
-        if (extracted.order_number || doc.order_number) {
-          updates.poSalesDocketNumber = extracted.order_number || doc.order_number;
+        if (extracted.order_number) {
+          updates.poSalesDocketNumber = extracted.order_number;
         }
-        if (extracted.customer_name || doc.customer_name) {
-          const customerName = extracted.customer_name || doc.customer_name;
+        if (extracted.customer_name) {
           const matchedCustomer = customers.find(c => 
-            c.customerName?.toLowerCase().includes(customerName.toLowerCase()) ||
-            customerName.toLowerCase().includes(c.customerName?.toLowerCase())
+            c.customerName?.toLowerCase().includes(extracted.customer_name.toLowerCase()) ||
+            extracted.customer_name.toLowerCase().includes(c.customerName?.toLowerCase())
           );
           if (matchedCustomer) {
             updates.customerId = matchedCustomer.id;
           }
         }
-        if (extracted.shipping_date || doc.shipping_date) {
+        if (extracted.shipping_date) {
           try {
-            const dateStr = extracted.shipping_date || doc.shipping_date;
-            const parsedDate = new Date(dateStr);
+            const parsedDate = new Date(extracted.shipping_date);
             if (!isNaN(parsedDate.getTime())) {
               updates.requestedDate = format(parsedDate, 'yyyy-MM-dd');
             }
