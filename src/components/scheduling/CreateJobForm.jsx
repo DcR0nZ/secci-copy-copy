@@ -728,48 +728,6 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
                     </Select>
                   </div>
                 )}
-
-                {canScheduleDirectly && (
-                  <div className="md:col-span-2 border-t pt-4 mt-2">
-                    <h3 className="text-sm font-semibold text-gray-900 mb-3">Schedule Directly (Optional)</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                      <div>
-                        <label htmlFor="scheduleTruckId" className="block text-sm font-medium text-gray-700 mb-1">Truck</label>
-                        <Select name="scheduleTruckId" onValueChange={(value) => handleSelectChange('scheduleTruckId', value)} value={formData.scheduleTruckId}>
-                          <SelectTrigger id="scheduleTruckId"><SelectValue placeholder="Select truck..." /></SelectTrigger>
-                          <SelectContent>
-                            {TRUCKS.map(truck => <SelectItem key={truck.id} value={truck.id}>{truck.name}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <label htmlFor="scheduleDate" className="block text-sm font-medium text-gray-700 mb-1">Schedule Date</label>
-                        <Input id="scheduleDate" name="scheduleDate" type="date" value={formData.scheduleDate} onChange={handleChange} />
-                      </div>
-                      <div>
-                        <label htmlFor="scheduleTimeSlot" className="block text-sm font-medium text-gray-700 mb-1">Time Slot</label>
-                        <Select name="scheduleTimeSlot" onValueChange={(value) => handleSelectChange('scheduleTimeSlot', value)} value={formData.scheduleTimeSlot}>
-                          <SelectTrigger id="scheduleTimeSlot"><SelectValue placeholder="Select slot..." /></SelectTrigger>
-                          <SelectContent>
-                            {DELIVERY_WINDOWS.map(window => <SelectItem key={window.id} value={window.id}>{window.label}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <label htmlFor="scheduleSlotPosition" className="block text-sm font-medium text-gray-700 mb-1">Delivery Slot</label>
-                        <Select name="scheduleSlotPosition" onValueChange={(value) => handleSelectChange('scheduleSlotPosition', value)} value={formData.scheduleSlotPosition || '1'}>
-                          <SelectTrigger id="scheduleSlotPosition"><SelectValue placeholder="Select..." /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="1">Slot 1</SelectItem>
-                            <SelectItem value="2">Slot 2</SelectItem>
-                            <SelectItem value="3">Slot 3</SelectItem>
-                            <SelectItem value="4">Slot 4</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </div>
-                )}
                 
                 <div className="md:col-span-2 grid grid-cols-2 gap-6">
                   <div>
@@ -1127,6 +1085,48 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
                     )}
                   </div>
                 </div>
+
+                {canScheduleDirectly && (
+                  <div className="md:col-span-2 border-t pt-4 mt-2">
+                    <h3 className="text-sm font-semibold text-gray-900 mb-3">Schedule Directly (Optional)</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <div>
+                        <label htmlFor="scheduleTruckId" className="block text-sm font-medium text-gray-700 mb-1">Truck</label>
+                        <Select name="scheduleTruckId" onValueChange={(value) => handleSelectChange('scheduleTruckId', value)} value={formData.scheduleTruckId}>
+                          <SelectTrigger id="scheduleTruckId"><SelectValue placeholder="Select truck..." /></SelectTrigger>
+                          <SelectContent>
+                            {TRUCKS.map(truck => <SelectItem key={truck.id} value={truck.id}>{truck.name}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <label htmlFor="scheduleDate" className="block text-sm font-medium text-gray-700 mb-1">Schedule Date</label>
+                        <Input id="scheduleDate" name="scheduleDate" type="date" value={formData.scheduleDate} onChange={handleChange} />
+                      </div>
+                      <div>
+                        <label htmlFor="scheduleTimeSlot" className="block text-sm font-medium text-gray-700 mb-1">Time Slot</label>
+                        <Select name="scheduleTimeSlot" onValueChange={(value) => handleSelectChange('scheduleTimeSlot', value)} value={formData.scheduleTimeSlot}>
+                          <SelectTrigger id="scheduleTimeSlot"><SelectValue placeholder="Select slot..." /></SelectTrigger>
+                          <SelectContent>
+                            {DELIVERY_WINDOWS.map(window => <SelectItem key={window.id} value={window.id}>{window.label}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <label htmlFor="scheduleSlotPosition" className="block text-sm font-medium text-gray-700 mb-1">Delivery Slot</label>
+                        <Select name="scheduleSlotPosition" onValueChange={(value) => handleSelectChange('scheduleSlotPosition', value)} value={formData.scheduleSlotPosition || '1'}>
+                          <SelectTrigger id="scheduleSlotPosition"><SelectValue placeholder="Select..." /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="1">Slot 1</SelectItem>
+                            <SelectItem value="2">Slot 2</SelectItem>
+                            <SelectItem value="3">Slot 3</SelectItem>
+                            <SelectItem value="4">Slot 4</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </ScrollArea>
             <DialogFooter className="pt-4">
