@@ -588,7 +588,7 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
                   </Button>
                   {extractedData && (
                     <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded text-xs text-green-700">
-                      ✓ Data extracted and form auto-filled. Please review the fields above.
+                      ✓ Data extracted and form auto-filled. Please review the fields below.
                     </div>
                   )}
                 </div>
