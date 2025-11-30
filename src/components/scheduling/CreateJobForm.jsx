@@ -443,6 +443,7 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
         sheetList: formData.sheetList.length > 0 ? formData.sheetList : undefined,
         attachments: attachments.length > 0 ? attachments : undefined,
         customerName: selectedCustomer.customerName,
+        customerReference: formData.customerReference || undefined,
         deliveryTypeName: selectedType.name,
         pickupLocation: `${selectedLocation.company} - ${selectedLocation.name}`,
         status: jobStatus,
@@ -565,6 +566,12 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
                       Building/Plastering: {selectedCustomer.buildingPlasteringCompany}
                     </p>
                   )}
+                </div>
+
+                <div>
+                  <label htmlFor="customerReference" className="block text-sm font-medium text-gray-700 mb-1">Customer Reference</label>
+                  <Input id="customerReference" name="customerReference" value={formData.customerReference} onChange={handleChange} placeholder="e.g. Smith Plastering - Job 123" />
+                  <p className="text-xs text-gray-500 mt-1">Your client's name or reference (for subcontract work)</p>
                 </div>
 
                 <div>

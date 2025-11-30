@@ -306,6 +306,7 @@ export default function CustomerRequestDeliveryPage() {
       const newJob = await base44.entities.Job.create({
         customerId: currentUser.customerId,
         customerName: currentUser.customerName,
+        customerReference: formData.customerReference || undefined,
         deliveryTypeId: formData.deliveryTypeId,
         deliveryTypeName: selectedType.name,
         pickupLocationId: formData.pickupLocationId,
@@ -348,6 +349,7 @@ export default function CustomerRequestDeliveryPage() {
       setFormData({
         deliveryTypeId: '', pickupLocationId: '', deliveryLocation: '', 
         deliveryLatitude: null, deliveryLongitude: null,
+        customerReference: '',
         requestedDate: '', 
         totalUnits: '', poSalesDocketNumber: '', deliveryWindow: '',
         sqm: '', weightKg: '', siteContactName: '', siteContactPhone: '', deliveryNotes: '',
@@ -448,6 +450,12 @@ export default function CustomerRequestDeliveryPage() {
                   )}
                 </div>
               )}
+            </div>
+
+            <div>
+              <label htmlFor="customerReference" className="block text-sm font-medium text-gray-700 mb-1">Customer Reference</label>
+              <Input id="customerReference" name="customerReference" value={formData.customerReference} onChange={handleChange} placeholder="e.g. Smith Plastering - Job 123" />
+              <p className="text-xs text-gray-500 mt-1">Your client's name or reference (for subcontract work)</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
