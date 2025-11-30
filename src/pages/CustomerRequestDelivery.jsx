@@ -4,12 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { useToast } from "@/components/ui/use-toast";
-import { Upload, Loader2, FileText, Sparkles, X, Plus, Trash2 } from 'lucide-react';
-import { format } from 'date-fns';
+import { Upload, Loader2, X, Plus, Trash2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { processDeliveryDocument } from '@/functions/processDeliveryDocument';
 
 
 export default function CustomerRequestDeliveryPage() {
@@ -17,10 +15,7 @@ export default function CustomerRequestDeliveryPage() {
   const [pickupLocations, setPickupLocations] = useState([]);
   const [attachments, setAttachments] = useState([]);
   const [uploadingAttachment, setUploadingAttachment] = useState(false);
-  const [extractionDocument, setExtractionDocument] = useState(null);
   const [manualSheetEntry, setManualSheetEntry] = useState({ description: '', quantity: '', m2: '', unit: 'sheets', weight: '' });
-  const [extracting, setExtracting] = useState(false);
-  const [extractedData, setExtractedData] = useState(null);
   const [formData, setFormData] = useState({
     deliveryTypeId: '',
     pickupLocationId: '',
@@ -65,155 +60,6 @@ export default function CustomerRequestDeliveryPage() {
     };
     fetchData();
   }, []);
-
-  const handleDocumentUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const validTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
-    if (!validTypes.includes(file.type)) {
-      toast({
-        title: "Invalid File Type",
-        description: "Please upload a PDF or image file (JPG, PNG).",
-        variant: "destructive",
-      });
-      e.target.value = '';
-      return;
-    }
-
-    const maxSize = 10 * 1024 * 1024;
-    if (file.size > maxSize) {
-      toast({
-        title: "File Too Large",
-        description: "Please upload a file smaller than 10MB.",
-        variant: "destructive",
-      });
-      e.target.value = '';
-      return;
-    }
-
-    setExtractionDocument(file);
-    setExtractedData(null);
-    e.target.value = '';
-    
-    // Automatically start extraction
-    await performExtraction(file);
-  };
-
-  const performExtraction = async (file) => {
-    setExtractedData(null);
-    setExtracting(true);
-    try {
-      toast({
-        title: "Processing Document",
-        description: "Uploading and analyzing your document with AI...",
-      });
-
-      // Upload file to storage first
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-
-      // Call DocExtract AI via backend function with file URL
-      const response = await processDeliveryDocument({ fileUrl: file_url });
-
-      if (response.data?.success && response.data?.data) {
-        const extracted = response.data.data;
-        setExtractedData(extracted);
-        
-        const updates = {};
-
-        // Map DocExtract AI fields to form fields
-        if (extracted.supplier_name) {
-          const matchedLocation = pickupLocations.find(loc =>
-            loc.name?.toLowerCase().includes(extracted.supplier_name.toLowerCase()) ||
-            loc.company?.toLowerCase().includes(extracted.supplier_name.toLowerCase()) ||
-            extracted.supplier_name.toLowerCase().includes(loc.name?.toLowerCase() || '') ||
-            extracted.supplier_name.toLowerCase().includes(loc.company?.toLowerCase() || '')
-          );
-          if (matchedLocation) {
-            updates.pickupLocationId = matchedLocation.id;
-          }
-        }
-
-        if (extracted.delivery_address) {
-          updates.deliveryLocation = extracted.delivery_address;
-        }
-        if (extracted.order_number || extracted.document_id) {
-          updates.poSalesDocketNumber = extracted.order_number || extracted.document_id;
-        }
-        if (extracted.total_m2) {
-          updates.sqm = String(extracted.total_m2);
-        }
-        if (extracted.total_weight) {
-          updates.weightKg = String(extracted.total_weight);
-        }
-        if (extracted.site_contact) {
-          updates.siteContactName = extracted.site_contact;
-        }
-        if (extracted.delivery_notes) {
-          updates.deliveryNotes = extracted.delivery_notes;
-        }
-
-        // Handle line items -> sheetList conversion
-        if (extracted.line_items && Array.isArray(extracted.line_items) && extracted.line_items.length > 0) {
-          const sheetListItems = extracted.line_items.map(item => ({
-            description: item.product_description || item.product_code || item.description || '',
-            quantity: item.ordered_quantity ? parseFloat(item.ordered_quantity) || 0 : (item.quantity || 0),
-            unit: item.unit || 'sheets',
-            m2: item.m2 || null,
-            weight: item.weight || null
-          })).filter(item => item.description);
-          
-          if (sheetListItems.length > 0) {
-            updates.sheetList = sheetListItems;
-          }
-        }
-
-        if (extracted.shipping_date) {
-          try {
-            const date = new Date(extracted.shipping_date);
-            if (!isNaN(date.getTime())) {
-              updates.requestedDate = format(date, 'yyyy-MM-dd');
-            }
-          } catch (e) {
-            console.log('Could not parse date:', extracted.shipping_date);
-          }
-        }
-
-        setFormData(prev => ({ 
-          ...prev, 
-          ...updates,
-          sheetList: updates.sheetList || prev.sheetList 
-        }));
-
-        toast({
-          title: "✨ Data Extracted Successfully!",
-          description: "Please review the pre-filled information and make any necessary corrections.",
-        });
-      } else {
-        throw new Error('Failed to extract data from document');
-      }
-
-    } catch (error) {
-      console.error('Document extraction error:', error);
-      toast({
-        title: "Extraction Failed",
-        description: error.message || "Could not extract data from the document. Please fill the form manually.",
-        variant: "destructive",
-      });
-    } finally {
-      setExtracting(false);
-    }
-  };
-
-  const handleExtractData = async () => {
-    if (!extractionDocument) return;
-    await performExtraction(extractionDocument);
-  };
-
-  const handleRemoveDocument = () => {
-    setExtractionDocument(null);
-    setExtractedData(null);
-  };
 
   const handleAttachmentUpload = async (e) => {
     const files = Array.from(e.target.files || []);
@@ -302,8 +148,6 @@ export default function CustomerRequestDeliveryPage() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-
-
   const selectedDeliveryType = deliveryTypes.find(t => t.id === formData.deliveryTypeId);
   const isUnitsDelivery = selectedDeliveryType?.name?.toLowerCase().includes('units');
 
@@ -319,17 +163,6 @@ export default function CustomerRequestDeliveryPage() {
         (typeof val === 'boolean' && val === true) || 
         (typeof val === 'string' && val.trim() !== '')
       );
-
-      // If there's an extraction document, upload it and add to attachments
-      let finalAttachments = [...attachments];
-      if (extractionDocument) {
-        try {
-          const { file_url } = await base44.integrations.Core.UploadFile({ file: extractionDocument });
-          finalAttachments.push(file_url);
-        } catch (error) {
-          console.error('Failed to upload extraction document:', error);
-        }
-      }
 
       const newJob = await base44.entities.Job.create({
         customerId: currentUser.customerId,
@@ -351,7 +184,7 @@ export default function CustomerRequestDeliveryPage() {
         siteContactPhone: formData.siteContactPhone,
         deliveryNotes: formData.deliveryNotes || undefined,
         sheetList: formData.sheetList.length > 0 ? formData.sheetList : undefined,
-        attachments: finalAttachments.length > 0 ? finalAttachments : undefined,
+        attachments: attachments.length > 0 ? attachments : undefined,
         status: 'PENDING_APPROVAL',
         nonStandardDelivery: hasNonStandard ? {
           longWalk: formData.nonStandardDelivery.longWalk || false,
@@ -387,8 +220,6 @@ export default function CustomerRequestDeliveryPage() {
         }
       });
       setAttachments([]);
-      setExtractionDocument(null);
-      setExtractedData(null);
 
     } catch (error) {
       toast({
@@ -410,77 +241,6 @@ export default function CustomerRequestDeliveryPage() {
       <form onSubmit={handleSubmit}>
         <Card>
           <CardContent className="p-6 space-y-6">
-            
-            {/* AI Document Extraction Section */}
-            <div className="bg-gradient-to-r from-purple-50 via-blue-50 to-purple-50 border-2 border-purple-200 rounded-lg p-4 shadow-sm">
-              <div className="flex items-center gap-2 mb-3">
-                <Sparkles className="h-5 w-5 text-purple-600 animate-pulse" />
-                <h3 className="font-semibold text-purple-900">✨ Smart Document Extraction</h3>
-              </div>
-              <p className="text-sm text-purple-700 mb-3">
-                Upload your delivery docket, purchase order, work order, or invoice and let AI automatically fill the form for you!
-              </p>
-              <p className="text-xs text-purple-600 mb-3">
-                Supported formats: PDF, JPG, PNG (max 10MB)
-              </p>
-              
-              {!extractionDocument ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full border-purple-300 hover:bg-purple-50 hover:border-purple-400"
-                  asChild
-                >
-                  <label className="cursor-pointer">
-                    <input
-                      type="file"
-                      accept=".pdf,.jpg,.jpeg,.png"
-                      onChange={handleDocumentUpload}
-                      className="hidden"
-                    />
-                    <FileText className="h-4 w-4 mr-2" />
-                    Upload Document
-                  </label>
-                </Button>
-              ) : (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between bg-white rounded p-3 border border-purple-200">
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <FileText className="h-4 w-4 text-purple-600 flex-shrink-0" />
-                      <span className="text-sm text-gray-700 truncate">{extractionDocument.name}</span>
-                      <span className="text-xs text-gray-500">
-                        ({(extractionDocument.size / 1024).toFixed(0)}KB)
-                      </span>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleRemoveDocument}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50 flex-shrink-0"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  {extracting && (
-                    <div className="flex items-center justify-center gap-2 p-3 bg-purple-50 border border-purple-200 rounded-lg">
-                      <Loader2 className="h-4 w-4 animate-spin text-purple-600" />
-                      <span className="text-sm text-purple-700 font-medium">Extracting data with AI...</span>
-                    </div>
-                  )}
-                  {extractedData && (
-                    <div className="flex items-start gap-2 p-2 bg-green-50 border border-green-200 rounded-lg">
-                      <div className="text-green-600 text-lg">✓</div>
-                      <div className="text-xs text-green-700 flex-1">
-                        <span className="font-medium">Data extracted successfully!</span>
-                        <br />
-                        Review the pre-filled fields below and make any necessary adjustments.
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -743,7 +503,7 @@ export default function CustomerRequestDeliveryPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Sheet List (Optional)</label>
-              <p className="text-xs text-gray-500 mb-3">List of items from the work order/docket. This is automatically extracted from uploaded documents.</p>
+              <p className="text-xs text-gray-500 mb-3">Add items from your work order/docket.</p>
 
               {formData.sheetList.length > 0 && (
                 <div className="mb-3 border rounded-lg overflow-hidden overflow-x-auto">
@@ -925,7 +685,7 @@ export default function CustomerRequestDeliveryPage() {
             </div>
           </CardContent>
           <CardFooter className="p-6">
-            <Button type="submit" disabled={loading || uploadingAttachment || extracting} className="w-full md:w-auto">
+            <Button type="submit" disabled={loading || uploadingAttachment} className="w-full md:w-auto">
               {loading ? 'Submitting...' : 'Submit Request'}
             </Button>
           </CardFooter>
