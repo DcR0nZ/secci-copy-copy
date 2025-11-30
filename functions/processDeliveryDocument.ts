@@ -9,15 +9,14 @@ Deno.serve(async (req) => {
         return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get the file from the frontend
-    const formData = await req.formData();
-    const file = formData.get('file');
-
-    if (!file) {
-        return Response.json({ error: 'No file provided' }, { status: 400 });
-    }
-
     try {
+        // Get the file URL from the request body
+        const { fileUrl } = await req.json();
+
+        if (!fileUrl) {
+            return Response.json({ error: 'No file URL provided' }, { status: 400 });
+        }
+
         // Get API key from secrets
         const DOCEXTRACT_AI_API_KEY = Deno.env.get("DOCEXTRACT_AI_API_KEY");
         if (!DOCEXTRACT_AI_API_KEY) {
@@ -27,9 +26,21 @@ Deno.serve(async (req) => {
         // DocExtract AI function URL
         const DOCEXTRACT_AI_FUNCTION_URL = "https://app.base44.com/api/apps/69284e31dfb5aba9575c1e0e/functions/invoke/extractDeliveryData";
 
+        // Fetch the file from the URL
+        const fileResponse = await fetch(fileUrl);
+        if (!fileResponse.ok) {
+            throw new Error('Failed to fetch file from URL');
+        }
+        
+        const fileBlob = await fileResponse.blob();
+        
+        // Extract filename from URL
+        const urlParts = fileUrl.split('/');
+        const filename = urlParts[urlParts.length - 1] || 'document.pdf';
+
         // Prepare the file for the external API
         const externalFormData = new FormData();
-        externalFormData.append('file', file);
+        externalFormData.append('file', fileBlob, filename);
 
         const response = await fetch(DOCEXTRACT_AI_FUNCTION_URL, {
             method: 'POST',
