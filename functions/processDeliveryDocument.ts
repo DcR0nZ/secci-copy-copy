@@ -24,15 +24,30 @@ Deno.serve(async (req) => {
         }
         
         // DocExtract AI function URL
-        const DOCEXTRACT_AI_FUNCTION_URL = "https://ta-01kb9s9zn9w91z5kwjmd9r59wf-5173.wo-9fp83urcons7cw8d8kg3x3qak.w.modal.host/functions/extractDeliveryData";
+        const DOCEXTRACT_AI_FUNCTION_URL = "https://delivery-docket-extractor-575c1e0e.base44.app/functions/extractDeliveryData";
+
+        // Fetch the file from the URL
+        const fileResponse = await fetch(fileUrl);
+        if (!fileResponse.ok) {
+            throw new Error('Failed to fetch file from URL');
+        }
+
+        const fileBlob = await fileResponse.blob();
+
+        // Extract filename from URL
+        const urlParts = fileUrl.split('/');
+        const filename = urlParts[urlParts.length - 1] || 'document.pdf';
+
+        // Prepare the file for the external API as FormData
+        const formData = new FormData();
+        formData.append('file', fileBlob, filename);
 
         const response = await fetch(DOCEXTRACT_AI_FUNCTION_URL, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
                 'x-api-key': DOCEXTRACT_AI_API_KEY,
             },
-            body: JSON.stringify({ fileUrl }),
+            body: formData,
         });
 
         const result = await response.json();
