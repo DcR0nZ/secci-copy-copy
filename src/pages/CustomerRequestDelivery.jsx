@@ -109,10 +109,11 @@ export default function CustomerRequestDeliveryPage() {
         description: "Uploading and analyzing your document with AI...",
       });
 
+      // Upload file to storage first
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
 
-      // Call Document AI extraction
-      const response = await extractWithDocumentAI({ fileUrl: file_url });
+      // Call DocExtract AI via backend function
+      const response = await processDeliveryDocument({ file });
 
       if (response.data?.success && response.data?.data) {
         const extracted = response.data.data;
@@ -120,7 +121,7 @@ export default function CustomerRequestDeliveryPage() {
         
         const updates = {};
 
-        // Map Document AI fields to form fields
+        // Map DocExtract AI fields to form fields
         if (extracted.supplier_name) {
           const matchedLocation = pickupLocations.find(loc =>
             loc.name?.toLowerCase().includes(extracted.supplier_name.toLowerCase()) ||
@@ -155,9 +156,11 @@ export default function CustomerRequestDeliveryPage() {
         // Handle line items -> sheetList conversion
         if (extracted.line_items && Array.isArray(extracted.line_items) && extracted.line_items.length > 0) {
           const sheetListItems = extracted.line_items.map(item => ({
-            description: item.product_description || item.product_code || '',
-            quantity: item.ordered_quantity ? parseFloat(item.ordered_quantity) || 0 : 0,
-            unit: 'sheets'
+            description: item.product_description || item.product_code || item.description || '',
+            quantity: item.ordered_quantity ? parseFloat(item.ordered_quantity) || 0 : (item.quantity || 0),
+            unit: item.unit || 'sheets',
+            m2: item.m2 || null,
+            weight: item.weight || null
           })).filter(item => item.description);
           
           if (sheetListItems.length > 0) {
