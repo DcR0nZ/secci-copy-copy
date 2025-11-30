@@ -112,11 +112,8 @@ export default function CustomerRequestDeliveryPage() {
       // Upload file to storage first
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
 
-      // Call DocExtract AI via backend function
-      // Create FormData to send the file properly
-      const extractFormData = new FormData();
-      extractFormData.append('file', file);
-      const response = await processDeliveryDocument(extractFormData);
+      // Call DocExtract AI via backend function with file URL
+      const response = await processDeliveryDocument({ fileUrl: file_url });
 
       if (response.data?.success && response.data?.data) {
         const extracted = response.data.data;
