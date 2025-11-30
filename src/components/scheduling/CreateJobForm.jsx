@@ -513,6 +513,7 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
       setFormData({
         customerId: '', deliveryTypeId: '', pickupLocationId: '', deliveryLocation: '', 
         deliveryLatitude: null, deliveryLongitude: null,
+        customerReference: '',
         requestedDate: '', 
         totalUnits: '', totalSheetQty: '', poSalesDocketNumber: '', deliveryWindow: '',
         sqm: '', weightKg: '', siteContactName: '', siteContactPhone: '', deliveryNotes: '',
