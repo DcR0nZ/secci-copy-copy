@@ -16,6 +16,41 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'External API key not configured' }, { status: 500 });
     }
 
+    // Check content type for multipart form data (file upload)
+    const contentType = req.headers.get('content-type') || '';
+    
+    if (contentType.includes('multipart/form-data')) {
+      // Handle file upload for extraction
+      const formData = await req.formData();
+      const file = formData.get('file');
+      
+      if (!file) {
+        return Response.json({ error: 'No file provided' }, { status: 400 });
+      }
+
+      // Forward the file to external API as multipart/form-data
+      const externalFormData = new FormData();
+      externalFormData.append('file', file);
+      externalFormData.append('owner_email', user.email);
+
+      const response = await fetch(EXTERNAL_API_BASE, {
+        method: 'POST',
+        headers: {
+          'api_key': apiKey
+        },
+        body: externalFormData
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        return Response.json({ error: 'Failed to process document', details: errorText }, { status: response.status });
+      }
+
+      const data = await response.json();
+      return Response.json({ success: true, document: data });
+    }
+
+    // Handle JSON requests
     const { action, entityId, updateData, filters } = await req.json();
 
     // Action: list - Fetch all delivery documents
@@ -103,7 +138,7 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, document: data });
     }
 
-    return Response.json({ error: 'Invalid action. Supported: list, get, update, create' }, { status: 400 });
+    return Response.json({ error: 'Invalid action. Supported: list, get, update, create, or upload file via multipart/form-data' }, { status: 400 });
 
   } catch (error) {
     console.error('External Doc Extract error:', error);
