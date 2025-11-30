@@ -551,9 +551,48 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
             <DialogTitle>Create New Job</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit}>
+          
             <ScrollArea className="h-[65vh] pr-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
                 
+                <div className="md:col-span-2 border-t pt-4 mt-2">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-3">AI Document Extraction</h3>
+                  <p className="text-xs text-gray-500 mb-3">Upload a delivery docket or order document to auto-fill the form</p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={extractionLoading}
+                    className="w-full border-dashed border-2 border-blue-300 bg-blue-50 hover:bg-blue-100"
+                    asChild
+                  >
+                    <label className="cursor-pointer flex items-center justify-center py-4">
+                      <input
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={handleDocumentExtraction}
+                        className="hidden"
+                        disabled={extractionLoading}
+                      />
+                      {extractionLoading ? (
+                        <>
+                          <Loader2 className="h-5 w-5 mr-2 animate-spin text-blue-600" />
+                          <span className="text-blue-700">Extracting data from document...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="h-5 w-5 mr-2 text-blue-600" />
+                          <span className="text-blue-700 font-medium">Upload Document for AI Extraction</span>
+                        </>
+                      )}
+                    </label>
+                  </Button>
+                  {extractedData && (
+                    <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded text-xs text-green-700">
+                      ✓ Data extracted and form auto-filled. Please review the fields above.
+                    </div>
+                  )}
+                </div>
+
                 <div>
                   <label htmlFor="customerId" className="block text-sm font-medium text-gray-700 mb-1">Customer</label>
                   <Select name="customerId" onValueChange={(value) => handleSelectChange('customerId', value)} value={formData.customerId} required>
@@ -1031,44 +1070,6 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
                       <Plus className="h-4 w-4" />
                     </Button>
                   </div>
-                </div>
-
-                <div className="md:col-span-2 border-t pt-4 mt-2">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-3">AI Document Extraction</h3>
-                  <p className="text-xs text-gray-500 mb-3">Upload a delivery docket or order document to auto-fill the form</p>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    disabled={extractionLoading}
-                    className="w-full border-dashed border-2 border-blue-300 bg-blue-50 hover:bg-blue-100"
-                    asChild
-                  >
-                    <label className="cursor-pointer flex items-center justify-center py-4">
-                      <input
-                        type="file"
-                        accept=".pdf,.jpg,.jpeg,.png"
-                        onChange={handleDocumentExtraction}
-                        className="hidden"
-                        disabled={extractionLoading}
-                      />
-                      {extractionLoading ? (
-                        <>
-                          <Loader2 className="h-5 w-5 mr-2 animate-spin text-blue-600" />
-                          <span className="text-blue-700">Extracting data from document...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles className="h-5 w-5 mr-2 text-blue-600" />
-                          <span className="text-blue-700 font-medium">Upload Document for AI Extraction</span>
-                        </>
-                      )}
-                    </label>
-                  </Button>
-                  {extractedData && (
-                    <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded text-xs text-green-700">
-                      ✓ Data extracted and form auto-filled. Please review the fields above.
-                    </div>
-                  )}
                 </div>
 
                 <div className="md:col-span-2">
