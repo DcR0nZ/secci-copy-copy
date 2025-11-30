@@ -332,7 +332,7 @@ export default function JobDetailsDialog({ job, open, onOpenChange, onJobUpdated
   const isDriver = currentUser?.appRole === 'driver';
   const isCustomer = currentUser?.role !== 'admin' && currentUser?.appRole !== 'dispatcher';
   const canEdit = currentUser?.role === 'admin' || currentUser?.appRole === 'dispatcher';
-  const canUploadPOD = (isDriver || canEdit) && currentJob.status === 'SCHEDULED';
+  const canUploadPOD = (isDriver || canEdit) && (currentJob.status === 'SCHEDULED' || currentJob.status === 'DELIVERED');
 
   return (
     <>
