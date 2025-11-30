@@ -75,8 +75,9 @@ Deno.serve(async (req) => {
         const prompt = `Extract delivery/order information from this document. Return a JSON object with these fields (use null for fields you cannot find):
 
 {
-  "customer_name": "customer or company name receiving the delivery",
-  "delivery_address": "full delivery address",
+  "customer_name": "customer that has uploaded the docket",
+  "customer_reference": "usually present for subcontract work (Bayside Plasterboard) where the customer that has requested the delivery will not be the one to receive the delivery ",
+  "delivery_address": "full delivery address only. do not include any company names, or anything other than the full delivery address e.g. 'Lot 1044 (22) Fake Street, Brisbane City'",
   "order_number": "PO number, sales order, docket number, or reference number",
   "supplier_name": "supplier or vendor name",
   "shipping_date": "delivery date in YYYY-MM-DD format",
