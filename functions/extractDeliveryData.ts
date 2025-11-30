@@ -1,6 +1,17 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
 import { GoogleGenerativeAI } from 'npm:@google/generative-ai@0.21.0';
 
+function arrayBufferToBase64(buffer) {
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    const chunkSize = 8192;
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+        const chunk = bytes.subarray(i, i + chunkSize);
+        binary += String.fromCharCode.apply(null, chunk);
+    }
+    return btoa(binary);
+}
+
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
@@ -22,21 +33,31 @@ Deno.serve(async (req) => {
         }
 
         // Fetch the file
+        console.log('Fetching file:', fileUrl);
         const fileResponse = await fetch(fileUrl);
         if (!fileResponse.ok) {
-            return Response.json({ error: 'Failed to fetch file' }, { status: 400 });
+            console.error('File fetch failed:', fileResponse.status, fileResponse.statusText);
+            return Response.json({ error: 'Failed to fetch file', status: fileResponse.status }, { status: 400 });
         }
 
         const fileBuffer = await fileResponse.arrayBuffer();
-        const base64Data = btoa(String.fromCharCode(...new Uint8Array(fileBuffer)));
+        console.log('File size:', fileBuffer.byteLength, 'bytes');
         
-        // Determine mime type
-        let mimeType = 'application/pdf';
+        const base64Data = arrayBufferToBase64(fileBuffer);
+        
+        // Determine mime type from URL or content-type header
+        const contentType = fileResponse.headers.get('content-type');
+        let mimeType = contentType || 'application/pdf';
+        
         if (fileUrl.toLowerCase().includes('.png')) {
             mimeType = 'image/png';
         } else if (fileUrl.toLowerCase().includes('.jpg') || fileUrl.toLowerCase().includes('.jpeg')) {
             mimeType = 'image/jpeg';
+        } else if (fileUrl.toLowerCase().includes('.pdf')) {
+            mimeType = 'application/pdf';
         }
+        
+        console.log('Using mime type:', mimeType);
 
         const genAI = new GoogleGenerativeAI(apiKey);
         const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
@@ -73,6 +94,7 @@ Important:
 - If a field is not present, use null
 - Return ONLY the JSON object, no other text`;
 
+        console.log('Calling Gemini API...');
         const result = await model.generateContent([
             {
                 inlineData: {
@@ -84,11 +106,12 @@ Important:
         ]);
 
         const responseText = result.response.text();
+        console.log('Gemini response length:', responseText.length);
         
         // Parse JSON from response (handle markdown code blocks)
         let extractedData;
         try {
-            let jsonStr = responseText;
+            let jsonStr = responseText.trim();
             if (jsonStr.includes('```json')) {
                 jsonStr = jsonStr.split('```json')[1].split('```')[0].trim();
             } else if (jsonStr.includes('```')) {
@@ -99,10 +122,11 @@ Important:
             console.error('Failed to parse Gemini response:', responseText);
             return Response.json({ 
                 error: 'Failed to parse extracted data',
-                rawResponse: responseText 
+                rawResponse: responseText.substring(0, 500)
             }, { status: 500 });
         }
 
+        console.log('Extraction successful');
         return Response.json({ 
             success: true, 
             data: extractedData 
