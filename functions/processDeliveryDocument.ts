@@ -24,7 +24,7 @@ Deno.serve(async (req) => {
         }
         
         // DocExtract AI function URL
-        const DOCEXTRACT_AI_FUNCTION_URL = "https://delivery-docket-extractor-575c1e0e.base44.app/functions/extractDeliveryData";
+        const DOCEXTRACT_AI_FUNCTION_URL = "https://ta-01kb9s9zn9w91z5kwjmd9r59wf-5173.wo-9fp83urcons7cw8d8kg3x3qak.w.modal.host/functions/extractDeliveryData";
 
         // Fetch the file from the URL
         const fileResponse = await fetch(fileUrl);
