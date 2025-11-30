@@ -512,12 +512,7 @@ export default function CustomerRequestDeliveryPage() {
               )}
             </div>
 
-            <div>
-              <label htmlFor="customerReference" className="block text-sm font-medium text-gray-700 mb-1">Customer Reference</label>
-              <Input id="customerReference" name="customerReference" value={formData.customerReference} onChange={handleChange} placeholder="e.g. Smith Plastering - Job 123" />
-              <p className="text-xs text-gray-500 mt-1">Your client's name or reference (for subcontract work)</p>
-            </div>
-            
+          
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label htmlFor="requestedDate" className="block text-sm font-medium text-gray-700 mb-1">Requested Date *</label>
@@ -541,6 +536,11 @@ export default function CustomerRequestDeliveryPage() {
                   </Select>
                 </div>
               )}
+
+              <div>
+                <label htmlFor="customerReference" className="block text-sm font-medium text-gray-700 mb-1">Customer Reference</label>
+                <Input id="customerReference" name="customerReference" value={formData.customerReference} onChange={handleChange} />
+             </div>
             </div>
             
             <div className="grid grid-cols-2 gap-6">
