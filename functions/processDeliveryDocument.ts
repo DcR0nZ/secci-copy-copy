@@ -26,24 +26,14 @@ Deno.serve(async (req) => {
         // DocExtract AI function URL
         const DOCEXTRACT_AI_URL = "https://delivery-docket-extractor-575c1e0e.base44.app/functions/extractDeliveryData";
 
-        // Fetch the file and send as FormData (the external API expects file upload)
-        const fileResponse = await fetch(fileUrl);
-        if (!fileResponse.ok) {
-            throw new Error('Failed to fetch file from URL');
-        }
-        const fileBlob = await fileResponse.blob();
-        const urlParts = fileUrl.split('/');
-        const filename = urlParts[urlParts.length - 1] || 'document.pdf';
-
-        const formData = new FormData();
-        formData.append('file', fileBlob, filename);
-
+        // Send file_url as JSON payload
         const response = await fetch(DOCEXTRACT_AI_URL, {
             method: 'POST',
             headers: {
+                'Content-Type': 'application/json',
                 'x-api-key': DOCEXTRACT_AI_API_KEY,
             },
-            body: formData,
+            body: JSON.stringify({ file_url: fileUrl }),
         });
 
         // Handle response with better error logging
