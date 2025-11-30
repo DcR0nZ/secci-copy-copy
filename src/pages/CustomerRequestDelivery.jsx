@@ -453,6 +453,18 @@ export default function CustomerRequestDeliveryPage() {
             </div>
 
             <div>
+              <label htmlFor="deliveryLocation" className="block text-sm font-medium text-gray-700 mb-1">Delivery Address *</label>
+              <Input
+                id="deliveryLocation"
+                name="deliveryLocation"
+                value={formData.deliveryLocation}
+                onChange={handleChange}
+                placeholder="Enter delivery address"
+                required
+              />
+            </div>
+
+            <div>
               <label htmlFor="customerReference" className="block text-sm font-medium text-gray-700 mb-1">Customer Reference</label>
               <Input id="customerReference" name="customerReference" value={formData.customerReference} onChange={handleChange} placeholder="e.g. Smith Plastering - Job 123" />
               <p className="text-xs text-gray-500 mt-1">Your client's name or reference (for subcontract work)</p>
@@ -506,18 +518,6 @@ export default function CustomerRequestDeliveryPage() {
               )}
             </div>
             
-            <div>
-              <label htmlFor="deliveryLocation" className="block text-sm font-medium text-gray-700 mb-1">Delivery Address *</label>
-              <Input
-                id="deliveryLocation"
-                name="deliveryLocation"
-                value={formData.deliveryLocation}
-                onChange={handleChange}
-                placeholder="Enter delivery address"
-                required
-              />
-            </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label htmlFor="requestedDate" className="block text-sm font-medium text-gray-700 mb-1">Requested Date *</label>
