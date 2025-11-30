@@ -265,7 +265,10 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
       setExtractedDocumentUrl(fileUrl);
 
       // Send file to DocExtract AI via backend function
-      const response = await processDeliveryDocument({ file });
+      // Create FormData to send the file properly
+      const extractFormData = new FormData();
+      extractFormData.append('file', file);
+      const response = await processDeliveryDocument(extractFormData);
       
       if (response.data?.success && response.data?.data) {
         const extracted = response.data.data;
