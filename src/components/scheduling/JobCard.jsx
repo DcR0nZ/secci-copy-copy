@@ -65,6 +65,9 @@ export default function JobCard({ job, deliveryTypes }) {
             </div>
           )}
           <span className={`font-semibold text-sm block ${isReturned ? 'text-white' : 'text-gray-900'}`}>{job.customerName}</span>
+          {job.customerReference && (
+            <p className={`text-xs ${isReturned ? 'text-gray-400' : 'text-blue-600'}`}>Ref: {job.customerReference}</p>
+          )}
           <p className={`text-xs mt-1 ${isReturned ? 'text-gray-400' : 'text-gray-500'}`}>{job.deliveryTypeName}</p>
         </div>
         <div className="flex flex-col gap-1 items-end">

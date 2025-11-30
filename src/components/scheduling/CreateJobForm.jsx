@@ -40,6 +40,7 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
     deliveryLocation: '',
     deliveryLatitude: null,
     deliveryLongitude: null,
+    customerReference: '',
     requestedDate: '',
     totalUnits: '',
     totalSheetQty: '',

@@ -27,6 +27,7 @@ export default function CustomerRequestDeliveryPage() {
     deliveryLocation: '',
     deliveryLatitude: null,
     deliveryLongitude: null,
+    customerReference: '',
     requestedDate: '',
     totalUnits: '',
     poSalesDocketNumber: '',
