@@ -9,7 +9,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Upload, Loader2, FileText, Sparkles, X, Plus, Trash2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { format } from 'date-fns';
-import { extractWithDocumentAI } from '@/functions/extractWithDocumentAI';
+import { externalDocExtract } from '@/functions/externalDocExtract';
 
 
 const TRUCKS = [
