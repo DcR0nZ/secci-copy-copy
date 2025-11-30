@@ -1,16 +1,4 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
-import { GoogleGenerativeAI } from 'npm:@google/generative-ai@0.21.0';
-
-function arrayBufferToBase64(buffer) {
-    const bytes = new Uint8Array(buffer);
-    let binary = '';
-    const chunkSize = 8192;
-    for (let i = 0; i < bytes.length; i += chunkSize) {
-        const chunk = bytes.subarray(i, i + chunkSize);
-        binary += String.fromCharCode.apply(null, chunk);
-    }
-    return btoa(binary);
-}
 
 Deno.serve(async (req) => {
     try {
@@ -43,24 +31,24 @@ Deno.serve(async (req) => {
         const fileBuffer = await fileResponse.arrayBuffer();
         console.log('File size:', fileBuffer.byteLength, 'bytes');
         
-        const base64Data = arrayBufferToBase64(fileBuffer);
+        // Convert to base64 using built-in encoding
+        const uint8Array = new Uint8Array(fileBuffer);
+        const base64Data = btoa(Array.from(uint8Array, byte => String.fromCharCode(byte)).join(''));
         
         // Determine mime type from URL or content-type header
         const contentType = fileResponse.headers.get('content-type');
         let mimeType = contentType || 'application/pdf';
         
-        if (fileUrl.toLowerCase().includes('.png')) {
+        const lowerUrl = fileUrl.toLowerCase();
+        if (lowerUrl.includes('.png')) {
             mimeType = 'image/png';
-        } else if (fileUrl.toLowerCase().includes('.jpg') || fileUrl.toLowerCase().includes('.jpeg')) {
+        } else if (lowerUrl.includes('.jpg') || lowerUrl.includes('.jpeg')) {
             mimeType = 'image/jpeg';
-        } else if (fileUrl.toLowerCase().includes('.pdf')) {
+        } else if (lowerUrl.includes('.pdf')) {
             mimeType = 'application/pdf';
         }
         
         console.log('Using mime type:', mimeType);
-
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
         const prompt = `You are a document data extraction assistant. Analyze this delivery docket, purchase order, work order, or invoice and extract the following information. Return ONLY a valid JSON object with these fields (use null for any field you cannot find):
 
@@ -95,17 +83,58 @@ Important:
 - Return ONLY the JSON object, no other text`;
 
         console.log('Calling Gemini API...');
-        const result = await model.generateContent([
+        
+        // Call Gemini API directly via REST
+        const geminiResponse = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
             {
-                inlineData: {
-                    mimeType: mimeType,
-                    data: base64Data
-                }
-            },
-            { text: prompt }
-        ]);
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [
+                            {
+                                inline_data: {
+                                    mime_type: mimeType,
+                                    data: base64Data
+                                }
+                            },
+                            {
+                                text: prompt
+                            }
+                        ]
+                    }],
+                    generationConfig: {
+                        temperature: 0.1,
+                        maxOutputTokens: 8192
+                    }
+                })
+            }
+        );
 
-        const responseText = result.response.text();
+        if (!geminiResponse.ok) {
+            const errorText = await geminiResponse.text();
+            console.error('Gemini API error:', geminiResponse.status, errorText);
+            return Response.json({ 
+                error: 'Gemini API error', 
+                details: errorText 
+            }, { status: 500 });
+        }
+
+        const geminiResult = await geminiResponse.json();
+        console.log('Gemini response received');
+        
+        if (!geminiResult.candidates || !geminiResult.candidates[0]?.content?.parts?.[0]?.text) {
+            console.error('Invalid Gemini response structure:', JSON.stringify(geminiResult));
+            return Response.json({ 
+                error: 'Invalid response from Gemini',
+                details: 'No text content in response'
+            }, { status: 500 });
+        }
+
+        const responseText = geminiResult.candidates[0].content.parts[0].text;
         console.log('Gemini response length:', responseText.length);
         
         // Parse JSON from response (handle markdown code blocks)
@@ -119,7 +148,7 @@ Important:
             }
             extractedData = JSON.parse(jsonStr);
         } catch (parseError) {
-            console.error('Failed to parse Gemini response:', responseText);
+            console.error('Failed to parse Gemini response:', responseText.substring(0, 500));
             return Response.json({ 
                 error: 'Failed to parse extracted data',
                 rawResponse: responseText.substring(0, 500)
