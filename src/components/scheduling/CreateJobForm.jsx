@@ -256,7 +256,7 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
 
     setExtractionLoading(true);
     try {
-      // Upload the file first
+      // Upload the file to our storage first for attachments
       const uploadResult = await base44.integrations.Core.UploadFile({ file });
       const fileUrl = uploadResult.file_url;
       
@@ -264,46 +264,49 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
       setAttachments(prev => [...prev, fileUrl]);
       setExtractedDocumentUrl(fileUrl);
 
-      // Call Document AI extraction
-      const response = await extractWithDocumentAI({ fileUrl });
+      // Send file to external AI extraction service via multipart/form-data
+      const formData = new FormData();
+      formData.append('file', file);
       
-      if (response.data?.success && response.data?.data) {
-        const extracted = response.data.data;
+      const response = await externalDocExtract(formData);
+      
+      if (response.data?.success && response.data?.document) {
+        const doc = response.data.document;
+        const extracted = doc.extracted_data || {};
         setExtractedData(extracted);
 
-        // Auto-fill form fields
+        // Auto-fill form fields from external extraction response
         const updates = {};
 
-        if (extracted.delivery_address) {
-          updates.deliveryLocation = extracted.delivery_address;
+        // Map external API response fields to form fields
+        if (extracted.delivery_address || doc.delivery_address) {
+          updates.deliveryLocation = extracted.delivery_address || doc.delivery_address;
         }
         if (extracted.delivery_notes) {
           updates.deliveryNotes = extracted.delivery_notes;
         }
-        if (extracted.order_number) {
-          updates.poSalesDocketNumber = extracted.order_number;
+        if (extracted.order_number || doc.order_number) {
+          updates.poSalesDocketNumber = extracted.order_number || doc.order_number;
         }
-        if (extracted.customer_reference) {
-          // Try to match customer by reference or name
-          if (extracted.customer_name) {
-            const matchedCustomer = customers.find(c => 
-              c.customerName?.toLowerCase().includes(extracted.customer_name.toLowerCase()) ||
-              extracted.customer_name.toLowerCase().includes(c.customerName?.toLowerCase())
-            );
-            if (matchedCustomer) {
-              updates.customerId = matchedCustomer.id;
-            }
+        if (extracted.customer_name || doc.customer_name) {
+          const customerName = extracted.customer_name || doc.customer_name;
+          const matchedCustomer = customers.find(c => 
+            c.customerName?.toLowerCase().includes(customerName.toLowerCase()) ||
+            customerName.toLowerCase().includes(c.customerName?.toLowerCase())
+          );
+          if (matchedCustomer) {
+            updates.customerId = matchedCustomer.id;
           }
         }
-        if (extracted.shipping_date) {
-          // Try to parse the date
+        if (extracted.shipping_date || doc.shipping_date) {
           try {
-            const parsedDate = new Date(extracted.shipping_date);
+            const dateStr = extracted.shipping_date || doc.shipping_date;
+            const parsedDate = new Date(dateStr);
             if (!isNaN(parsedDate.getTime())) {
               updates.requestedDate = format(parsedDate, 'yyyy-MM-dd');
             }
           } catch (err) {
-            console.warn('Could not parse shipping date:', extracted.shipping_date);
+            console.warn('Could not parse shipping date');
           }
         }
         if (extracted.site_contact) {
@@ -319,12 +322,14 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
           updates.totalSheetQty = extracted.total_sheets;
         }
 
-        // Handle line items
+        // Handle line items from external extraction
         if (extracted.line_items && extracted.line_items.length > 0) {
           const sheetListItems = extracted.line_items.map(item => ({
-            description: item.product_description || item.product_code || '',
-            quantity: item.ordered_quantity ? parseFloat(item.ordered_quantity) || 0 : 0,
-            unit: 'sheets'
+            description: item.product_description || item.product_code || item.description || '',
+            quantity: item.ordered_quantity ? parseFloat(item.ordered_quantity) || 0 : (item.quantity || 0),
+            unit: item.unit || 'sheets',
+            m2: item.m2 || null,
+            weight: item.weight || null
           })).filter(item => item.description);
           
           if (sheetListItems.length > 0) {
