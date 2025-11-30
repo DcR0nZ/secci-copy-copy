@@ -389,7 +389,7 @@ export default function CustomerRequestDeliveryPage() {
                 <Sparkles className="h-5 w-5 text-purple-600" />
                 <h3 className="font-semibold text-purple-900">Smart Document Extraction</h3>
               </div>
-              <p className="text-sm text-purple-700 mb-3">Upload your delivery docket, purchase order, or work order and have AI 
+              <p className="text-sm text-purple-700 mb-3">Upload your docket/work order/sales order and let AI autofill this form for you.
 
               </p>
               <p className="text-xs text-purple-600 mb-3">
