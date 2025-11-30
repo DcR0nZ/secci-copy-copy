@@ -1,0 +1,66 @@
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
+
+Deno.serve(async (req) => {
+    const base44 = createClientFromRequest(req);
+    
+    // Ensure user is authenticated
+    const user = await base44.auth.me();
+    if (!user) {
+        return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Get the file from the frontend
+    const formData = await req.formData();
+    const file = formData.get('file');
+
+    if (!file) {
+        return Response.json({ error: 'No file provided' }, { status: 400 });
+    }
+
+    try {
+        // Get API key from secrets
+        const DOCEXTRACT_AI_API_KEY = Deno.env.get("DOCEXTRACT_AI_API_KEY");
+        if (!DOCEXTRACT_AI_API_KEY) {
+            return Response.json({ error: 'DocExtract AI API key not configured' }, { status: 500 });
+        }
+        
+        // DocExtract AI function URL
+        const DOCEXTRACT_AI_FUNCTION_URL = "https://app.base44.com/api/apps/69284e31dfb5aba9575c1e0e/functions/invoke/extractDeliveryData";
+
+        // Prepare the file for the external API
+        const externalFormData = new FormData();
+        externalFormData.append('file', file);
+
+        const response = await fetch(DOCEXTRACT_AI_FUNCTION_URL, {
+            method: 'POST',
+            headers: {
+                'x-api-key': DOCEXTRACT_AI_API_KEY,
+            },
+            body: externalFormData,
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            console.error('DocExtract AI error:', result);
+            throw new Error(result.error || "DocExtract AI returned an error");
+        }
+
+        // The result object contains:
+        // {
+        //   output: { customer_name: "...", order_number: "...", delivery_address: "...", ... },
+        //   validation_status: "valid" | "warning" | "invalid" | "needs_review",
+        //   history_id: "..."
+        // }
+
+        return Response.json({ 
+            success: true, 
+            data: result.output,
+            validation_status: result.validation_status,
+            history_id: result.history_id
+        });
+    } catch (error) {
+        console.error('Document processing error:', error);
+        return Response.json({ error: error.message }, { status: 500 });
+    }
+});

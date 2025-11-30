@@ -9,7 +9,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Upload, Loader2, FileText, Sparkles, X, Plus, Trash2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { format } from 'date-fns';
-import { externalDocExtract } from '@/functions/externalDocExtract';
+import { processDeliveryDocument } from '@/functions/processDeliveryDocument';
 
 
 const TRUCKS = [
@@ -264,11 +264,11 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
       setAttachments(prev => [...prev, fileUrl]);
       setExtractedDocumentUrl(fileUrl);
 
-      // Send file URL to external AI extraction service
-      const response = await externalDocExtract({ 
-        action: 'create',
-        updateData: { file_url: fileUrl }
-      });
+      // Send file to external AI extraction service via multipart/form-data
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const response = await externalDocExtract(formData);
       
       if (response.data?.success && response.data?.document) {
         const doc = response.data.document;

@@ -9,7 +9,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Upload, Loader2, FileText, Sparkles, X, Plus, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { extractWithDocumentAI } from '@/functions/extractWithDocumentAI';
+import { processDeliveryDocument } from '@/functions/processDeliveryDocument';
 
 
 export default function CustomerRequestDeliveryPage() {
