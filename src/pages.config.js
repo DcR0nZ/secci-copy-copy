@@ -14,6 +14,7 @@ import WeatherToday from './pages/WeatherToday';
 import TestEmails from './pages/TestEmails';
 import Reports from './pages/Reports';
 import LiveTracking from './pages/LiveTracking';
+import DataExport from './pages/DataExport';
 import __Layout from './Layout.jsx';
 
 
@@ -34,6 +35,7 @@ export const PAGES = {
     "TestEmails": TestEmails,
     "Reports": Reports,
     "LiveTracking": LiveTracking,
+    "DataExport": DataExport,
 }
 
 export const pagesConfig = {

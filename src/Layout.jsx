@@ -84,7 +84,8 @@ const AdminNav = ({ collapsed, onNavigate }) => {
     createPageUrl('AdminCustomers'),
     createPageUrl('AdminUsers'),
     createPageUrl('AdminPickupLocations'),
-    createPageUrl('AdminDeliveryTypes')
+    createPageUrl('AdminDeliveryTypes'),
+    createPageUrl('DataExport')
   ];
   
   const isLibraryActive = libraryPages.includes(location.pathname);
