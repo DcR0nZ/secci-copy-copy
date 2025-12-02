@@ -85,6 +85,7 @@ const AdminNav = ({ collapsed, onNavigate }) => {
     createPageUrl('AdminUsers'),
     createPageUrl('AdminPickupLocations'),
     createPageUrl('AdminDeliveryTypes'),
+    createPageUrl('SheetSpecs'),
     createPageUrl('DataExport')
   ];
   
@@ -133,6 +134,7 @@ const AdminNav = ({ collapsed, onNavigate }) => {
             <SubNavLink to={createPageUrl('AdminUsers')} onClick={onNavigate}>System Users</SubNavLink>
             <SubNavLink to={createPageUrl('AdminPickupLocations')} onClick={onNavigate}>Pickup Locations</SubNavLink>
             <SubNavLink to={createPageUrl('AdminDeliveryTypes')} onClick={onNavigate}>Delivery Types</SubNavLink>
+            <SubNavLink to={createPageUrl('SheetSpecs')} onClick={onNavigate}>Sheet Specs</SubNavLink>
             <SubNavLink to={createPageUrl('DataExport')} onClick={onNavigate}>Data Export</SubNavLink>
           </CollapsibleContent>
         </Collapsible>

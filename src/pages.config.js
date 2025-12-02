@@ -15,6 +15,7 @@ import TestEmails from './pages/TestEmails';
 import Reports from './pages/Reports';
 import LiveTracking from './pages/LiveTracking';
 import DataExport from './pages/DataExport';
+import SheetSpecs from './pages/SheetSpecs';
 import __Layout from './Layout.jsx';
 
 
@@ -36,6 +37,7 @@ export const PAGES = {
     "Reports": Reports,
     "LiveTracking": LiveTracking,
     "DataExport": DataExport,
+    "SheetSpecs": SheetSpecs,
 }
 
 export const pagesConfig = {
