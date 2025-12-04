@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
 import { Plus, Pencil, Trash2, Search, Upload, Download, Loader2, CheckSquare } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const CATEGORIES = ['Plasterboard', 'Fibre Cement', 'Insulation', 'Steel', 'Timber', 'Accessories', 'Other'];
 
@@ -33,6 +34,7 @@ export default function SheetSpecsPage() {
   const [formData, setFormData] = useState(emptyForm);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
+  const [supplierFilter, setSupplierFilter] = useState('all');
   const [selectedIds, setSelectedIds] = useState([]);
   const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
   const [bulkAction, setBulkAction] = useState({ type: '', value: '' });
@@ -307,13 +309,17 @@ export default function SheetSpecsPage() {
     e.target.value = '';
   };
 
+  // Get unique suppliers for tabs
+  const suppliers = [...new Set(specs.map(s => s.supplier).filter(Boolean))].sort();
+
   const filteredSpecs = specs.filter(s => {
     const matchesSearch = !search || 
       s.productCode?.toLowerCase().includes(search.toLowerCase()) ||
       s.description?.toLowerCase().includes(search.toLowerCase()) ||
       s.supplier?.toLowerCase().includes(search.toLowerCase());
     const matchesCategory = categoryFilter === 'all' || s.category === categoryFilter;
-    return matchesSearch && matchesCategory;
+    const matchesSupplier = supplierFilter === 'all' || s.supplier === supplierFilter;
+    return matchesSearch && matchesCategory && matchesSupplier;
   });
 
   if (isLoading) {
@@ -349,6 +355,20 @@ export default function SheetSpecsPage() {
           </Button>
         </div>
       </div>
+
+      {/* Supplier Tabs */}
+      <Tabs value={supplierFilter} onValueChange={setSupplierFilter} className="mb-4">
+        <TabsList className="flex-wrap h-auto gap-1">
+          <TabsTrigger value="all" className="text-sm">
+            All Suppliers ({specs.length})
+          </TabsTrigger>
+          {suppliers.map(supplier => (
+            <TabsTrigger key={supplier} value={supplier} className="text-sm">
+              {supplier} ({specs.filter(s => s.supplier === supplier).length})
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
 
       <Card className="mb-6">
         <CardContent className="p-4">
@@ -410,6 +430,7 @@ export default function SheetSpecsPage() {
                   />
                 </TableHead>
                 <TableHead>Description</TableHead>
+                <TableHead>Supplier</TableHead>
                 <TableHead>Thickness_mm</TableHead>
                 <TableHead>Width_mm</TableHead>
                 <TableHead>Length_mm</TableHead>
@@ -421,7 +442,7 @@ export default function SheetSpecsPage() {
             <TableBody>
               {filteredSpecs.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                  <TableCell colSpan={9} className="text-center py-8 text-gray-500">
                     No item specs found
                   </TableCell>
                 </TableRow>
@@ -435,6 +456,7 @@ export default function SheetSpecsPage() {
                       />
                     </TableCell>
                     <TableCell>{spec.description}</TableCell>
+                    <TableCell className="text-gray-600">{spec.supplier || '-'}</TableCell>
                     <TableCell>{spec.thicknessMm || '-'}</TableCell>
                     <TableCell>{spec.widthMm || '-'}</TableCell>
                     <TableCell>{spec.lengthMm || '-'}</TableCell>
