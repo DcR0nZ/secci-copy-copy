@@ -286,7 +286,20 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
       setProcessingIndex(-1);
 
       if (compressedPhotosDataURLs.length === 0) {
-        throw new Error('All photos failed to be processed. Please ensure they are valid image files.');
+        // Last resort: try uploading original files directly
+        console.log('All processing failed, attempting direct upload of original files...');
+        for (let i = 0; i < photos.length; i++) {
+          try {
+            const result = await base44.integrations.Core.UploadFile({ file: photos[i] });
+            compressedPhotosDataURLs.push(result.file_url);
+          } catch (directErr) {
+            console.error(`Direct upload also failed for photo ${i + 1}:`, directErr);
+          }
+        }
+        
+        if (compressedPhotosDataURLs.length === 0) {
+          throw new Error('All photos failed to be processed. Please try taking new photos or selecting different images.');
+        }
       }
       
       if (currentSubmissionErrors.length > 0) {
