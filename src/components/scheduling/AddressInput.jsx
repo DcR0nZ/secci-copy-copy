@@ -88,11 +88,11 @@ export default function AddressInput({
       usageCount: addr.usageCount
     }));
 
-    // If we have fewer than 5 saved results, search Geoscape GNAF
+    // If we have fewer than 5 saved results, search Geoscape Predictive API
     let gnafSuggestions = [];
     if (savedSuggestions.length < 5 && query.length >= 4) {
       try {
-        const response = await base44.functions.invoke('geocodeAddress', { address: query });
+        const response = await base44.functions.invoke('geocodeAddress', { query: query, stateFilter: 'QLD' });
         const data = response.data || response;
         
         if (data.success && data.suggestions) {
@@ -104,16 +104,19 @@ export default function AddressInput({
             .map(s => ({
               type: 'gnaf',
               address: s.address,
+              addressId: s.addressId,
+              // Coordinates come later when user selects (2-step flow)
               latitude: s.latitude,
               longitude: s.longitude,
               suburb: s.suburb,
               state: s.state,
               postcode: s.postcode,
-              gnafId: s.gnafId
+              matchType: s.matchType,
+              matchQuality: s.matchQuality
             }));
         }
       } catch (err) {
-        console.error('GNAF search failed:', err);
+        console.error('Geoscape search failed:', err);
       }
     }
 
