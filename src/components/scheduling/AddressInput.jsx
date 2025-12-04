@@ -319,6 +319,8 @@ export default function AddressInput({
             >
               {suggestion.type === 'saved' ? (
                 <Building2 className="h-4 w-4 text-blue-600 mt-0.5 shrink-0" />
+              ) : suggestion.type === 'gnaf' ? (
+                <MapPin className="h-4 w-4 text-green-600 mt-0.5 shrink-0" />
               ) : (
                 <MapPin className="h-4 w-4 text-gray-400 mt-0.5 shrink-0" />
               )}
@@ -333,6 +335,9 @@ export default function AddressInput({
                 )}
                 {suggestion.type === 'saved' && (
                   <div className="text-xs text-gray-400">From your saved addresses</div>
+                )}
+                {suggestion.type === 'gnaf' && (
+                  <div className="text-xs text-green-600">GNAF verified address</div>
                 )}
               </div>
               {suggestion.type === 'saved' && suggestion.latitude && (
