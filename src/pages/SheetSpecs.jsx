@@ -9,7 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
-import { Plus, Pencil, Trash2, Search, Upload, Download, Loader2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Upload, Download, Loader2, CheckSquare } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const CATEGORIES = ['Plasterboard', 'Fibre Cement', 'Insulation', 'Steel', 'Timber', 'Accessories', 'Other'];
 
@@ -32,6 +33,9 @@ export default function SheetSpecsPage() {
   const [formData, setFormData] = useState(emptyForm);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
+  const [bulkAction, setBulkAction] = useState({ type: '', value: '' });
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -115,6 +119,51 @@ export default function SheetSpecsPage() {
   const handleDelete = (id) => {
     if (window.confirm('Are you sure you want to delete this item spec?')) {
       deleteMutation.mutate(id);
+    }
+  };
+
+  const handleSelectAll = (checked) => {
+    if (checked) {
+      setSelectedIds(filteredSpecs.map(s => s.id));
+    } else {
+      setSelectedIds([]);
+    }
+  };
+
+  const handleSelectOne = (id, checked) => {
+    if (checked) {
+      setSelectedIds(prev => [...prev, id]);
+    } else {
+      setSelectedIds(prev => prev.filter(i => i !== id));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!window.confirm(`Are you sure you want to delete ${selectedIds.length} items?`)) return;
+    
+    try {
+      await Promise.all(selectedIds.map(id => base44.entities.ItemSpec.delete(id)));
+      queryClient.invalidateQueries({ queryKey: ['itemSpecs'] });
+      toast({ title: `Deleted ${selectedIds.length} items` });
+      setSelectedIds([]);
+    } catch (error) {
+      toast({ title: 'Delete failed', description: error.message, variant: 'destructive' });
+    }
+  };
+
+  const handleBulkUpdate = async () => {
+    if (!bulkAction.type || !bulkAction.value) return;
+    
+    try {
+      const updateData = { [bulkAction.type]: bulkAction.value };
+      await Promise.all(selectedIds.map(id => base44.entities.ItemSpec.update(id, updateData)));
+      queryClient.invalidateQueries({ queryKey: ['itemSpecs'] });
+      toast({ title: `Updated ${selectedIds.length} items` });
+      setSelectedIds([]);
+      setBulkDialogOpen(false);
+      setBulkAction({ type: '', value: '' });
+    } catch (error) {
+      toast({ title: 'Update failed', description: error.message, variant: 'destructive' });
     }
   };
 
@@ -289,8 +338,8 @@ export default function SheetSpecsPage() {
 
       <Card className="mb-6">
         <CardContent className="p-4">
-          <div className="flex gap-4">
-            <div className="flex-1 relative">
+          <div className="flex gap-4 flex-wrap">
+            <div className="flex-1 relative min-w-[200px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
                 placeholder="Search by code, description, or supplier..."
@@ -311,6 +360,27 @@ export default function SheetSpecsPage() {
               </SelectContent>
             </Select>
           </div>
+          
+          {selectedIds.length > 0 && (
+            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
+              <span className="text-sm font-medium text-blue-800">
+                {selectedIds.length} item{selectedIds.length !== 1 ? 's' : ''} selected
+              </span>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => setBulkDialogOpen(true)}>
+                  <CheckSquare className="h-4 w-4 mr-1" />
+                  Bulk Update
+                </Button>
+                <Button variant="destructive" size="sm" onClick={handleBulkDelete}>
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Delete Selected
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => setSelectedIds([])}>
+                  Clear Selection
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -319,6 +389,12 @@ export default function SheetSpecsPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-12">
+                  <Checkbox
+                    checked={filteredSpecs.length > 0 && selectedIds.length === filteredSpecs.length}
+                    onCheckedChange={handleSelectAll}
+                  />
+                </TableHead>
                 <TableHead>Description</TableHead>
                 <TableHead>Thickness_mm</TableHead>
                 <TableHead>Width_mm</TableHead>
@@ -331,13 +407,19 @@ export default function SheetSpecsPage() {
             <TableBody>
               {filteredSpecs.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                  <TableCell colSpan={8} className="text-center py-8 text-gray-500">
                     No item specs found
                   </TableCell>
                 </TableRow>
               ) : (
                 filteredSpecs.map(spec => (
-                  <TableRow key={spec.id}>
+                  <TableRow key={spec.id} className={selectedIds.includes(spec.id) ? 'bg-blue-50' : ''}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedIds.includes(spec.id)}
+                        onCheckedChange={(checked) => handleSelectOne(spec.id, checked)}
+                      />
+                    </TableCell>
                     <TableCell>{spec.description}</TableCell>
                     <TableCell>{spec.thicknessMm || '-'}</TableCell>
                     <TableCell>{spec.widthMm || '-'}</TableCell>
@@ -473,6 +555,76 @@ export default function SheetSpecsPage() {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={bulkDialogOpen} onOpenChange={setBulkDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Bulk Update {selectedIds.length} Items</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">Field to Update</label>
+              <Select value={bulkAction.type} onValueChange={(v) => setBulkAction({ type: v, value: '' })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select field" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="status">Status</SelectItem>
+                  <SelectItem value="category">Category</SelectItem>
+                  <SelectItem value="supplier">Supplier</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {bulkAction.type === 'status' && (
+              <div>
+                <label className="text-sm font-medium">New Status</label>
+                <Select value={bulkAction.value} onValueChange={(v) => setBulkAction(prev => ({ ...prev, value: v }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ACTIVE">Active</SelectItem>
+                    <SelectItem value="INACTIVE">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            
+            {bulkAction.type === 'category' && (
+              <div>
+                <label className="text-sm font-medium">New Category</label>
+                <Select value={bulkAction.value} onValueChange={(v) => setBulkAction(prev => ({ ...prev, value: v }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CATEGORIES.map(c => (
+                      <SelectItem key={c} value={c}>{c}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            
+            {bulkAction.type === 'supplier' && (
+              <div>
+                <label className="text-sm font-medium">New Supplier</label>
+                <Input
+                  value={bulkAction.value}
+                  onChange={(e) => setBulkAction(prev => ({ ...prev, value: e.target.value }))}
+                  placeholder="Enter supplier name"
+                />
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleBulkUpdate} disabled={!bulkAction.type || !bulkAction.value}>
+              Update {selectedIds.length} Items
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
