@@ -161,8 +161,8 @@ export default function AddressInput({
     onChange?.(suggestion.address);
     setShowSuggestions(false);
 
-    if (suggestion.type === 'saved' && suggestion.latitude && suggestion.longitude) {
-      // Already have coordinates
+    if (suggestion.latitude && suggestion.longitude) {
+      // Already have coordinates (saved or GNAF)
       setConfirmedAddress({
         address: suggestion.address,
         latitude: suggestion.latitude,
@@ -175,17 +175,37 @@ export default function AddressInput({
         siteNotes: suggestion.siteNotes
       });
       
-      // Update usage count
-      try {
-        await base44.entities.AddressLookup.update(suggestion.id, {
-          usageCount: (suggestion.usageCount || 0) + 1
-        });
-      } catch (err) {
-        console.error('Failed to update usage count:', err);
+      if (suggestion.type === 'saved' && suggestion.id) {
+        // Update usage count for saved addresses
+        try {
+          await base44.entities.AddressLookup.update(suggestion.id, {
+            usageCount: (suggestion.usageCount || 0) + 1
+          });
+        } catch (err) {
+          console.error('Failed to update usage count:', err);
+        }
+      } else if (suggestion.type === 'gnaf') {
+        // Save GNAF address for future use
+        try {
+          await base44.entities.AddressLookup.create({
+            address: suggestion.address,
+            suburb: suggestion.suburb,
+            state: suggestion.state,
+            postcode: suggestion.postcode,
+            latitude: suggestion.latitude,
+            longitude: suggestion.longitude,
+            usageCount: 1
+          });
+          // Refresh saved addresses
+          const addresses = await base44.entities.AddressLookup.list('-usageCount', 100);
+          setSavedAddresses(addresses);
+        } catch (err) {
+          console.error('Failed to save GNAF address:', err);
+        }
       }
     } else {
-      // Need to geocode
-      const geocoded = await geocodeAddress(suggestion.address);
+      // Need to geocode (shouldn't happen with GNAF but fallback)
+      const geocoded = await geocodeAddressFunc(suggestion.address);
       if (geocoded) {
         setConfirmedAddress(geocoded);
         onAddressConfirmed?.({
