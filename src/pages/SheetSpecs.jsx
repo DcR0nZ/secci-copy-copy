@@ -154,11 +154,18 @@ export default function SheetSpecsPage() {
       // Helper to find column index with multiple possible names
       const findCol = (...names) => {
         for (const name of names) {
+          // Try exact match first
+          const exactIdx = headers.findIndex(h => h === name.toLowerCase());
+          if (exactIdx !== -1) return exactIdx;
+          // Then try contains match
           const idx = headers.findIndex(h => h.includes(name.toLowerCase()));
           if (idx !== -1) return idx;
         }
         return -1;
       };
+      
+      console.log('CSV Headers found:', headers);
+      console.log('m² column index:', findCol('m²', 'm2', 'sqm', 'square', 'area'));
 
       const descCol = findCol('description');
       const thicknessCol = findCol('thickness');
