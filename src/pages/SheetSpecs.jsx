@@ -245,47 +245,31 @@ export default function SheetSpecsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Product Code</TableHead>
                 <TableHead>Description</TableHead>
-                <TableHead>Dimensions (mm)</TableHead>
-                <TableHead>Weight (kg)</TableHead>
-                <TableHead>M²/Unit</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Supplier</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>Thickness_mm</TableHead>
+                <TableHead>Width_mm</TableHead>
+                <TableHead>Length_mm</TableHead>
+                <TableHead>Sheet_weight_kg</TableHead>
+                <TableHead>m²</TableHead>
                 <TableHead className="w-20"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredSpecs.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center py-8 text-gray-500">
+                  <TableCell colSpan={7} className="text-center py-8 text-gray-500">
                     No item specs found
                   </TableCell>
                 </TableRow>
               ) : (
                 filteredSpecs.map(spec => (
                   <TableRow key={spec.id}>
-                    <TableCell className="font-mono text-sm">{spec.productCode}</TableCell>
                     <TableCell>{spec.description}</TableCell>
-                    <TableCell className="text-sm text-gray-600">
-                      {spec.lengthMm && spec.widthMm && spec.thicknessMm
-                        ? `${spec.lengthMm} × ${spec.widthMm} × ${spec.thicknessMm}`
-                        : '-'}
-                    </TableCell>
+                    <TableCell>{spec.thicknessMm || '-'}</TableCell>
+                    <TableCell>{spec.widthMm || '-'}</TableCell>
+                    <TableCell>{spec.lengthMm || '-'}</TableCell>
                     <TableCell>{spec.weightKg || '-'}</TableCell>
                     <TableCell>{spec.m2PerUnit || '-'}</TableCell>
-                    <TableCell>
-                      {spec.category && (
-                        <Badge variant="outline">{spec.category}</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>{spec.supplier || '-'}</TableCell>
-                    <TableCell>
-                      <Badge className={spec.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
-                        {spec.status}
-                      </Badge>
-                    </TableCell>
                     <TableCell>
                       <div className="flex gap-1">
                         <Button variant="ghost" size="icon" onClick={() => handleOpen(spec)}>
