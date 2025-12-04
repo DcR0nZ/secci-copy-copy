@@ -84,10 +84,40 @@ export default function AddressInput({
       longitude: addr.longitude,
       customerName: addr.customerName,
       siteNotes: addr.siteNotes,
-      id: addr.id
+      id: addr.id,
+      usageCount: addr.usageCount
     }));
 
-    setSuggestions(savedSuggestions);
+    // If we have fewer than 5 saved results, search Geoscape GNAF
+    let gnafSuggestions = [];
+    if (savedSuggestions.length < 5 && query.length >= 4) {
+      try {
+        const response = await base44.functions.invoke('geocodeAddress', { address: query });
+        const data = response.data || response;
+        
+        if (data.success && data.suggestions) {
+          gnafSuggestions = data.suggestions
+            .filter(s => !savedSuggestions.find(saved => 
+              saved.address?.toLowerCase() === s.address?.toLowerCase()
+            ))
+            .slice(0, 5 - savedSuggestions.length)
+            .map(s => ({
+              type: 'gnaf',
+              address: s.address,
+              latitude: s.latitude,
+              longitude: s.longitude,
+              suburb: s.suburb,
+              state: s.state,
+              postcode: s.postcode,
+              gnafId: s.gnafId
+            }));
+        }
+      } catch (err) {
+        console.error('GNAF search failed:', err);
+      }
+    }
+
+    setSuggestions([...savedSuggestions, ...gnafSuggestions]);
     setShowSuggestions(true);
     setLoading(false);
   };
