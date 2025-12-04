@@ -10,6 +10,7 @@ import { Upload, Loader2, X, Plus, Trash2, Sparkles } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { format } from 'date-fns';
 import { extractDeliveryData } from '@/functions/extractDeliveryData';
+import AddressInput from './AddressInput';
 
 
 const TRUCKS = [
