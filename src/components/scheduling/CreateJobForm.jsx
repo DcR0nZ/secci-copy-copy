@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -700,14 +701,23 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
                   <label htmlFor="deliveryLocation" className="block text-sm font-medium text-gray-700 mb-1">
                     Delivery Address <span className="text-red-500">*</span>
                   </label>
-                  <Input
-                    id="deliveryLocation"
-                    name="deliveryLocation"
+                  <AddressInput
                     value={formData.deliveryLocation}
-                    onChange={handleChange}
-                    placeholder="Enter delivery address"
+                    onChange={(value) => setFormData(prev => ({ ...prev, deliveryLocation: value }))}
+                    onAddressConfirmed={(data) => {
+                      setFormData(prev => ({
+                        ...prev,
+                        deliveryLocation: data.address,
+                        deliveryLatitude: data.latitude,
+                        deliveryLongitude: data.longitude
+                      }));
+                    }}
+                    placeholder="Start typing to search saved addresses..."
                     required
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Search your saved addresses or enter a new one and click Verify
+                  </p>
                 </div>
 
                 <div>
