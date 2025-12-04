@@ -459,11 +459,19 @@ export default function DailyJobBoard() {
                                   key={placeholder.id}
                                   className={`p-3 rounded-lg border-2 ${colorScheme.bg} ${colorScheme.border}`}
                                 >
-                                  <div className="flex items-center gap-2">
-                                    <Package className={`h-4 w-4 ${colorScheme.text}`} />
-                                    <span className={`font-medium text-sm ${colorScheme.text}`}>
-                                      {placeholder.label}
-                                    </span>
+                                  <div className="flex items-center justify-between gap-2">
+                                    <div className="flex items-center gap-2">
+                                      <Package className={`h-4 w-4 ${colorScheme.text}`} />
+                                      <span className={`font-medium text-sm ${colorScheme.text}`}>
+                                        {placeholder.label}
+                                      </span>
+                                    </div>
+                                    {placeholder.truckId && (
+                                      <Badge variant="outline" className="text-xs bg-white/90 text-gray-700 border-gray-400">
+                                        <Truck className="h-3 w-3 mr-1" />
+                                        {placeholder.truckId}
+                                      </Badge>
+                                    )}
                                   </div>
                                 </div>
                               );
@@ -694,11 +702,19 @@ export default function DailyJobBoard() {
                                 key={placeholder.id}
                                 className={`p-3 rounded-lg border-2 ${colorScheme.bg} ${colorScheme.border}`}
                               >
-                                <div className="flex items-center gap-2">
-                                  <Package className={`h-4 w-4 ${colorScheme.text}`} />
-                                  <span className={`font-medium text-sm ${colorScheme.text}`}>
-                                    {placeholder.label}
-                                  </span>
+                                <div className="flex items-center justify-between gap-2">
+                                  <div className="flex items-center gap-2">
+                                    <Package className={`h-4 w-4 ${colorScheme.text}`} />
+                                    <span className={`font-medium text-sm ${colorScheme.text}`}>
+                                      {placeholder.label}
+                                    </span>
+                                  </div>
+                                  {placeholder.truckId && (
+                                    <Badge variant="outline" className="text-xs bg-white/90 text-gray-700 border-gray-400">
+                                      <Truck className="h-3 w-3 mr-1" />
+                                      {placeholder.truckId}
+                                    </Badge>
+                                  )}
                                 </div>
                               </div>
                             );
