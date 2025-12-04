@@ -164,8 +164,8 @@ export default function AddressInput({
     onChange?.(suggestion.address);
     setShowSuggestions(false);
 
-    if (suggestion.latitude && suggestion.longitude) {
-      // Already have coordinates (saved or GNAF)
+    // For saved addresses with coordinates - use directly
+    if (suggestion.type === 'saved' && suggestion.latitude && suggestion.longitude) {
       setConfirmedAddress({
         address: suggestion.address,
         latitude: suggestion.latitude,
@@ -178,45 +178,76 @@ export default function AddressInput({
         siteNotes: suggestion.siteNotes
       });
       
-      if (suggestion.type === 'saved' && suggestion.id) {
-        // Update usage count for saved addresses
-        try {
-          await base44.entities.AddressLookup.update(suggestion.id, {
-            usageCount: (suggestion.usageCount || 0) + 1
-          });
-        } catch (err) {
-          console.error('Failed to update usage count:', err);
-        }
-      } else if (suggestion.type === 'gnaf') {
-        // Save GNAF address for future use
-        try {
-          await base44.entities.AddressLookup.create({
-            address: suggestion.address,
-            suburb: suggestion.suburb,
-            state: suggestion.state,
-            postcode: suggestion.postcode,
-            latitude: suggestion.latitude,
-            longitude: suggestion.longitude,
-            usageCount: 1
-          });
-          // Refresh saved addresses
-          const addresses = await base44.entities.AddressLookup.list('-usageCount', 100);
-          setSavedAddresses(addresses);
-        } catch (err) {
-          console.error('Failed to save GNAF address:', err);
-        }
-      }
-    } else {
-      // Need to geocode (shouldn't happen with GNAF but fallback)
-      const geocoded = await geocodeAddressFunc(suggestion.address);
-      if (geocoded) {
-        setConfirmedAddress(geocoded);
-        onAddressConfirmed?.({
-          address: geocoded.formattedAddress,
-          latitude: geocoded.latitude,
-          longitude: geocoded.longitude
+      // Update usage count
+      try {
+        await base44.entities.AddressLookup.update(suggestion.id, {
+          usageCount: (suggestion.usageCount || 0) + 1
         });
+      } catch (err) {
+        console.error('Failed to update usage count:', err);
       }
+      return;
+    }
+
+    // For GNAF suggestions - fetch full details with coordinates using addressId
+    if (suggestion.type === 'gnaf' && suggestion.addressId) {
+      setGeocoding(true);
+      try {
+        const response = await base44.functions.invoke('geocodeAddress', { 
+          addressId: suggestion.addressId 
+        });
+        const data = response.data || response;
+        
+        if (data.success && data.result) {
+          const result = data.result;
+          setConfirmedAddress({
+            address: result.address,
+            latitude: result.latitude,
+            longitude: result.longitude
+          });
+          onAddressConfirmed?.({
+            address: result.address,
+            latitude: result.latitude,
+            longitude: result.longitude
+          });
+
+          // Save to local database for future use
+          try {
+            await base44.entities.AddressLookup.create({
+              address: result.address,
+              streetNumber: result.streetNumber,
+              streetName: result.streetName,
+              suburb: result.suburb,
+              state: result.state,
+              postcode: result.postcode,
+              latitude: result.latitude,
+              longitude: result.longitude,
+              usageCount: 1
+            });
+            // Refresh saved addresses
+            const addresses = await base44.entities.AddressLookup.list('-usageCount', 100);
+            setSavedAddresses(addresses);
+          } catch (err) {
+            console.error('Failed to save address:', err);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch address details:', err);
+      } finally {
+        setGeocoding(false);
+      }
+      return;
+    }
+
+    // Fallback - geocode the address text
+    const geocoded = await geocodeAddressFunc(suggestion.address);
+    if (geocoded) {
+      setConfirmedAddress(geocoded);
+      onAddressConfirmed?.({
+        address: geocoded.formattedAddress || suggestion.address,
+        latitude: geocoded.latitude,
+        longitude: geocoded.longitude
+      });
     }
   };
 
