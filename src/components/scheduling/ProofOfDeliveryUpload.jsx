@@ -338,10 +338,29 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
         setProcessingIndex(i);
         try {
           const dataURL = compressedPhotosDataURLs[i];
-          const blob = await fetch(dataURL).then(r => r.blob());
+          
+          // More robust blob conversion
+          let blob;
+          try {
+            const response = await fetch(dataURL);
+            blob = await response.blob();
+          } catch (fetchErr) {
+            // Fallback: manually convert data URL to blob
+            console.warn('Fetch blob failed, using manual conversion:', fetchErr);
+            const arr = dataURL.split(',');
+            const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/jpeg';
+            const bstr = atob(arr[1]);
+            let n = bstr.length;
+            const u8arr = new Uint8Array(n);
+            while (n--) {
+              u8arr[n] = bstr.charCodeAt(n);
+            }
+            blob = new Blob([u8arr], { type: mime });
+          }
           
           const originalFile = photos[i]; 
-          const fileToUpload = new File([blob], originalFile?.name || `pod-${job.id}-${Date.now()}-${i + 1}.jpg`, { type: blob.type });
+          const fileName = originalFile?.name || `pod-${job.id}-${Date.now()}-${i + 1}.jpg`;
+          const fileToUpload = new File([blob], fileName, { type: blob.type || 'image/jpeg' });
           
           const result = await base44.integrations.Core.UploadFile({ file: fileToUpload });
           uploadedUrls.push(result.file_url);
