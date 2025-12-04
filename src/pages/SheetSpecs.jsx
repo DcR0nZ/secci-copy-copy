@@ -138,34 +138,101 @@ export default function SheetSpecsPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const text = await file.text();
-    const lines = text.split('\n').filter(l => l.trim());
-    const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim().toLowerCase());
-    
-    const items = [];
-    for (let i = 1; i < lines.length; i++) {
-      const values = lines[i].split(',').map(v => v.replace(/"/g, '').trim());
-      const item = {
-        productCode: values[headers.indexOf('product code')] || '',
-        description: values[headers.indexOf('description')] || '',
-        lengthMm: parseFloat(values[headers.indexOf('length (mm)')]) || undefined,
-        widthMm: parseFloat(values[headers.indexOf('width (mm)')]) || undefined,
-        thicknessMm: parseFloat(values[headers.indexOf('thickness (mm)')]) || undefined,
-        weightKg: parseFloat(values[headers.indexOf('weight (kg)')]) || undefined,
-        m2PerUnit: parseFloat(values[headers.indexOf('m² per unit')]) || undefined,
-        category: values[headers.indexOf('category')] || undefined,
-        supplier: values[headers.indexOf('supplier')] || undefined,
-        status: values[headers.indexOf('status')] || 'ACTIVE'
+    try {
+      const text = await file.text();
+      const lines = text.split('\n').filter(l => l.trim());
+      
+      if (lines.length < 2) {
+        toast({ title: 'Invalid CSV', description: 'File must have headers and at least one data row', variant: 'destructive' });
+        e.target.value = '';
+        return;
+      }
+
+      // Parse headers - handle various formats
+      const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim().toLowerCase());
+      
+      // Helper to find column index with multiple possible names
+      const findCol = (...names) => {
+        for (const name of names) {
+          const idx = headers.findIndex(h => h.includes(name.toLowerCase()));
+          if (idx !== -1) return idx;
+        }
+        return -1;
       };
-      if (item.productCode && item.description) {
+
+      const descCol = findCol('description');
+      const thicknessCol = findCol('thickness');
+      const widthCol = findCol('width');
+      const lengthCol = findCol('length');
+      const weightCol = findCol('weight', 'sheet_weight');
+      const m2Col = findCol('m²', 'm2', 'sqm');
+      const categoryCol = findCol('category');
+      const supplierCol = findCol('supplier');
+      const productCodeCol = findCol('product code', 'productcode', 'code', 'sku');
+      const statusCol = findCol('status');
+
+      if (descCol === -1) {
+        toast({ title: 'Missing required column', description: 'CSV must have a "description" column', variant: 'destructive' });
+        e.target.value = '';
+        return;
+      }
+
+      const items = [];
+      for (let i = 1; i < lines.length; i++) {
+        // Handle CSV values that might contain commas in quotes
+        const values = [];
+        let current = '';
+        let inQuotes = false;
+        for (const char of lines[i]) {
+          if (char === '"') {
+            inQuotes = !inQuotes;
+          } else if (char === ',' && !inQuotes) {
+            values.push(current.trim());
+            current = '';
+          } else {
+            current += char;
+          }
+        }
+        values.push(current.trim());
+
+        const getValue = (idx) => idx !== -1 && values[idx] ? values[idx].replace(/"/g, '').trim() : '';
+        const getNumber = (idx) => {
+          const val = getValue(idx);
+          const num = parseFloat(val);
+          return !isNaN(num) ? num : undefined;
+        };
+
+        const description = getValue(descCol);
+        if (!description) continue;
+
+        const item = {
+          description,
+          productCode: getValue(productCodeCol) || description.substring(0, 50),
+          thicknessMm: getNumber(thicknessCol),
+          widthMm: getNumber(widthCol),
+          lengthMm: getNumber(lengthCol),
+          weightKg: getNumber(weightCol),
+          m2PerUnit: getNumber(m2Col),
+          category: getValue(categoryCol) || undefined,
+          supplier: getValue(supplierCol) || undefined,
+          status: getValue(statusCol) || 'ACTIVE'
+        };
+
         items.push(item);
       }
-    }
 
-    if (items.length > 0) {
+      if (items.length === 0) {
+        toast({ title: 'No valid items', description: 'No valid rows found in the CSV', variant: 'destructive' });
+        e.target.value = '';
+        return;
+      }
+
       await base44.entities.ItemSpec.bulkCreate(items);
       queryClient.invalidateQueries({ queryKey: ['itemSpecs'] });
-      toast({ title: `Imported ${items.length} items` });
+      toast({ title: 'Import successful', description: `Imported ${items.length} items` });
+    } catch (error) {
+      console.error('CSV import error:', error);
+      toast({ title: 'Import failed', description: error.message || 'Failed to import CSV', variant: 'destructive' });
     }
     e.target.value = '';
   };
