@@ -18,7 +18,8 @@ const compressImage = async (file) => {
   return new Promise((resolve, reject) => {
     // Set a timeout to prevent hanging
     const timeout = setTimeout(() => {
-      reject(new Error('Compression timeout'));
+      console.warn('Compression timeout - returning original file');
+      resolve(file); // Return original file instead of rejecting
     }, 30000); // 30 second timeout
 
     const reader = new FileReader();
@@ -48,7 +49,8 @@ const compressImage = async (file) => {
           const ctx = canvas.getContext('2d');
           if (!ctx) {
             clearTimeout(timeout);
-            reject(new Error('Failed to get canvas context'));
+            console.warn('Failed to get canvas context - returning original file');
+            resolve(file); // Return original file
             return;
           }
           ctx.drawImage(img, 0, 0, width, height);
@@ -60,7 +62,8 @@ const compressImage = async (file) => {
               (blob) => {
                 if (!blob) {
                   clearTimeout(timeout);
-                  reject(new Error('Compression failed - no blob created'));
+                  console.warn('Compression failed - no blob created, returning original file');
+                  resolve(file); // Return original file
                   return;
                 }
 
@@ -85,17 +88,20 @@ const compressImage = async (file) => {
           tryCompress();
         } catch (err) {
           clearTimeout(timeout);
-          reject(err);
+          console.warn('Compression error - returning original file:', err);
+          resolve(file); // Return original file instead of rejecting
         }
       };
       img.onerror = () => {
         clearTimeout(timeout);
-        reject(new Error('Failed to load image'));
+        console.warn('Failed to load image - returning original file');
+        resolve(file); // Return original file instead of rejecting
       };
     };
     reader.onerror = () => {
       clearTimeout(timeout);
-      reject(new Error('Failed to read file'));
+      console.warn('Failed to read file - returning original file');
+      resolve(file); // Return original file instead of rejecting
     };
   });
 };
