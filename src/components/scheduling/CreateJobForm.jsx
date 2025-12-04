@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -613,7 +612,6 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
                 <div>
                   <label htmlFor="customerReference" className="block text-sm font-medium text-gray-700 mb-1">Customer Reference</label>
                   <Input id="customerReference" name="customerReference" value={formData.customerReference} onChange={handleChange} placeholder="e.g. Smith Plastering - Job 123" />
-                  <p className="text-xs text-gray-500 mt-1">Your client's name or reference (for subcontract work)</p>
                 </div>
 
                 <div>
