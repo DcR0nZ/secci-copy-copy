@@ -165,7 +165,7 @@ export default function SheetSpecsPage() {
       const widthCol = findCol('width');
       const lengthCol = findCol('length');
       const weightCol = findCol('weight', 'sheet_weight');
-      const m2Col = findCol('m²', 'm2', 'sqm');
+      const m2Col = findCol('m²', 'm2', 'sqm', 'square', 'area');
       const categoryCol = findCol('category');
       const supplierCol = findCol('supplier');
       const productCodeCol = findCol('product code', 'productcode', 'code', 'sku');
