@@ -226,21 +226,26 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
           
           // Only compress if file is larger than target and is an image
           if (photo.type && photo.type.startsWith('image/') && photo.size > TARGET_SIZE) {
-            try {
-              fileToProcess = await compressImage(photo);
-              console.log(`Compressed ${photoName}: ${(photo.size / 1024 / 1024).toFixed(2)}MB → ${(fileToProcess.size / 1024 / 1024).toFixed(2)}MB`);
-            } catch (compressionError) {
-              console.warn(`Compression failed for photo ${photoName}. Using original file.`, compressionError);
-              // Continue with original file, don't add to errors unless it's critical
-              fileToProcess = photo;
-            }
+            fileToProcess = await compressImage(photo);
+            console.log(`Processed ${photoName}: ${(photo.size / 1024 / 1024).toFixed(2)}MB → ${(fileToProcess.size / 1024 / 1024).toFixed(2)}MB`);
           }
 
           // Convert to data URL with timeout protection
           const dataURL = await new Promise((resolve, reject) => {
             const readTimeout = setTimeout(() => {
-              reject(new Error('File read timeout'));
-            }, 15000); // 15 second timeout for reading
+              // On timeout, try one more time with original file
+              console.warn(`Read timeout for ${photoName}, retrying with original...`);
+              const retryReader = new FileReader();
+              retryReader.onload = (e) => {
+                if (e.target.result) {
+                  resolve(e.target.result);
+                } else {
+                  reject(new Error('Empty file result on retry'));
+                }
+              };
+              retryReader.onerror = () => reject(new Error('File read error on retry'));
+              retryReader.readAsDataURL(photo); // Use original photo
+            }, 20000); // 20 second timeout for reading
 
             const reader = new FileReader();
             reader.onload = (e) => {
@@ -248,12 +253,22 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
               if (e.target.result) {
                 resolve(e.target.result);
               } else {
-                reject(new Error('Empty file result'));
+                // Try with original file if result is empty
+                console.warn(`Empty result for ${photoName}, trying original...`);
+                const fallbackReader = new FileReader();
+                fallbackReader.onload = (e2) => resolve(e2.target.result);
+                fallbackReader.onerror = () => reject(new Error('Empty file result'));
+                fallbackReader.readAsDataURL(photo);
               }
             };
             reader.onerror = (e) => {
               clearTimeout(readTimeout);
-              reject(new Error('File read error'));
+              // Try with original file on error
+              console.warn(`Read error for ${photoName}, trying original...`);
+              const fallbackReader = new FileReader();
+              fallbackReader.onload = (e2) => resolve(e2.target.result);
+              fallbackReader.onerror = () => reject(new Error('File read error'));
+              fallbackReader.readAsDataURL(photo);
             };
             reader.readAsDataURL(fileToProcess);
           });
