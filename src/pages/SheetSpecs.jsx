@@ -142,7 +142,14 @@ export default function SheetSpecsPage() {
     if (!window.confirm(`Are you sure you want to delete ${selectedIds.length} items?`)) return;
     
     try {
-      await Promise.all(selectedIds.map(id => base44.entities.ItemSpec.delete(id)));
+      const batchSize = 5;
+      for (let i = 0; i < selectedIds.length; i += batchSize) {
+        const batch = selectedIds.slice(i, i + batchSize);
+        await Promise.all(batch.map(id => base44.entities.ItemSpec.delete(id)));
+        if (i + batchSize < selectedIds.length) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
       queryClient.invalidateQueries({ queryKey: ['itemSpecs'] });
       toast({ title: `Deleted ${selectedIds.length} items` });
       setSelectedIds([]);
@@ -156,7 +163,14 @@ export default function SheetSpecsPage() {
     
     try {
       const updateData = { [bulkAction.type]: bulkAction.value };
-      await Promise.all(selectedIds.map(id => base44.entities.ItemSpec.update(id, updateData)));
+      const batchSize = 5;
+      for (let i = 0; i < selectedIds.length; i += batchSize) {
+        const batch = selectedIds.slice(i, i + batchSize);
+        await Promise.all(batch.map(id => base44.entities.ItemSpec.update(id, updateData)));
+        if (i + batchSize < selectedIds.length) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
       queryClient.invalidateQueries({ queryKey: ['itemSpecs'] });
       toast({ title: `Updated ${selectedIds.length} items` });
       setSelectedIds([]);
