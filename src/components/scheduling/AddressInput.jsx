@@ -122,7 +122,7 @@ export default function AddressInput({
     setLoading(false);
   };
 
-  const geocodeAddress = async (address) => {
+  const geocodeAddressFunc = async (address) => {
     setGeocoding(true);
     try {
       // Use Google Places API for geocoding
@@ -220,7 +220,7 @@ export default function AddressInput({
   const handleConfirmAddress = async () => {
     if (!inputValue.trim()) return;
     
-    const geocoded = await geocodeAddress(inputValue);
+    const geocoded = await geocodeAddressFunc(inputValue);
     if (geocoded) {
       setInputValue(geocoded.formattedAddress);
       onChange?.(geocoded.formattedAddress);
