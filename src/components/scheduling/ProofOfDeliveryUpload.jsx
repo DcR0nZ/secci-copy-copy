@@ -286,20 +286,81 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
       setProcessingIndex(-1);
 
       if (compressedPhotosDataURLs.length === 0) {
-        // Last resort: try uploading original files directly
+        // Last resort: try uploading original files directly and skip Phase 2
         console.log('All processing failed, attempting direct upload of original files...');
+        const directUploadUrls = [];
         for (let i = 0; i < photos.length; i++) {
           try {
+            setProcessingIndex(i);
             const result = await base44.integrations.Core.UploadFile({ file: photos[i] });
-            compressedPhotosDataURLs.push(result.file_url);
+            directUploadUrls.push(result.file_url);
+            const progress = ((i + 1) / photos.length) * 100;
+            setUploadProgress(Math.round(progress));
           } catch (directErr) {
             console.error(`Direct upload also failed for photo ${i + 1}:`, directErr);
           }
         }
+        setProcessingIndex(-1);
         
-        if (compressedPhotosDataURLs.length === 0) {
+        if (directUploadUrls.length === 0) {
           throw new Error('All photos failed to be processed. Please try taking new photos or selecting different images.');
         }
+        
+        // Skip Phase 2 - we already have the URLs
+        const existingPodFiles = job.podFiles || [];
+        const allPodFiles = [...existingPodFiles, ...directUploadUrls];
+
+        await base44.entities.Job.update(job.id, {
+          ...job,
+          podFiles: allPodFiles,
+          podNotes: notes || job.podNotes,
+          status: 'DELIVERED',
+          driverStatus: 'COMPLETED'
+        });
+
+        if (notes && notes.trim()) {
+          try {
+            await sendPODNotesNotification({
+              jobId: job.id,
+              customerName: job.customerName,
+              deliveryLocation: job.deliveryLocation,
+              notes: notes.trim(),
+              driverName: user?.full_name || 'Driver'
+            });
+          } catch (emailError) {
+            console.error('Failed to send POD notes notification:', emailError);
+          }
+        }
+
+        toast({
+          title: "Delivery Complete!",
+          description: `${directUploadUrls.length} photo(s) uploaded successfully!`,
+        });
+
+        setPhotos([]);
+        setPhotoPreviews([]);
+        setNotes('');
+        setErrors([]);
+        setUploading(false);
+        setUploadProgress(0);
+
+        try {
+          if (onPODUploaded && typeof onPODUploaded === 'function') {
+            onPODUploaded();
+          }
+        } catch (callbackError) {
+          console.error('Error in onPODUploaded callback:', callbackError);
+        }
+
+        try {
+          if (onOpenChange && typeof onOpenChange === 'function') {
+            onOpenChange(false);
+          }
+        } catch (callbackError) {
+          console.error('Error in onOpenChange callback:', callbackError);
+        }
+
+        return;
       }
       
       if (currentSubmissionErrors.length > 0) {
