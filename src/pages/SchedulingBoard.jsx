@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { DragDropContext } from '@hello-pangea/dnd';
+import { DndContext, DragOverlay, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChevronLeft, ChevronRight, Calendar, Plus, Package, Truck, Clock, AlertTriangle, Bell } from 'lucide-react';
@@ -181,10 +181,29 @@ export default function SchedulingBoard() {
     }
   }, [fetchData, currentUser]);
 
-  const handleDragEnd = async (result) => {
-    const { destination, source, draggableId } = result;
-    if (!destination) return;
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
 
+  const [activeId, setActiveId] = useState(null);
+
+  const handleDragStart = (event) => {
+    setActiveId(event.active.id);
+  };
+
+  const handleDragEnd = async (event) => {
+    const { active, over } = event;
+    setActiveId(null);
+    
+    if (!over) return;
+
+    const draggableId = active.id;
+    const destination = { droppableId: over.id };
+    
     const isPlaceholder = draggableId.startsWith('placeholder-');
 
     if (isPlaceholder) {
@@ -712,7 +731,7 @@ export default function SchedulingBoard() {
   // DESKTOP VIEW
   return (
     <>
-      <DragDropContext onDragEnd={handleDragEnd}>
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
           <div className="h-full flex flex-col bg-gray-50 overflow-hidden">
             <div className="bg-white border-b px-4 md:px-6 py-4 flex-shrink-0 z-30">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -965,7 +984,7 @@ export default function SchedulingBoard() {
               </div>
             )}
           </div>
-        </DragDropContext>
+        </DndContext>
 
       <CreateJobForm 
         open={isCreateJobOpen}
