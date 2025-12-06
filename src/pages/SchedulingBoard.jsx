@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { DragDropContext } from '@hello-pangea/dnd';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChevronLeft, ChevronRight, Calendar, Plus, Package, Truck, Clock, AlertTriangle, Bell } from 'lucide-react';
