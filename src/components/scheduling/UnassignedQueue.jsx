@@ -1,4 +1,5 @@
 import React from 'react';
+import { Droppable, Draggable } from '@hello-pangea/dnd';
 import { Badge } from '@/components/ui/badge';
 import { Clock, Package } from 'lucide-react';
 import JobCard from './JobCard';
