@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { DragDropContext } from '@hello-pangea/dnd';
 import { Button } from '@/components/ui/button';
@@ -185,7 +184,6 @@ export default function SchedulingBoard() {
   const reorderTimeSlot = useCallback(async (truckId, timeSlotId, date) => {
     if (!truckId || !timeSlotId || !date) return;
 
-    // Fetch assignments and placeholders for the specific truck, time slot, and date
     const itemsInSlot = await Promise.all([
       base44.entities.Assignment.filter({ truckId, timeSlotId, date }),
       base44.entities.Placeholder.filter({ truckId, timeSlotId, date })
@@ -193,21 +191,40 @@ export default function SchedulingBoard() {
 
     const allItems = [...itemsInSlot[0], ...itemsInSlot[1]];
 
-    // Sort items by their current slot position
-    const sortedItems = allItems.sort((a, b) => a.slotPosition - b.slotPosition);
+    // Separate items into two blocks: Block 1 (positions 1-2) and Block 2 (positions 3+)
+    const block1Items = allItems.filter(item => item.slotPosition >= 1 && item.slotPosition <= 2);
+    const block2Items = allItems.filter(item => item.slotPosition >= 3);
+
+    // Sort each block by current position
+    block1Items.sort((a, b) => a.slotPosition - b.slotPosition);
+    block2Items.sort((a, b) => a.slotPosition - b.slotPosition);
 
     const updates = [];
-    for (let i = 0; i < sortedItems.length; i++) {
-      const item = sortedItems[i];
-      const newSlotPosition = i + 1; // 1-indexed
+
+    // Reorder block 1 items to sequential positions starting at 1
+    block1Items.forEach((item, index) => {
+      const newSlotPosition = index + 1;
       if (item.slotPosition !== newSlotPosition) {
-        if (item.jobId) { // It's an Assignment
+        if (item.jobId) {
           updates.push(base44.entities.Assignment.update(item.id, { slotPosition: newSlotPosition }));
-        } else { // It's a Placeholder
+        } else {
           updates.push(base44.entities.Placeholder.update(item.id, { slotPosition: newSlotPosition }));
         }
       }
-    }
+    });
+
+    // Reorder block 2 items to sequential positions starting at 3
+    block2Items.forEach((item, index) => {
+      const newSlotPosition = index + 3;
+      if (item.slotPosition !== newSlotPosition) {
+        if (item.jobId) {
+          updates.push(base44.entities.Assignment.update(item.id, { slotPosition: newSlotPosition }));
+        } else {
+          updates.push(base44.entities.Placeholder.update(item.id, { slotPosition: newSlotPosition }));
+        }
+      }
+    });
+
     await Promise.all(updates);
   }, []);
 
