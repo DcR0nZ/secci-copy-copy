@@ -654,9 +654,6 @@ export default function SchedulerGrid({
                                 } else if (!snapshot.isDraggingOver && draggingOverCell === cellKey) {
                                   setDraggingOverCell(null);
                                 }
-
-                                const isDraggingOverWholeSlot = snapshot.isDraggingOver && hasMultipleItemsInSlot && !isTimedOutDroppable;
-                                const isDraggingOverSpecific = snapshot.isDraggingOver && (!hasMultipleItemsInSlot || isTimedOutDroppable);
                                 
                                 return (
                                   <div
