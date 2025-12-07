@@ -1,9 +1,10 @@
 import React from 'react';
+import { Droppable, Draggable } from '@hello-pangea/dnd';
 import { AlertTriangle, Truck } from 'lucide-react';
 import JobCard from './JobCard';
 import { Badge } from '@/components/ui/badge';
 
-export default function TruckJobColumn({ truck, jobs, isOverCapacity, utilizationPercent, onJobClick }) {
+export default function TruckJobColumn({ truck, jobs, isOverCapacity, utilizationPercent }) {
   const totalWeight = jobs.reduce((sum, job) => sum + (job.weightKg || 0), 0);
 
   return (
@@ -46,20 +47,41 @@ export default function TruckJobColumn({ truck, jobs, isOverCapacity, utilizatio
       </div>
 
       {/* Job List */}
-      <div className="min-h-[300px] md:min-h-[400px] p-3 md:p-4 space-y-3">
-        {jobs.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-24 md:h-32 text-gray-400 border-2 border-dashed rounded-lg border-gray-200">
-            <Truck className="h-6 w-6 md:h-8 md:w-8 mb-2" />
-            <span className="text-xs md:text-sm">No jobs assigned</span>
+      <Droppable droppableId={truck.id}>
+        {(provided, snapshot) => (
+          <div
+            ref={provided.innerRef}
+            {...provided.droppableProps}
+            className={`min-h-[300px] md:min-h-[400px] p-3 md:p-4 space-y-3 ${
+              snapshot.isDraggingOver ? 'bg-blue-50' : ''
+            }`}
+          >
+            {jobs.length === 0 ? (
+              <div className={`flex flex-col items-center justify-center h-24 md:h-32 text-gray-400 border-2 border-dashed rounded-lg ${
+                snapshot.isDraggingOver ? 'border-blue-300 text-blue-500' : 'border-gray-200'
+              }`}>
+                <Truck className="h-6 w-6 md:h-8 md:w-8 mb-2" />
+                <span className="text-xs md:text-sm">{snapshot.isDraggingOver ? "Drop here" : "No jobs assigned"}</span>
+              </div>
+            ) : (
+              jobs.map((job, index) => (
+                <Draggable key={job.id} draggableId={job.id} index={index}>
+                  {(provided, snapshot) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                      {...provided.dragHandleProps}
+                    >
+                      <JobCard job={job} isDragging={snapshot.isDragging} />
+                    </div>
+                  )}
+                </Draggable>
+              ))
+            )}
+            {provided.placeholder}
           </div>
-        ) : (
-          jobs.map((job) => (
-            <div key={job.id} onClick={() => onJobClick && onJobClick(job)} className="cursor-pointer">
-              <JobCard job={job} isDragging={false} />
-            </div>
-          ))
         )}
-      </div>
+      </Droppable>
     </div>
   );
 }
