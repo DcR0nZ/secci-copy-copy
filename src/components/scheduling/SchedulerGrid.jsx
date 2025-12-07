@@ -682,7 +682,7 @@ export default function SchedulerGrid({
                                       {slotJobs.map((job, index) => (
                                         <div key={job.id} className="relative w-full max-w-[196px] group/job">
                                           {/* Left Placeholder Button - Insert Above */}
-                                          {canCreatePlaceholder && !isDraggingOver && (
+                                          {canCreatePlaceholder && !snapshot.isDraggingOver && (
                                             <button
                                               onClick={() => onOpenPlaceholderDialog(truck.id, slot.id, blockStart, 'before', index)}
                                               className="absolute left-0 top-1/2 transform -translate-x-full -translate-y-1/2 opacity-0 group-hover/job:opacity-100 transition-opacity bg-white hover:bg-gray-100 border-2 border-gray-300 rounded-full p-1 z-20 shadow-sm ml-[-4px]"
@@ -720,7 +720,7 @@ export default function SchedulerGrid({
                                           </Draggable>
 
                                           {/* Right Placeholder Button - Insert Below */}
-                                          {canCreatePlaceholder && !isDraggingOver && (
+                                          {canCreatePlaceholder && !snapshot.isDraggingOver && (
                                             <button
                                               onClick={() => onOpenPlaceholderDialog(truck.id, slot.id, blockStart, 'after', index)}
                                               className="absolute right-0 top-1/2 transform translate-x-full -translate-y-1/2 opacity-0 group-hover/job:opacity-100 transition-opacity bg-white hover:bg-gray-100 border-2 border-gray-300 rounded-full p-1 z-20 shadow-sm mr-[-4px]"
