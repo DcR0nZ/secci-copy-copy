@@ -288,22 +288,49 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
       if (compressedPhotosDataURLs.length === 0) {
         // Last resort: try uploading original files directly and skip Phase 2
         console.log('All processing failed, attempting direct upload of original files...');
+        setUploadProgress(50); // Show some progress
         const directUploadUrls = [];
+        const directUploadErrors = [];
+        
         for (let i = 0; i < photos.length; i++) {
           try {
             setProcessingIndex(i);
-            const result = await base44.integrations.Core.UploadFile({ file: photos[i] });
+            const photo = photos[i];
+            console.log(`Attempting direct upload of photo ${i + 1}:`, photo.name, photo.type, photo.size);
+            
+            // Validate photo before upload
+            if (!photo || !photo.type || !photo.type.startsWith('image/')) {
+              throw new Error('Invalid image file');
+            }
+            
+            const result = await base44.integrations.Core.UploadFile({ file: photo });
+            
+            if (!result || !result.file_url) {
+              throw new Error('Upload returned no URL');
+            }
+            
             directUploadUrls.push(result.file_url);
-            const progress = ((i + 1) / photos.length) * 100;
+            console.log(`Successfully uploaded photo ${i + 1}:`, result.file_url);
+            
+            const progress = 50 + ((i + 1) / photos.length) * 50;
             setUploadProgress(Math.round(progress));
           } catch (directErr) {
-            console.error(`Direct upload also failed for photo ${i + 1}:`, directErr);
+            const errorMsg = directErr?.message || String(directErr);
+            console.error(`Direct upload failed for photo ${i + 1}:`, errorMsg);
+            directUploadErrors.push(`Photo ${i + 1}: ${errorMsg}`);
           }
         }
         setProcessingIndex(-1);
         
         if (directUploadUrls.length === 0) {
+          console.error('All direct uploads failed. Errors:', directUploadErrors);
+          setErrors(directUploadErrors);
           throw new Error('All photos failed to be processed. Please try taking new photos or selecting different images.');
+        }
+        
+        console.log(`Direct upload succeeded for ${directUploadUrls.length} out of ${photos.length} photos`);
+        if (directUploadErrors.length > 0) {
+          setErrors(directUploadErrors);
         }
         
         // Skip Phase 2 - we already have the URLs
