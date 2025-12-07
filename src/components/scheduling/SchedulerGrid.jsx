@@ -613,37 +613,36 @@ export default function SchedulerGrid({
                               direction="vertical"
                               isDropDisabled={!isDropAllowed}>
                               {(provided, snapshot) => {
-                                // Handle hover timer for 2-second delay
-                                useEffect(() => {
-                                  if (snapshot.isDraggingOver) {
-                                    if (hoveredDroppableId !== droppableId) {
-                                      setHoveredDroppableId(droppableId);
-                                      
-                                      // Clear any existing timer
-                                      if (hoverTimerRef.current) {
-                                        clearTimeout(hoverTimerRef.current);
-                                      }
-                                      
-                                      // Start 2-second timer for this droppable
-                                      if (hasMultipleItemsInSlot) {
-                                        hoverTimerRef.current = setTimeout(() => {
-                                          setTimedOutDroppableId(droppableId);
-                                        }, 2000);
-                                      }
+                                // Handle hover tracking and timer outside of hooks
+                                if (snapshot.isDraggingOver && hoveredDroppableId !== droppableId) {
+                                  // New hover started
+                                  setTimeout(() => {
+                                    setHoveredDroppableId(droppableId);
+                                    
+                                    // Clear any existing timer
+                                    if (hoverTimerRef.current) {
+                                      clearTimeout(hoverTimerRef.current);
                                     }
-                                  } else {
-                                    // Not dragging over this droppable anymore
-                                    if (hoveredDroppableId === droppableId) {
-                                      if (hoverTimerRef.current) {
-                                        clearTimeout(hoverTimerRef.current);
-                                      }
-                                      setHoveredDroppableId(null);
-                                      if (timedOutDroppableId === droppableId) {
-                                        setTimedOutDroppableId(null);
-                                      }
+                                    
+                                    // Start 2-second timer for this droppable
+                                    if (hasMultipleItemsInSlot) {
+                                      hoverTimerRef.current = setTimeout(() => {
+                                        setTimedOutDroppableId(droppableId);
+                                      }, 2000);
                                     }
-                                  }
-                                }, [snapshot.isDraggingOver]);
+                                  }, 0);
+                                } else if (!snapshot.isDraggingOver && hoveredDroppableId === droppableId) {
+                                  // Hover ended
+                                  setTimeout(() => {
+                                    if (hoverTimerRef.current) {
+                                      clearTimeout(hoverTimerRef.current);
+                                    }
+                                    setHoveredDroppableId(null);
+                                    if (timedOutDroppableId === droppableId) {
+                                      setTimedOutDroppableId(null);
+                                    }
+                                  }, 0);
+                                }
                                 
                                 // Determine visual feedback
                                 const isDraggingOverWholeSlot = snapshot.isDraggingOver && hasMultipleItemsInSlot && !isTimedOutDroppable;
