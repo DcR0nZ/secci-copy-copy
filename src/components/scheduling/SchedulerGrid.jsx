@@ -411,9 +411,11 @@ export default function SchedulerGrid({
   const getJobsForCell = (truckId, timeSlotId, slotPosition) => {
     const cellAssignments = assignments.filter((a) => {
       if (a.truckId !== truckId || a.timeSlotId !== timeSlotId) return false;
-      if (a.slotPosition === slotPosition) return true;
-      if (a.slotPosition === slotPosition - 1 && (a.slotPosition === 1 || a.slotPosition === 3)) {
-        return true;
+      // Block 1: positions 1-2, Block 2: positions 3-4+
+      if (slotPosition === 1) {
+        return a.slotPosition >= 1 && a.slotPosition <= 2;
+      } else if (slotPosition === 3) {
+        return a.slotPosition >= 3;
       }
       return false;
     });
@@ -424,9 +426,15 @@ export default function SchedulerGrid({
     return placeholders.filter((p) => {
       if (p.truckId !== truckId || p.timeSlotId !== timeSlotId) return false;
       
-      // If placeholder has a slotPosition defined, only show in that specific block
+      // If placeholder has a slotPosition defined, check which block it belongs to
       if (p.slotPosition) {
-        return p.slotPosition === slotPosition;
+        // Block 1: positions 1-2, Block 2: positions 3-4+
+        if (slotPosition === 1) {
+          return p.slotPosition >= 1 && p.slotPosition <= 2;
+        } else if (slotPosition === 3) {
+          return p.slotPosition >= 3;
+        }
+        return false;
       }
       
       // If placeholder doesn't have slotPosition, only show in block 1 (backward compatibility)
