@@ -464,9 +464,9 @@ export default function SchedulerGrid({
 
   return (
     <>
-      <div className="w-full h-full overflow-auto">
+      <div className="w-full h-full flex flex-col overflow-hidden">
         {/* Unscheduled Row */}
-        <div className="flex border-2 border-gray-400 bg-yellow-50 mb-6 rounded-lg overflow-hidden shadow-sm">
+        <div className="flex border-2 border-gray-400 bg-yellow-50 mb-4 rounded-lg overflow-hidden shadow-sm flex-shrink-0">
           <div className="w-24 lg:w-32 flex-shrink-0 p-3 bg-yellow-100 border-r-2 border-gray-400 flex flex-col justify-center">
             <div className="flex items-center">
               <Package className="h-4 w-4 mr-1.5 text-yellow-700" />
@@ -518,7 +518,7 @@ export default function SchedulerGrid({
         </div>
 
         {/* Time Header */}
-        <div className="flex sticky top-0 z-20 bg-white border-b-2 border-gray-300 shadow-sm">
+        <div className="flex sticky top-0 z-20 bg-white border-b-2 border-gray-300 shadow-sm flex-shrink-0">
           <div className="w-24 lg:w-32 flex-shrink-0 p-2 bg-gray-100 border-r-2 border-gray-300 sticky left-0 z-30">
             <span className="font-semibold text-xs">Truck</span>
           </div>
@@ -537,7 +537,7 @@ export default function SchedulerGrid({
         </div>
 
         {/* Truck Rows */}
-        <div className="pb-8">
+        <div className="flex-1 overflow-auto pb-4">
           {trucks.map((truck, truckIndex) => {
             const totalSqm = assignments
               .filter((a) => a.truckId === truck.id)
@@ -561,8 +561,8 @@ export default function SchedulerGrid({
               <div
                 key={truck.id}
                 className={`flex ${
-                  isLastTruck ? 'border-b-2 border-gray-400 mb-4' : 'border-b border-gray-200'
-                } min-h-[140px]`}>
+                  isLastTruck ? 'border-b-2 border-gray-400' : 'border-b-2 border-gray-300'
+                } min-h-[140px] mb-6`}>
                 {/* Sticky Truck Column */}
                 <div className="w-24 lg:w-32 flex-shrink-0 p-2 bg-gray-50 border-r-2 border-gray-300 sticky left-0 z-10">
                   <div className="font-semibold text-xs text-gray-900">{truck.name}</div>
@@ -616,11 +616,11 @@ export default function SchedulerGrid({
                                     ref={provided.innerRef}
                                     {...provided.droppableProps}
                                     className={`relative border-r border-gray-200 group overflow-visible flex-1 ${
-                                      snapshot.isDraggingOver ? 'ring-2 ring-inset ring-blue-500 bg-blue-100' : ''
+                                     snapshot.isDraggingOver ? 'ring-4 ring-inset ring-blue-500 bg-blue-100' : ''
                                     }`}
                                     style={{
-                                      minWidth: '100px',
-                                      minHeight: '132px',
+                                     minWidth: '100px',
+                                     minHeight: '140px',
                                       display: 'flex',
                                       flexDirection: 'column',
                                       alignItems: 'center',
