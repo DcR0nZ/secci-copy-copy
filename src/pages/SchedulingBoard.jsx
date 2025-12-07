@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { DragDropContext } from '@hello-pangea/dnd';
 import { Button } from '@/components/ui/button';
@@ -181,6 +182,35 @@ export default function SchedulingBoard() {
     }
   }, [fetchData, currentUser]);
 
+  const reorderTimeSlot = useCallback(async (truckId, timeSlotId, date) => {
+    if (!truckId || !timeSlotId || !date) return;
+
+    // Fetch assignments and placeholders for the specific truck, time slot, and date
+    const itemsInSlot = await Promise.all([
+      base44.entities.Assignment.filter({ truckId, timeSlotId, date }),
+      base44.entities.Placeholder.filter({ truckId, timeSlotId, date })
+    ]);
+
+    const allItems = [...itemsInSlot[0], ...itemsInSlot[1]];
+
+    // Sort items by their current slot position
+    const sortedItems = allItems.sort((a, b) => a.slotPosition - b.slotPosition);
+
+    const updates = [];
+    for (let i = 0; i < sortedItems.length; i++) {
+      const item = sortedItems[i];
+      const newSlotPosition = i + 1; // 1-indexed
+      if (item.slotPosition !== newSlotPosition) {
+        if (item.jobId) { // It's an Assignment
+          updates.push(base44.entities.Assignment.update(item.id, { slotPosition: newSlotPosition }));
+        } else { // It's a Placeholder
+          updates.push(base44.entities.Placeholder.update(item.id, { slotPosition: newSlotPosition }));
+        }
+      }
+    }
+    await Promise.all(updates);
+  }, []);
+
   const handleDragEnd = async (result) => {
     const { destination, source, draggableId } = result;
     if (!destination) return;
@@ -194,27 +224,39 @@ export default function SchedulingBoard() {
       
       if (!placeholder) return;
 
+      const originalSourceTruckId = placeholder.truckId;
+      const originalSourceTimeSlotId = placeholder.timeSlotId;
+
       if (destination.droppableId === 'unscheduled') {
         // Delete placeholder if dropped in unscheduled
         await base44.entities.Placeholder.delete(placeholderId);
-        fetchData();
-        return;
+        if (originalSourceTruckId && originalSourceTimeSlotId) {
+          await reorderTimeSlot(originalSourceTruckId, originalSourceTimeSlotId, selectedDate);
+        }
+      } else {
+        const parts = destination.droppableId.split('-');
+        const requestedSlotPosition = parseInt(parts[parts.length - 1]);
+        const destinationTimeSlotId = parts.slice(1, parts.length - 1).join('-');
+        const destinationTruckId = parts[0];
+
+        const finalSlotPosition = requestedSlotPosition <= 2 ? 1 : 3;
+
+        // Update placeholder position
+        await base44.entities.Placeholder.update(placeholderId, {
+          truckId: destinationTruckId,
+          timeSlotId: destinationTimeSlotId,
+          slotPosition: finalSlotPosition,
+          date: selectedDate
+        });
+
+        // Reorder source and destination slots
+        if (originalSourceTruckId !== destinationTruckId || originalSourceTimeSlotId !== destinationTimeSlotId) {
+          if (originalSourceTruckId && originalSourceTimeSlotId) {
+            await reorderTimeSlot(originalSourceTruckId, originalSourceTimeSlotId, selectedDate);
+          }
+        }
+        await reorderTimeSlot(destinationTruckId, destinationTimeSlotId, selectedDate);
       }
-
-      const parts = destination.droppableId.split('-');
-      const requestedSlotPosition = parseInt(parts[parts.length - 1]);
-      const timeSlotId = parts.slice(1, parts.length - 1).join('-');
-      const truckId = parts[0];
-
-      const finalSlotPosition = requestedSlotPosition <= 2 ? 1 : 3;
-
-      // Update placeholder position
-      await base44.entities.Placeholder.update(placeholderId, {
-        truckId,
-        timeSlotId,
-        slotPosition: finalSlotPosition,
-        date: selectedDate
-      });
       fetchData();
       return;
     }
@@ -226,19 +268,25 @@ export default function SchedulingBoard() {
 
     if (!jobToUpdate) return;
 
+    const originalSourceTruckId = sourceAssignment?.truckId;
+    const originalSourceTimeSlotId = sourceAssignment?.timeSlotId;
+
     if (destination.droppableId === 'unscheduled') {
       if (sourceAssignment) {
         await base44.entities.Assignment.delete(sourceAssignment.id);
         await base44.entities.Job.update(jobId, { ...jobToUpdate, status: 'APPROVED' });
-        fetchData();
+        if (originalSourceTruckId && originalSourceTimeSlotId) {
+          await reorderTimeSlot(originalSourceTruckId, originalSourceTimeSlotId, selectedDate);
+        }
       }
+      fetchData();
       return;
     }
     
     const parts = destination.droppableId.split('-');
     const requestedSlotPosition = parseInt(parts[parts.length - 1]);
-    const timeSlotId = parts.slice(1, parts.length - 1).join('-');
-    const truckId = parts[0];
+    const destinationTimeSlotId = parts.slice(1, parts.length - 1).join('-');
+    const destinationTruckId = parts[0];
     
     const assignmentsExcludingCurrentJob = assignments.filter(a => a.jobId !== jobId);
     
@@ -253,8 +301,8 @@ export default function SchedulingBoard() {
     const secondaryBlockEnd = isTargetingBlock1 ? 4 : 2;
 
     const primaryBlockOccupied = assignmentsExcludingCurrentJob.some(a => 
-      a.truckId === truckId && 
-      a.timeSlotId === timeSlotId && 
+      a.truckId === destinationTruckId && 
+      a.timeSlotId === destinationTimeSlotId && 
       a.slotPosition >= primaryBlockStart &&
       a.slotPosition <= primaryBlockEnd
     );
@@ -263,8 +311,8 @@ export default function SchedulingBoard() {
       finalSlotPosition = primaryBlockStart;
     } else {
       const secondaryBlockOccupied = assignmentsExcludingCurrentJob.some(a => 
-        a.truckId === truckId && 
-        a.timeSlotId === timeSlotId && 
+        a.truckId === destinationTruckId && 
+        a.timeSlotId === destinationTimeSlotId && 
         a.slotPosition >= secondaryBlockStart &&
         a.slotPosition <= secondaryBlockEnd
       );
@@ -283,19 +331,28 @@ export default function SchedulingBoard() {
     
     if (sourceAssignment) {
       await base44.entities.Assignment.update(sourceAssignment.id, { 
-        truckId, 
-        timeSlotId, 
+        truckId: destinationTruckId, 
+        timeSlotId: destinationTimeSlotId, 
         slotPosition: finalSlotPosition 
       });
+
+      // Reorder source and destination slots
+      if (originalSourceTruckId !== destinationTruckId || originalSourceTimeSlotId !== destinationTimeSlotId) {
+        if (originalSourceTruckId && originalSourceTimeSlotId) {
+          await reorderTimeSlot(originalSourceTruckId, originalSourceTimeSlotId, selectedDate);
+        }
+      }
+      await reorderTimeSlot(destinationTruckId, destinationTimeSlotId, selectedDate);
     } else {
       await base44.entities.Assignment.create({
         jobId,
-        truckId,
-        timeSlotId,
+        truckId: destinationTruckId,
+        timeSlotId: destinationTimeSlotId,
         slotPosition: finalSlotPosition,
         date: selectedDate,
       });
       await base44.entities.Job.update(jobId, { ...jobToUpdate, status: 'SCHEDULED' });
+      await reorderTimeSlot(destinationTruckId, destinationTimeSlotId, selectedDate);
     }
     fetchData();
   };
