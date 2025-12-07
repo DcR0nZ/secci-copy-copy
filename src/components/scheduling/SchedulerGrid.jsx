@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Droppable, Draggable } from '@hello-pangea/dnd';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, Package, GripVertical, CheckCircle2, Plus } from 'lucide-react';
@@ -383,6 +383,9 @@ export default function SchedulerGrid({
   const [currentUser, setCurrentUser] = useState(null);
   const [draggingOverCell, setDraggingOverCell] = useState(null);
   const [pickupLocations, setPickupLocations] = useState([]);
+  const [hoveredDroppableId, setHoveredDroppableId] = useState(null);
+  const [timedOutDroppableId, setTimedOutDroppableId] = useState(null);
+  const hoverTimerRef = useRef(null);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -596,27 +599,73 @@ export default function SchedulerGrid({
                           const slotPlaceholders = getPlaceholdersForCell(truck.id, slot.id, blockStart);
                           const droppableId = `${truck.id}-${slot.id}-${blockStart}`;
                           const cellKey = droppableId;
-                          const isDraggingOver = draggingOverCell === cellKey;
+                          
+                          // Determine if dropping should be disabled based on slot occupancy
+                          const itemsInWholeSlot = allJobsInSlot.length + allPlaceholdersInSlot.length;
+                          const hasMultipleItemsInSlot = itemsInWholeSlot >= 2;
+                          const isTimedOutDroppable = timedOutDroppableId === droppableId;
+                          const isDropAllowed = dragDropEnabled && (!hasMultipleItemsInSlot || isTimedOutDroppable);
 
                           return (
                             <Droppable
                               key={blockStart}
                               droppableId={droppableId}
                               direction="vertical"
-                              isDropDisabled={!dragDropEnabled}>
+                              isDropDisabled={!isDropAllowed}>
                               {(provided, snapshot) => {
-                                if (snapshot.isDraggingOver && draggingOverCell !== cellKey) {
+                                // Handle hover timer for 2-second delay
+                                useEffect(() => {
+                                  if (snapshot.isDraggingOver) {
+                                    if (hoveredDroppableId !== droppableId) {
+                                      setHoveredDroppableId(droppableId);
+                                      
+                                      // Clear any existing timer
+                                      if (hoverTimerRef.current) {
+                                        clearTimeout(hoverTimerRef.current);
+                                      }
+                                      
+                                      // Start 2-second timer for this droppable
+                                      if (hasMultipleItemsInSlot) {
+                                        hoverTimerRef.current = setTimeout(() => {
+                                          setTimedOutDroppableId(droppableId);
+                                        }, 2000);
+                                      }
+                                    }
+                                  } else {
+                                    // Not dragging over this droppable anymore
+                                    if (hoveredDroppableId === droppableId) {
+                                      if (hoverTimerRef.current) {
+                                        clearTimeout(hoverTimerRef.current);
+                                      }
+                                      setHoveredDroppableId(null);
+                                      if (timedOutDroppableId === droppableId) {
+                                        setTimedOutDroppableId(null);
+                                      }
+                                    }
+                                  }
+                                }, [snapshot.isDraggingOver]);
+                                
+                                // Determine visual feedback
+                                const isDraggingOverWholeSlot = snapshot.isDraggingOver && hasMultipleItemsInSlot && !isTimedOutDroppable;
+                                const isDraggingOverSpecific = snapshot.isDraggingOver && (!hasMultipleItemsInSlot || isTimedOutDroppable);
+                                
+                                if (isDraggingOverSpecific && draggingOverCell !== cellKey) {
                                   setDraggingOverCell(cellKey);
                                 } else if (!snapshot.isDraggingOver && draggingOverCell === cellKey) {
                                   setDraggingOverCell(null);
                                 }
 
+                                const isDraggingOverWholeSlot = snapshot.isDraggingOver && hasMultipleItemsInSlot && !isTimedOutDroppable;
+                                const isDraggingOverSpecific = snapshot.isDraggingOver && (!hasMultipleItemsInSlot || isTimedOutDroppable);
+                                
                                 return (
                                   <div
                                     ref={provided.innerRef}
                                     {...provided.droppableProps}
                                     className={`relative border-r border-gray-200 group overflow-visible flex-1 ${
-                                     snapshot.isDraggingOver ? 'ring-4 ring-inset ring-blue-500 bg-blue-100' : ''
+                                     isDraggingOverWholeSlot ? 'ring-4 ring-inset ring-blue-500 bg-blue-100' : ''
+                                    } ${
+                                     isDraggingOverSpecific ? 'ring-4 ring-inset ring-green-500 bg-green-100' : ''
                                     }`}
                                     style={{
                                      minWidth: '100px',
@@ -685,7 +734,7 @@ export default function SchedulerGrid({
                                       {slotPlaceholders.map((placeholder, phIndex) => (
                                         <div key={`placeholder-${placeholder.id}`} className="relative w-full max-w-[196px] group/placeholder">
                                           {/* Left Placeholder Button - Insert Above */}
-                                          {canCreatePlaceholder && !isDraggingOver && (
+                                          {canCreatePlaceholder && !snapshot.isDraggingOver && (
                                             <button
                                               onClick={() => onOpenPlaceholderDialog(truck.id, slot.id, blockStart, 'before', slotJobs.length + phIndex)}
                                               className="absolute left-0 top-1/2 transform -translate-x-full -translate-y-1/2 opacity-0 group-hover/placeholder:opacity-100 transition-opacity bg-white hover:bg-gray-100 border-2 border-gray-300 rounded-full p-1 z-20 shadow-sm ml-[-4px]"
@@ -718,7 +767,7 @@ export default function SchedulerGrid({
                                           </Draggable>
 
                                           {/* Right Placeholder Button - Insert Below */}
-                                          {canCreatePlaceholder && !isDraggingOver && (
+                                          {canCreatePlaceholder && !snapshot.isDraggingOver && (
                                             <button
                                               onClick={() => onOpenPlaceholderDialog(truck.id, slot.id, blockStart, 'after', slotJobs.length + phIndex)}
                                               className="absolute right-0 top-1/2 transform translate-x-full -translate-y-1/2 opacity-0 group-hover/placeholder:opacity-100 transition-opacity bg-white hover:bg-gray-100 border-2 border-gray-300 rounded-full p-1 z-20 shadow-sm mr-[-4px]"
@@ -731,7 +780,7 @@ export default function SchedulerGrid({
                                     </div>
 
                                     {/* Empty Cell Placeholder Button */}
-                                    {canCreatePlaceholder && slotJobs.length === 0 && slotPlaceholders.length === 0 && !isDraggingOver && (
+                                    {canCreatePlaceholder && slotJobs.length === 0 && slotPlaceholders.length === 0 && !snapshot.isDraggingOver && (
                                       <button
                                         onClick={() => onOpenPlaceholderDialog(truck.id, slot.id, blockStart)}
                                         className="opacity-0 group-hover:opacity-100 transition-opacity bg-white hover:bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg p-2 z-10"
