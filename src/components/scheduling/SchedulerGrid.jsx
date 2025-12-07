@@ -81,7 +81,7 @@ const JobBlock = ({ job, onClick, deliveryTypes, pickupLocations }) => {
       className="w-full h-full border-2 rounded p-2 text-xs cursor-pointer transition-all overflow-hidden"
       style={{
         ...cardStyles,
-        boxShadow: isDragging ? '0 10px 15px -3px rgba(0, 0, 0, 0.1)' : '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
+        boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
       }}
       onMouseEnter={(e) => {
         if (!isDragging) {
@@ -210,7 +210,7 @@ const ScheduledJobBlock = ({ job, onClick, deliveryTypes, pickupLocations }) => 
       className="w-full h-full border-2 rounded p-2 text-xs cursor-pointer transition-all overflow-hidden"
       style={{
         ...cardStyles,
-        boxShadow: isDragging ? '0 10px 15px -3px rgba(0, 0, 0, 0.1)' : '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
+        boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
       }}
       onMouseEnter={(e) => {
         if (!isDragging) {
