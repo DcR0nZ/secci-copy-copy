@@ -1,10 +1,9 @@
 import React from 'react';
-import { Droppable, Draggable } from '@hello-pangea/dnd';
 import { Badge } from '@/components/ui/badge';
 import { Clock, Package } from 'lucide-react';
 import JobCard from './JobCard';
 
-export default function UnassignedQueue({ jobs }) {
+export default function UnassignedQueue({ jobs, onJobClick }) {
   const sortedJobs = [...jobs].sort((a, b) => 
     new Date(a.requestedDate) - new Date(b.requestedDate)
   );
@@ -22,49 +21,30 @@ export default function UnassignedQueue({ jobs }) {
           </Badge>
         </div>
         <p className="text-xs md:text-sm text-gray-600 mt-1">
-          Drag jobs to schedule them
+          Click jobs to view details and schedule them
         </p>
       </div>
 
-      <Droppable droppableId="unassigned">
-        {(provided, snapshot) => (
-          <div
-            ref={provided.innerRef}
-            {...provided.droppableProps}
-            className={`flex-1 overflow-y-auto p-3 md:p-4 space-y-3 ${
-              snapshot.isDraggingOver ? 'bg-blue-50' : ''
-            }`}
-          >
-            {sortedJobs.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <Package className="h-8 w-8 md:h-12 md:w-12 mx-auto mb-4 text-gray-300" />
-                <p className="text-xs md:text-sm">All jobs are scheduled!</p>
-              </div>
-            ) : (
-              sortedJobs.map((job, index) => (
-                <Draggable key={job.id} draggableId={job.id} index={index}>
-                  {(provided, snapshot) => (
-                    <div
-                      ref={provided.innerRef}
-                      {...provided.draggableProps}
-                      {...provided.dragHandleProps}
-                    >
-                      <div className="relative">
-                        <JobCard job={job} isDragging={snapshot.isDragging} />
-                        <div className="mt-1 flex items-center text-xs text-gray-500">
-                          <Clock className="h-3 w-3 mr-1" />
-                          <span>Requested: {new Date(job.requestedDate).toLocaleDateString()}</span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </Draggable>
-              ))
-            )}
-            {provided.placeholder}
+      <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-3">
+        {sortedJobs.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">
+            <Package className="h-8 w-8 md:h-12 md:w-12 mx-auto mb-4 text-gray-300" />
+            <p className="text-xs md:text-sm">All jobs are scheduled!</p>
           </div>
+        ) : (
+          sortedJobs.map((job) => (
+            <div key={job.id} onClick={() => onJobClick && onJobClick(job)} className="cursor-pointer">
+              <div className="relative">
+                <JobCard job={job} isDragging={false} />
+                <div className="mt-1 flex items-center text-xs text-gray-500">
+                  <Clock className="h-3 w-3 mr-1" />
+                  <span>Requested: {new Date(job.requestedDate).toLocaleDateString()}</span>
+                </div>
+              </div>
+            </div>
+          ))
         )}
-      </Droppable>
+      </div>
     </div>
   );
 }
