@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { DragDropContext } from '@hello-pangea/dnd';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChevronLeft, ChevronRight, Calendar, Plus, Package, Truck, Clock, AlertTriangle, Bell } from 'lucide-react';
@@ -786,8 +785,7 @@ export default function SchedulingBoard() {
   // DESKTOP VIEW
   return (
     <>
-      <DragDropContext onDragEnd={handleDragEnd}>
-          <div className="h-full flex flex-col bg-gray-50 overflow-hidden">
+      <div className="h-full flex flex-col bg-gray-50 overflow-hidden">
             <div className="bg-white border-b px-4 md:px-6 py-4 flex-shrink-0 z-30">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
@@ -1037,9 +1035,8 @@ export default function SchedulingBoard() {
                   onJobClick={handleJobClick}
                 />
               </div>
-            )}
-          </div>
-        </DragDropContext>
+              )}
+              </div>
 
       <CreateJobForm 
         open={isCreateJobOpen}

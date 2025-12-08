@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Droppable, Draggable } from '@hello-pangea/dnd';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, Package, GripVertical, CheckCircle2, Plus } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -479,45 +478,28 @@ export default function SchedulerGrid({
               {unscheduledJobs.length} {unscheduledJobs.length === 1 ? 'job' : 'jobs'}
             </Badge>
           </div>
-          <Droppable droppableId="unscheduled" direction="horizontal" isDropDisabled={!dragDropEnabled}>
-            {(provided, snapshot) => (
+          <div className="flex-1 flex gap-2 p-3 overflow-x-auto min-h-[100px]">
+            {unscheduledJobs.map((job, index) => (
               <div
-                ref={provided.innerRef}
-                {...provided.droppableProps}
-                className={`flex-1 flex gap-2 p-3 overflow-x-auto min-h-[100px] ${
-                  snapshot.isDraggingOver ? 'bg-yellow-200' : ''
-                }`}>
-                {unscheduledJobs.map((job, index) => (
-                  <Draggable key={job.id} draggableId={job.id} index={index} isDragDisabled={!dragDropEnabled}>
-                    {(provided, snapshot) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        {...provided.dragHandleProps}
-                        style={{
-                          ...provided.draggableProps.style,
-                          width: '200px',
-                          height: '80px',
-                          flexShrink: 0
-                        }}>
-                        <JobBlock
-                          job={job}
-                          isDragging={snapshot.isDragging}
-                          onClick={() => !snapshot.isDragging && (onJobClick ? onJobClick(job) : handleJobClick(job))}
-                          deliveryTypes={deliveryTypes}
-                          pickupLocations={pickupLocations}
-                        />
-                      </div>
-                    )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
-                {unscheduledJobs.length === 0 && (
-                  <div className="text-gray-500 text-sm p-2 flex items-center">No unscheduled jobs for this date</div>
-                )}
+                key={job.id}
+                style={{
+                  width: '200px',
+                  height: '80px',
+                  flexShrink: 0
+                }}>
+                <JobBlock
+                  job={job}
+                  isDragging={false}
+                  onClick={() => (onJobClick ? onJobClick(job) : handleJobClick(job))}
+                  deliveryTypes={deliveryTypes}
+                  pickupLocations={pickupLocations}
+                />
               </div>
+            ))}
+            {unscheduledJobs.length === 0 && (
+              <div className="text-gray-500 text-sm p-2 flex items-center">No unscheduled jobs for this date</div>
             )}
-          </Droppable>
+          </div>
         </div>
 
         {/* Time Header */}
@@ -607,189 +589,106 @@ export default function SchedulerGrid({
                           const isDropAllowed = dragDropEnabled && (!hasMultipleItemsInSlot || isTimedOutDroppable);
 
                           return (
-                            <Droppable
+                            <div
                               key={blockStart}
-                              droppableId={droppableId}
-                              direction="vertical"
-                              isDropDisabled={!isDropAllowed}>
-                              {(provided, snapshot) => {
-                                // Handle hover tracking and timer outside of hooks
-                                if (snapshot.isDraggingOver && hoveredDroppableId !== droppableId) {
-                                  // New hover started
-                                  setTimeout(() => {
-                                    setHoveredDroppableId(droppableId);
-                                    
-                                    // Clear any existing timer
-                                    if (hoverTimerRef.current) {
-                                      clearTimeout(hoverTimerRef.current);
-                                    }
-                                    
-                                    // Start 2-second timer for this droppable
-                                    if (hasMultipleItemsInSlot) {
-                                      hoverTimerRef.current = setTimeout(() => {
-                                        setTimedOutDroppableId(droppableId);
-                                      }, 2000);
-                                    }
-                                  }, 0);
-                                } else if (!snapshot.isDraggingOver && hoveredDroppableId === droppableId) {
-                                  // Hover ended
-                                  setTimeout(() => {
-                                    if (hoverTimerRef.current) {
-                                      clearTimeout(hoverTimerRef.current);
-                                    }
-                                    setHoveredDroppableId(null);
-                                    if (timedOutDroppableId === droppableId) {
-                                      setTimedOutDroppableId(null);
-                                    }
-                                  }, 0);
-                                }
-                                
-                                // Determine visual feedback
-                                const isDraggingOverWholeSlot = snapshot.isDraggingOver && hasMultipleItemsInSlot && !isTimedOutDroppable;
-                                const isDraggingOverSpecific = snapshot.isDraggingOver && (!hasMultipleItemsInSlot || isTimedOutDroppable);
-                                
-                                if (isDraggingOverSpecific && draggingOverCell !== cellKey) {
-                                  setDraggingOverCell(cellKey);
-                                } else if (!snapshot.isDraggingOver && draggingOverCell === cellKey) {
-                                  setDraggingOverCell(null);
-                                }
-                                
-                                return (
-                                  <div
-                                    ref={provided.innerRef}
-                                    {...provided.droppableProps}
-                                    className={`relative border-r border-gray-200 group overflow-visible flex-1 ${
-                                     isDraggingOverWholeSlot ? 'ring-4 ring-inset ring-blue-500 bg-blue-100' : ''
-                                    } ${
-                                     isDraggingOverSpecific ? 'ring-4 ring-inset ring-green-500 bg-green-100' : ''
-                                    }`}
-                                    style={{
-                                     minWidth: '100px',
-                                     minHeight: '140px',
-                                      display: 'flex',
-                                      flexDirection: 'column',
-                                      alignItems: 'center',
-                                      justifyContent: 'center',
-                                      position: 'relative'
-                                    }}>
-                                    {/* Centered Content Container with relative positioning for buttons */}
-                                    <div
-                                      className="flex flex-col gap-2 items-center justify-center w-full px-1 relative">
-                                      {slotJobs.map((job, index) => (
-                                        <div key={job.id} className="relative w-full max-w-[196px] group/job">
-                                          {/* Left Placeholder Button - Insert Above */}
-                                          {canCreatePlaceholder && !snapshot.isDraggingOver && (
-                                            <button
-                                              onClick={() => onOpenPlaceholderDialog(truck.id, slot.id, blockStart, 'before', index)}
-                                              className="absolute left-0 top-1/2 transform -translate-x-full -translate-y-1/2 opacity-0 group-hover/job:opacity-100 transition-opacity bg-white hover:bg-gray-100 border-2 border-gray-300 rounded-full p-1 z-20 shadow-sm ml-[-4px]"
-                                              style={{ width: '24px', height: '24px' }}>
-                                              <Plus className="h-3 w-3 text-gray-600" />
-                                            </button>
-                                          )}
-                                          
-                                          <Draggable
-                                            draggableId={job.id}
-                                            index={index}
-                                            isDragDisabled={!dragDropEnabled}>
-                                            {(provided, snapshot) => (
-                                              <div
-                                                ref={provided.innerRef}
-                                                {...provided.draggableProps}
-                                                {...provided.dragHandleProps}
-                                                style={{
-                                                  ...provided.draggableProps.style,
-                                                  width: '100%',
-                                                  minHeight: '100px'
-                                                }}>
-                                                <ScheduledJobBlock
-                                                  job={job}
-                                                  isDragging={snapshot.isDragging}
-                                                  onClick={() =>
-                                                    !snapshot.isDragging &&
-                                                    (onJobClick ? onJobClick(job) : handleJobClick(job))
-                                                  }
-                                                  deliveryTypes={deliveryTypes}
-                                                  pickupLocations={pickupLocations}
-                                                />
-                                              </div>
-                                            )}
-                                          </Draggable>
-
-                                          {/* Right Placeholder Button - Insert Below */}
-                                          {canCreatePlaceholder && !snapshot.isDraggingOver && (
-                                            <button
-                                              onClick={() => onOpenPlaceholderDialog(truck.id, slot.id, blockStart, 'after', index)}
-                                              className="absolute right-0 top-1/2 transform translate-x-full -translate-y-1/2 opacity-0 group-hover/job:opacity-100 transition-opacity bg-white hover:bg-gray-100 border-2 border-gray-300 rounded-full p-1 z-20 shadow-sm mr-[-4px]"
-                                              style={{ width: '24px', height: '24px' }}>
-                                              <Plus className="h-3 w-3 text-gray-600" />
-                                            </button>
-                                          )}
-                                        </div>
-                                      ))}
-
-                                      {slotPlaceholders.map((placeholder, phIndex) => (
-                                        <div key={`placeholder-${placeholder.id}`} className="relative w-full max-w-[196px] group/placeholder">
-                                          {/* Left Placeholder Button - Insert Above */}
-                                          {canCreatePlaceholder && !snapshot.isDraggingOver && (
-                                            <button
-                                              onClick={() => onOpenPlaceholderDialog(truck.id, slot.id, blockStart, 'before', slotJobs.length + phIndex)}
-                                              className="absolute left-0 top-1/2 transform -translate-x-full -translate-y-1/2 opacity-0 group-hover/placeholder:opacity-100 transition-opacity bg-white hover:bg-gray-100 border-2 border-gray-300 rounded-full p-1 z-20 shadow-sm ml-[-4px]"
-                                              style={{ width: '24px', height: '24px' }}>
-                                              <Plus className="h-3 w-3 text-gray-600" />
-                                            </button>
-                                          )}
-
-                                          <Draggable
-                                            draggableId={`placeholder-${placeholder.id}`}
-                                            index={slotJobs.length + phIndex}
-                                            isDragDisabled={!dragDropEnabled}>
-                                            {(provided, snapshot) => (
-                                              <div
-                                                ref={provided.innerRef}
-                                                {...provided.draggableProps}
-                                                {...provided.dragHandleProps}
-                                                style={{
-                                                  ...provided.draggableProps.style,
-                                                  minHeight: '60px',
-                                                  width: '100%'
-                                                }}>
-                                                <PlaceholderBlock
-                                                  placeholder={placeholder}
-                                                  onUpdated={() => window.location.reload()}
-                                                  isDragging={snapshot.isDragging}
-                                                />
-                                              </div>
-                                            )}
-                                          </Draggable>
-
-                                          {/* Right Placeholder Button - Insert Below */}
-                                          {canCreatePlaceholder && !snapshot.isDraggingOver && (
-                                            <button
-                                              onClick={() => onOpenPlaceholderDialog(truck.id, slot.id, blockStart, 'after', slotJobs.length + phIndex)}
-                                              className="absolute right-0 top-1/2 transform translate-x-full -translate-y-1/2 opacity-0 group-hover/placeholder:opacity-100 transition-opacity bg-white hover:bg-gray-100 border-2 border-gray-300 rounded-full p-1 z-20 shadow-sm mr-[-4px]"
-                                              style={{ width: '24px', height: '24px' }}>
-                                              <Plus className="h-3 w-3 text-gray-600" />
-                                            </button>
-                                          )}
-                                        </div>
-                                      ))}
-                                    </div>
-
-                                    {/* Empty Cell Placeholder Button */}
-                                    {canCreatePlaceholder && slotJobs.length === 0 && slotPlaceholders.length === 0 && !snapshot.isDraggingOver && (
+                              className="relative border-r border-gray-200 group overflow-visible flex-1"
+                              style={{
+                               minWidth: '100px',
+                               minHeight: '140px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                position: 'relative'
+                              }}>
+                              {/* Centered Content Container with relative positioning for buttons */}
+                              <div
+                                className="flex flex-col gap-2 items-center justify-center w-full px-1 relative">
+                                {slotJobs.map((job, index) => (
+                                  <div key={job.id} className="relative w-full max-w-[196px] group/job">
+                                    {/* Left Placeholder Button - Insert Above */}
+                                    {canCreatePlaceholder && (
                                       <button
-                                        onClick={() => onOpenPlaceholderDialog(truck.id, slot.id, blockStart)}
-                                        className="opacity-0 group-hover:opacity-100 transition-opacity bg-white hover:bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg p-2 z-10"
-                                        style={{ width: '48px', height: '48px' }}>
-                                        <Plus className="h-6 w-6 text-gray-400" />
+                                        onClick={() => onOpenPlaceholderDialog(truck.id, slot.id, blockStart, 'before', index)}
+                                        className="absolute left-0 top-1/2 transform -translate-x-full -translate-y-1/2 opacity-0 group-hover/job:opacity-100 transition-opacity bg-white hover:bg-gray-100 border-2 border-gray-300 rounded-full p-1 z-20 shadow-sm ml-[-4px]"
+                                        style={{ width: '24px', height: '24px' }}>
+                                        <Plus className="h-3 w-3 text-gray-600" />
                                       </button>
                                     )}
 
-                                    {provided.placeholder}
+                                    <div
+                                      style={{
+                                        width: '100%',
+                                        minHeight: '100px'
+                                      }}>
+                                      <ScheduledJobBlock
+                                        job={job}
+                                        isDragging={false}
+                                        onClick={() => (onJobClick ? onJobClick(job) : handleJobClick(job))}
+                                        deliveryTypes={deliveryTypes}
+                                        pickupLocations={pickupLocations}
+                                      />
+                                    </div>
+
+                                    {/* Right Placeholder Button - Insert Below */}
+                                    {canCreatePlaceholder && (
+                                      <button
+                                        onClick={() => onOpenPlaceholderDialog(truck.id, slot.id, blockStart, 'after', index)}
+                                        className="absolute right-0 top-1/2 transform translate-x-full -translate-y-1/2 opacity-0 group-hover/job:opacity-100 transition-opacity bg-white hover:bg-gray-100 border-2 border-gray-300 rounded-full p-1 z-20 shadow-sm mr-[-4px]"
+                                        style={{ width: '24px', height: '24px' }}>
+                                        <Plus className="h-3 w-3 text-gray-600" />
+                                      </button>
+                                    )}
                                   </div>
-                                );
-                              }}
-                            </Droppable>
+                                ))}
+
+                                {slotPlaceholders.map((placeholder, phIndex) => (
+                                  <div key={`placeholder-${placeholder.id}`} className="relative w-full max-w-[196px] group/placeholder">
+                                    {/* Left Placeholder Button - Insert Above */}
+                                    {canCreatePlaceholder && (
+                                      <button
+                                        onClick={() => onOpenPlaceholderDialog(truck.id, slot.id, blockStart, 'before', slotJobs.length + phIndex)}
+                                        className="absolute left-0 top-1/2 transform -translate-x-full -translate-y-1/2 opacity-0 group-hover/placeholder:opacity-100 transition-opacity bg-white hover:bg-gray-100 border-2 border-gray-300 rounded-full p-1 z-20 shadow-sm ml-[-4px]"
+                                        style={{ width: '24px', height: '24px' }}>
+                                        <Plus className="h-3 w-3 text-gray-600" />
+                                      </button>
+                                    )}
+
+                                    <div
+                                      style={{
+                                        minHeight: '60px',
+                                        width: '100%'
+                                      }}>
+                                      <PlaceholderBlock
+                                        placeholder={placeholder}
+                                        onUpdated={() => window.location.reload()}
+                                        isDragging={false}
+                                      />
+                                    </div>
+
+                                    {/* Right Placeholder Button - Insert Below */}
+                                    {canCreatePlaceholder && (
+                                      <button
+                                        onClick={() => onOpenPlaceholderDialog(truck.id, slot.id, blockStart, 'after', slotJobs.length + phIndex)}
+                                        className="absolute right-0 top-1/2 transform translate-x-full -translate-y-1/2 opacity-0 group-hover/placeholder:opacity-100 transition-opacity bg-white hover:bg-gray-100 border-2 border-gray-300 rounded-full p-1 z-20 shadow-sm mr-[-4px]"
+                                        style={{ width: '24px', height: '24px' }}>
+                                        <Plus className="h-3 w-3 text-gray-600" />
+                                      </button>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+
+                              {/* Empty Cell Placeholder Button */}
+                              {canCreatePlaceholder && slotJobs.length === 0 && slotPlaceholders.length === 0 && (
+                                <button
+                                  onClick={() => onOpenPlaceholderDialog(truck.id, slot.id, blockStart)}
+                                  className="opacity-0 group-hover:opacity-100 transition-opacity bg-white hover:bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg p-2 z-10"
+                                  style={{ width: '48px', height: '48px' }}>
+                                  <Plus className="h-6 w-6 text-gray-400" />
+                                </button>
+                              )}
+                            </div>
                           );
                         })}
                       </div>
