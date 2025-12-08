@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { format, addDays, subDays, startOfDay } from 'date-fns';
 import { base44 } from '@/api/base44Client';
 import { createPageUrl } from '@/utils';
+import { DndContext, DragOverlay, closestCorners } from '@dnd-kit/core';
 import SchedulerGrid from '../components/scheduling/SchedulerGrid';
 import CreateJobForm from '../components/scheduling/CreateJobForm';
 import JobDetailsDialog from '../components/scheduling/JobDetailsDialog';
@@ -75,6 +76,7 @@ export default function SchedulingBoard() {
   const [notificationReadStatus, setNotificationReadStatus] = useState([]);
   const [unreadNotifications, setUnreadNotifications] = useState([]);
   const [readNotifications, setReadNotifications] = useState([]);
+  const [activeId, setActiveId] = useState(null);
 
   const { toast } = useToast();
 
@@ -290,6 +292,132 @@ export default function SchedulingBoard() {
       updateDateInUrl(job.requestedDate);
     }
   };
+
+  const handleDragStart = (event) => {
+    setActiveId(event.active.id);
+  };
+
+  const handleDragEnd = async (event) => {
+    const { active, over } = event;
+    setActiveId(null);
+
+    if (!over) return;
+
+    const draggedId = active.id;
+    const droppedOnId = over.id;
+
+    const isPlaceholder = draggedId.startsWith('placeholder-');
+
+    if (isPlaceholder) {
+      const placeholderId = draggedId.replace('placeholder-', '');
+      const placeholder = placeholders.find(p => p.id === placeholderId);
+      
+      if (!placeholder) return;
+
+      if (droppedOnId === 'unscheduled') {
+        await base44.entities.Placeholder.delete(placeholderId);
+      } else {
+        const parts = droppedOnId.split('-');
+        const requestedSlotPosition = parseInt(parts[parts.length - 1]);
+        const destinationTimeSlotId = parts.slice(1, parts.length - 1).join('-');
+        const destinationTruckId = parts[0];
+
+        const finalSlotPosition = requestedSlotPosition <= 2 ? 1 : 3;
+
+        await base44.entities.Placeholder.update(placeholderId, {
+          truckId: destinationTruckId,
+          timeSlotId: destinationTimeSlotId,
+          slotPosition: finalSlotPosition,
+          date: selectedDate
+        });
+      }
+      fetchData();
+      return;
+    }
+
+    const jobId = draggedId;
+    const sourceAssignment = assignments.find(a => a.jobId === jobId);
+    const jobToUpdate = jobs.find(j => j.id === jobId);
+
+    if (!jobToUpdate) return;
+
+    if (droppedOnId === 'unscheduled') {
+      if (sourceAssignment) {
+        await base44.entities.Assignment.delete(sourceAssignment.id);
+        await base44.entities.Job.update(jobId, { ...jobToUpdate, status: 'APPROVED' });
+      }
+      fetchData();
+      return;
+    }
+    
+    const parts = droppedOnId.split('-');
+    const requestedSlotPosition = parseInt(parts[parts.length - 1]);
+    const destinationTimeSlotId = parts.slice(1, parts.length - 1).join('-');
+    const destinationTruckId = parts[0];
+    
+    const assignmentsExcludingCurrentJob = assignments.filter(a => a.jobId !== jobId);
+    
+    let finalSlotPosition;
+
+    const isTargetingBlock1 = requestedSlotPosition <= 2;
+    
+    const primaryBlockStart = isTargetingBlock1 ? 1 : 3;
+    const primaryBlockEnd = isTargetingBlock1 ? 2 : 4;
+
+    const secondaryBlockStart = isTargetingBlock1 ? 3 : 1;
+    const secondaryBlockEnd = isTargetingBlock1 ? 4 : 2;
+
+    const primaryBlockOccupied = assignmentsExcludingCurrentJob.some(a => 
+      a.truckId === destinationTruckId && 
+      a.timeSlotId === destinationTimeSlotId && 
+      a.slotPosition >= primaryBlockStart &&
+      a.slotPosition <= primaryBlockEnd
+    );
+
+    if (!primaryBlockOccupied) {
+      finalSlotPosition = primaryBlockStart;
+    } else {
+      const secondaryBlockOccupied = assignmentsExcludingCurrentJob.some(a => 
+        a.truckId === destinationTruckId && 
+        a.timeSlotId === destinationTimeSlotId && 
+        a.slotPosition >= secondaryBlockStart &&
+        a.slotPosition <= secondaryBlockEnd
+      );
+
+      if (!secondaryBlockOccupied) {
+        finalSlotPosition = secondaryBlockStart;
+      } else {
+        toast({
+          title: "Time Window Full",
+          description: "Both delivery blocks in this time window are occupied. Please choose a different time or truck.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+    
+    if (sourceAssignment) {
+      await base44.entities.Assignment.update(sourceAssignment.id, { 
+        truckId: destinationTruckId, 
+        timeSlotId: destinationTimeSlotId, 
+        slotPosition: finalSlotPosition 
+      });
+    } else {
+      await base44.entities.Assignment.create({
+        jobId,
+        truckId: destinationTruckId,
+        timeSlotId: destinationTimeSlotId,
+        slotPosition: finalSlotPosition,
+        date: selectedDate,
+      });
+      await base44.entities.Job.update(jobId, { ...jobToUpdate, status: 'SCHEDULED' });
+    }
+    fetchData();
+  };
+
+  const activeJob = activeId && !activeId.startsWith('placeholder-') 
+    ? jobs.find(j => j.id === activeId) 
+    : null;
 
   if (!currentUser) {
     return (
@@ -830,18 +958,33 @@ export default function SchedulingBoard() {
               </div>
             ) : (
               <div className="flex-1 overflow-auto">
-                
-                <SchedulerGrid
-                  trucks={TRUCKS}
-                  timeSlots={TIME_SLOTS}
-                  jobs={jobs}
-                  assignments={assignments}
-                  placeholders={placeholders}
-                  selectedDate={selectedDate}
-                  deliveryTypes={deliveryTypes}
-                  onOpenPlaceholderDialog={handleOpenPlaceholderDialog}
-                  onJobClick={handleJobClick}
-                />
+                <DndContext
+                  onDragStart={handleDragStart}
+                  onDragEnd={handleDragEnd}
+                  collisionDetection={closestCorners}
+                >
+                  <SchedulerGrid
+                    trucks={TRUCKS}
+                    timeSlots={TIME_SLOTS}
+                    jobs={jobs}
+                    assignments={assignments}
+                    placeholders={placeholders}
+                    selectedDate={selectedDate}
+                    deliveryTypes={deliveryTypes}
+                    onOpenPlaceholderDialog={handleOpenPlaceholderDialog}
+                    onJobClick={handleJobClick}
+                  />
+                  <DragOverlay>
+                    {activeJob ? (
+                      <div style={{ width: '200px', height: '100px' }}>
+                        <div className="w-full h-full border-2 rounded p-2 text-xs bg-white shadow-lg opacity-90">
+                          <div className="font-semibold text-sm mb-1">{activeJob.customerName}</div>
+                          <div className="text-xs text-gray-600 truncate">{activeJob.deliveryLocation}</div>
+                        </div>
+                      </div>
+                    ) : null}
+                  </DragOverlay>
+                </DndContext>
               </div>
               )}
               </div>

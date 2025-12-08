@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, Package, GripVertical, CheckCircle2, Plus } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
+import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { base44 } from '@/api/base44Client';
 import { getJobCardInlineStyles, getBadgeStyles, getJobCardStyles } from './DeliveryTypeColorUtils';
 
@@ -63,7 +64,14 @@ const parseAddress = (address) => {
   return { unit, street, suburb };
 };
 
-const JobBlock = ({ job, isDragging, onClick, deliveryTypes, pickupLocations }) => {
+const DraggableJobBlock = ({ job, onClick, deliveryTypes, pickupLocations }) => {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: job.id,
+  });
+
+  const style = transform ? {
+    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+  } : undefined;
   const isLargeJob = job.sqm > 2000;
   const deliveryType = deliveryTypes?.find((dt) => dt.id === job.deliveryTypeId);
   const cardStyles = getJobCardInlineStyles(deliveryType, job);
@@ -195,7 +203,14 @@ const JobBlock = ({ job, isDragging, onClick, deliveryTypes, pickupLocations }) 
   return jobCard;
 };
 
-const ScheduledJobBlock = ({ job, isDragging, onClick, deliveryTypes, pickupLocations }) => {
+const DraggableScheduledJobBlock = ({ job, onClick, deliveryTypes, pickupLocations }) => {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: job.id,
+  });
+
+  const style = transform ? {
+    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+  } : undefined;
   const isLargeJob = job.sqm > 2000;
   const deliveryType = deliveryTypes?.find((dt) => dt.id === job.deliveryTypeId);
   const cardStyles = getJobCardInlineStyles(deliveryType, job);
@@ -365,6 +380,49 @@ const ScheduledJobBlock = ({ job, isDragging, onClick, deliveryTypes, pickupLoca
   return jobCard;
 };
 
+const DroppableCell = ({ id, children }) => {
+  const { setNodeRef, isOver } = useDroppable({
+    id,
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`relative border-r border-gray-200 group overflow-visible flex-1 ${
+        isOver ? 'bg-blue-50' : ''
+      }`}
+      style={{
+        minWidth: '100px',
+        minHeight: '140px',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        position: 'relative'
+      }}
+    >
+      {children}
+    </div>
+  );
+};
+
+const DroppableUnscheduled = ({ children }) => {
+  const { setNodeRef, isOver } = useDroppable({
+    id: 'unscheduled',
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`flex-1 flex gap-2 p-3 overflow-x-auto min-h-[100px] ${
+        isOver ? 'bg-yellow-100' : ''
+      }`}
+    >
+      {children}
+    </div>
+  );
+};
+
 export default function SchedulerGrid({
   trucks,
   timeSlots,
@@ -473,7 +531,7 @@ export default function SchedulerGrid({
               {unscheduledJobs.length} {unscheduledJobs.length === 1 ? 'job' : 'jobs'}
             </Badge>
           </div>
-          <div className="flex-1 flex gap-2 p-3 overflow-x-auto min-h-[100px]">
+          <DroppableUnscheduled>
             {unscheduledJobs.map((job, index) => (
               <div
                 key={job.id}
@@ -482,9 +540,8 @@ export default function SchedulerGrid({
                   height: '80px',
                   flexShrink: 0
                 }}>
-                <JobBlock
+                <DraggableJobBlock
                   job={job}
-                  isDragging={false}
                   onClick={() => (onJobClick ? onJobClick(job) : handleJobClick(job))}
                   deliveryTypes={deliveryTypes}
                   pickupLocations={pickupLocations}
@@ -494,7 +551,7 @@ export default function SchedulerGrid({
             {unscheduledJobs.length === 0 && (
               <div className="text-gray-500 text-sm p-2 flex items-center">No unscheduled jobs for this date</div>
             )}
-          </div>
+          </DroppableUnscheduled>
         </div>
 
         {/* Time Header */}
