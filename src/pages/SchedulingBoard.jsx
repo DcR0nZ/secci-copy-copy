@@ -974,10 +974,23 @@ export default function SchedulingBoard() {
                     onOpenPlaceholderDialog={handleOpenPlaceholderDialog}
                     onJobClick={handleJobClick}
                   />
-                  <DragOverlay>
+                  <DragOverlay
+                    dropAnimation={{
+                      duration: 200,
+                      easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)',
+                    }}
+                  >
                     {activeJob ? (
-                      <div style={{ width: '200px', height: '100px' }}>
-                        <div className="w-full h-full border-2 rounded p-2 text-xs bg-white shadow-lg opacity-90">
+                      <div 
+                        style={{ 
+                          width: '200px', 
+                          height: '100px',
+                          cursor: 'grabbing',
+                          transform: 'rotate(3deg)',
+                          willChange: 'transform',
+                        }}
+                      >
+                        <div className="w-full h-full border-2 rounded p-2 text-xs bg-white shadow-2xl opacity-95 pointer-events-none">
                           <div className="font-semibold text-sm mb-1">{activeJob.customerName}</div>
                           <div className="text-xs text-gray-600 truncate">{activeJob.deliveryLocation}</div>
                         </div>
