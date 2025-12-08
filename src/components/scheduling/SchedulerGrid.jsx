@@ -86,43 +86,13 @@ const DraggableJobBlock = ({ job, onClick, deliveryTypes, pickupLocations }) => 
 
   const jobCard = (
     <div
+      ref={setNodeRef}
+      style={{ ...style, ...cardStyles }}
+      {...listeners}
+      {...attributes}
       className={`w-full h-full border-2 rounded p-2 text-xs cursor-pointer transition-all overflow-hidden ${
-        isDragging ? 'opacity-50 scale-105 z-50' : ''
+        isDragging ? 'opacity-50' : ''
       }`}
-      style={{
-        ...cardStyles,
-        boxShadow: isDragging ? '0 10px 15px -3px rgba(0, 0, 0, 0.1)' : '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
-      }}
-      onMouseEnter={(e) => {
-        if (!isDragging) {
-          const rgb = cardStyles['--card-color-rgb'];
-          if (rgb) {
-            e.currentTarget.style.backgroundColor = `rgba(${rgb}, 0.10)`;
-            e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)';
-          }
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (!isDragging) {
-          const rgb = cardStyles['--card-color-rgb'];
-          if (rgb) {
-            e.currentTarget.style.backgroundColor = `rgba(${rgb}, 0.06)`;
-            e.currentTarget.style.boxShadow = '0 1px 2px 0 rgba(0, 0, 0, 0.05)';
-          }
-        }
-      }}
-      onMouseDown={(e) => {
-        const rgb = cardStyles['--card-color-rgb'];
-        if (rgb) {
-          e.currentTarget.style.backgroundColor = `rgba(${rgb}, 0.08)`;
-        }
-      }}
-      onMouseUp={(e) => {
-        const rgb = cardStyles['--card-color-rgb'];
-        if (rgb) {
-          e.currentTarget.style.backgroundColor = `rgba(${rgb}, 0.10)`;
-        }
-      }}
       onClick={onClick}
       aria-label={`${textStyles.name} delivery for ${job.customerName}`}
     >
@@ -225,43 +195,13 @@ const DraggableScheduledJobBlock = ({ job, onClick, deliveryTypes, pickupLocatio
 
   const jobCard = (
     <div
+      ref={setNodeRef}
+      style={{ ...style, ...cardStyles }}
+      {...listeners}
+      {...attributes}
       className={`w-full h-full border-2 rounded p-2 text-xs cursor-pointer transition-all overflow-hidden ${
-        isDragging ? 'opacity-50 scale-105 z-50' : ''
+        isDragging ? 'opacity-50' : ''
       }`}
-      style={{
-        ...cardStyles,
-        boxShadow: isDragging ? '0 10px 15px -3px rgba(0, 0, 0, 0.1)' : '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
-      }}
-      onMouseEnter={(e) => {
-        if (!isDragging) {
-          const rgb = cardStyles['--card-color-rgb'];
-          if (rgb) {
-            e.currentTarget.style.backgroundColor = `rgba(${rgb}, 0.10)`;
-            e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)';
-          }
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (!isDragging) {
-          const rgb = cardStyles['--card-color-rgb'];
-          if (rgb) {
-            e.currentTarget.style.backgroundColor = `rgba(${rgb}, 0.06)`;
-            e.currentTarget.style.boxShadow = '0 1px 2px 0 rgba(0, 0, 0, 0.05)';
-          }
-        }
-      }}
-      onMouseDown={(e) => {
-        const rgb = cardStyles['--card-color-rgb'];
-        if (rgb) {
-          e.currentTarget.style.backgroundColor = `rgba(${rgb}, 0.08)`;
-        }
-      }}
-      onMouseUp={(e) => {
-        const rgb = cardStyles['--card-color-rgb'];
-        if (rgb) {
-          e.currentTarget.style.backgroundColor = `rgba(${rgb}, 0.10)`;
-        }
-      }}
       onClick={onClick}
       aria-label={`${textStyles.name} delivery for ${job.customerName}`}
     >
@@ -629,110 +569,38 @@ export default function SchedulerGrid({
                         className={`${slot.color} border-r border-gray-200 flex flex-1`}
                         style={{ minWidth: '200px' }}>
                         {blocksToShow.map((blockStart) => {
-                          const slotJobs = getJobsForCell(truck.id, slot.id, blockStart);
-                          const slotPlaceholders = getPlaceholdersForCell(truck.id, slot.id, blockStart);
-                          return (
-                            <div
-                              key={blockStart}
-                              className="relative border-r border-gray-200 group overflow-visible flex-1"
-                              style={{
-                               minWidth: '100px',
-                               minHeight: '140px',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                position: 'relative'
-                              }}>
-                              {/* Centered Content Container with relative positioning for buttons */}
-                              <div
-                                className="flex flex-col gap-2 items-center justify-center w-full px-1 relative">
-                                {slotJobs.map((job, index) => (
-                                  <div key={job.id} className="relative w-full max-w-[196px] group/job">
-                                    {/* Left Placeholder Button - Insert Above */}
-                                    {canCreatePlaceholder && (
-                                      <button
-                                        onClick={() => onOpenPlaceholderDialog(truck.id, slot.id, blockStart, 'before', index)}
-                                        className="absolute left-0 top-1/2 transform -translate-x-full -translate-y-1/2 opacity-0 group-hover/job:opacity-100 transition-opacity bg-white hover:bg-gray-100 border-2 border-gray-300 rounded-full p-1 z-20 shadow-sm ml-[-4px]"
-                                        style={{ width: '24px', height: '24px' }}>
-                                        <Plus className="h-3 w-3 text-gray-600" />
-                                      </button>
-                                    )}
+const DraggableJobBlock = ({ job, onClick, deliveryTypes, pickupLocations }) => {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: job.id,
+  });
 
-                                    <div
-                                      style={{
-                                        width: '100%',
-                                        minHeight: '100px'
-                                      }}>
-                                      <ScheduledJobBlock
-                                        job={job}
-                                        isDragging={false}
-                                        onClick={() => (onJobClick ? onJobClick(job) : handleJobClick(job))}
-                                        deliveryTypes={deliveryTypes}
-                                        pickupLocations={pickupLocations}
-                                      />
-                                    </div>
+  const style = transform ? {
+    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+  } : undefined;
+  const isLargeJob = job.sqm > 2000;
+  const deliveryType = deliveryTypes?.find((dt) => dt.id === job.deliveryTypeId);
+  const cardStyles = getJobCardInlineStyles(deliveryType, job);
+  const textStyles = getJobCardStyles(deliveryType, job);
+  
+  const isUnitDelivery = deliveryType?.code && ['UNITUP', 'UNITDWN', 'CRANE'].includes(deliveryType.code);
+  const hasPodNotes = job.podNotes && job.podNotes.trim().length > 0;
+  const addressParts = parseAddress(job.deliveryLocation);
+  
+  const pickupLocation = pickupLocations?.find(loc => loc.id === job.pickupLocationId);
+  const pickupShortname = pickupLocation?.shortname;
 
-                                    {/* Right Placeholder Button - Insert Below */}
-                                    {canCreatePlaceholder && (
-                                      <button
-                                        onClick={() => onOpenPlaceholderDialog(truck.id, slot.id, blockStart, 'after', index)}
-                                        className="absolute right-0 top-1/2 transform translate-x-full -translate-y-1/2 opacity-0 group-hover/job:opacity-100 transition-opacity bg-white hover:bg-gray-100 border-2 border-gray-300 rounded-full p-1 z-20 shadow-sm mr-[-4px]"
-                                        style={{ width: '24px', height: '24px' }}>
-                                        <Plus className="h-3 w-3 text-gray-600" />
-                                      </button>
-                                    )}
-                                  </div>
-                                ))}
-
-                                {slotPlaceholders.map((placeholder, phIndex) => (
-                                  <div key={`placeholder-${placeholder.id}`} className="relative w-full max-w-[196px] group/placeholder">
-                                    {/* Left Placeholder Button - Insert Above */}
-                                    {canCreatePlaceholder && (
-                                      <button
-                                        onClick={() => onOpenPlaceholderDialog(truck.id, slot.id, blockStart, 'before', slotJobs.length + phIndex)}
-                                        className="absolute left-0 top-1/2 transform -translate-x-full -translate-y-1/2 opacity-0 group-hover/placeholder:opacity-100 transition-opacity bg-white hover:bg-gray-100 border-2 border-gray-300 rounded-full p-1 z-20 shadow-sm ml-[-4px]"
-                                        style={{ width: '24px', height: '24px' }}>
-                                        <Plus className="h-3 w-3 text-gray-600" />
-                                      </button>
-                                    )}
-
-                                    <div
-                                      style={{
-                                        minHeight: '60px',
-                                        width: '100%'
-                                      }}>
-                                      <PlaceholderBlock
-                                        placeholder={placeholder}
-                                        onUpdated={() => window.location.reload()}
-                                        isDragging={false}
-                                      />
-                                    </div>
-
-                                    {/* Right Placeholder Button - Insert Below */}
-                                    {canCreatePlaceholder && (
-                                      <button
-                                        onClick={() => onOpenPlaceholderDialog(truck.id, slot.id, blockStart, 'after', slotJobs.length + phIndex)}
-                                        className="absolute right-0 top-1/2 transform translate-x-full -translate-y-1/2 opacity-0 group-hover/placeholder:opacity-100 transition-opacity bg-white hover:bg-gray-100 border-2 border-gray-300 rounded-full p-1 z-20 shadow-sm mr-[-4px]"
-                                        style={{ width: '24px', height: '24px' }}>
-                                        <Plus className="h-3 w-3 text-gray-600" />
-                                      </button>
-                                    )}
-                                  </div>
-                                ))}
-                              </div>
-
-                              {/* Empty Cell Placeholder Button */}
-                              {canCreatePlaceholder && slotJobs.length === 0 && slotPlaceholders.length === 0 && (
-                                <button
-                                  onClick={() => onOpenPlaceholderDialog(truck.id, slot.id, blockStart)}
-                                  className="opacity-0 group-hover:opacity-100 transition-opacity bg-white hover:bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg p-2 z-10"
-                                  style={{ width: '48px', height: '48px' }}>
-                                  <Plus className="h-6 w-6 text-gray-400" />
-                                </button>
-                              )}
-                            </div>
-                          );
+  const jobCard = (
+    <div
+      ref={setNodeRef}
+      style={{ ...style, ...cardStyles }}
+      {...listeners}
+      {...attributes}
+      className={`w-full h-full border-2 rounded p-2 text-xs cursor-pointer transition-all overflow-hidden ${
+        isDragging ? 'opacity-50' : ''
+      }`}
+      onClick={onClick}
+      aria-label={`${textStyles.name} delivery for ${job.customerName}`}
+    >
                         })}
                       </div>
                     );
