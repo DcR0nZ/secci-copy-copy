@@ -373,18 +373,13 @@ export default function SchedulerGrid({
   placeholders,
   selectedDate,
   deliveryTypes,
-  dragDropEnabled,
   onOpenPlaceholderDialog,
   onJobClick
 }) {
   const [selectedJob, setSelectedJob] = useState(null);
   const [isJobDialogOpen, setJobDialogOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
-  const [draggingOverCell, setDraggingOverCell] = useState(null);
   const [pickupLocations, setPickupLocations] = useState([]);
-  const [hoveredDroppableId, setHoveredDroppableId] = useState(null);
-  const [timedOutDroppableId, setTimedOutDroppableId] = useState(null);
-  const hoverTimerRef = useRef(null);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -579,15 +574,6 @@ export default function SchedulerGrid({
                         {blocksToShow.map((blockStart) => {
                           const slotJobs = getJobsForCell(truck.id, slot.id, blockStart);
                           const slotPlaceholders = getPlaceholdersForCell(truck.id, slot.id, blockStart);
-                          const droppableId = `${truck.id}-${slot.id}-${blockStart}`;
-                          const cellKey = droppableId;
-                          
-                          // Determine if dropping should be disabled based on slot occupancy
-                          const itemsInWholeSlot = allJobsInSlot.length + allPlaceholdersInSlot.length;
-                          const hasMultipleItemsInSlot = itemsInWholeSlot >= 2;
-                          const isTimedOutDroppable = timedOutDroppableId === droppableId;
-                          const isDropAllowed = dragDropEnabled && (!hasMultipleItemsInSlot || isTimedOutDroppable);
-
                           return (
                             <div
                               key={blockStart}

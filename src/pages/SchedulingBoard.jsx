@@ -180,198 +180,7 @@ export default function SchedulingBoard() {
     }
   }, [fetchData, currentUser]);
 
-  const reorderTimeSlot = useCallback(async (truckId, timeSlotId, date) => {
-    if (!truckId || !timeSlotId || !date) return;
 
-    const itemsInSlot = await Promise.all([
-      base44.entities.Assignment.filter({ truckId, timeSlotId, date }),
-      base44.entities.Placeholder.filter({ truckId, timeSlotId, date })
-    ]);
-
-    const allItems = [...itemsInSlot[0], ...itemsInSlot[1]];
-
-    // Separate items into two blocks: Block 1 (positions 1-2) and Block 2 (positions 3+)
-    const block1Items = allItems.filter(item => item.slotPosition >= 1 && item.slotPosition <= 2);
-    const block2Items = allItems.filter(item => item.slotPosition >= 3);
-
-    // Sort each block by current position
-    block1Items.sort((a, b) => a.slotPosition - b.slotPosition);
-    block2Items.sort((a, b) => a.slotPosition - b.slotPosition);
-
-    const updates = [];
-
-    // Reorder block 1 items to sequential positions starting at 1
-    block1Items.forEach((item, index) => {
-      const newSlotPosition = index + 1;
-      if (item.slotPosition !== newSlotPosition) {
-        if (item.jobId) {
-          updates.push(base44.entities.Assignment.update(item.id, { slotPosition: newSlotPosition }));
-        } else {
-          updates.push(base44.entities.Placeholder.update(item.id, { slotPosition: newSlotPosition }));
-        }
-      }
-    });
-
-    // Reorder block 2 items to sequential positions starting at 3
-    block2Items.forEach((item, index) => {
-      const newSlotPosition = index + 3;
-      if (item.slotPosition !== newSlotPosition) {
-        if (item.jobId) {
-          updates.push(base44.entities.Assignment.update(item.id, { slotPosition: newSlotPosition }));
-        } else {
-          updates.push(base44.entities.Placeholder.update(item.id, { slotPosition: newSlotPosition }));
-        }
-      }
-    });
-
-    await Promise.all(updates);
-  }, []);
-
-  const handleDragEnd = async (result) => {
-    const { destination, source, draggableId } = result;
-    if (!destination) return;
-
-    const isPlaceholder = draggableId.startsWith('placeholder-');
-
-    if (isPlaceholder) {
-      // Handle placeholder dragging
-      const placeholderId = draggableId.replace('placeholder-', '');
-      const placeholder = placeholders.find(p => p.id === placeholderId);
-      
-      if (!placeholder) return;
-
-      const originalSourceTruckId = placeholder.truckId;
-      const originalSourceTimeSlotId = placeholder.timeSlotId;
-
-      if (destination.droppableId === 'unscheduled') {
-        // Delete placeholder if dropped in unscheduled
-        await base44.entities.Placeholder.delete(placeholderId);
-        if (originalSourceTruckId && originalSourceTimeSlotId) {
-          await reorderTimeSlot(originalSourceTruckId, originalSourceTimeSlotId, selectedDate);
-        }
-      } else {
-        const parts = destination.droppableId.split('-');
-        const requestedSlotPosition = parseInt(parts[parts.length - 1]);
-        const destinationTimeSlotId = parts.slice(1, parts.length - 1).join('-');
-        const destinationTruckId = parts[0];
-
-        const finalSlotPosition = requestedSlotPosition <= 2 ? 1 : 3;
-
-        // Update placeholder position
-        await base44.entities.Placeholder.update(placeholderId, {
-          truckId: destinationTruckId,
-          timeSlotId: destinationTimeSlotId,
-          slotPosition: finalSlotPosition,
-          date: selectedDate
-        });
-
-        // Reorder source and destination slots
-        if (originalSourceTruckId !== destinationTruckId || originalSourceTimeSlotId !== destinationTimeSlotId) {
-          if (originalSourceTruckId && originalSourceTimeSlotId) {
-            await reorderTimeSlot(originalSourceTruckId, originalSourceTimeSlotId, selectedDate);
-          }
-        }
-        await reorderTimeSlot(destinationTruckId, destinationTimeSlotId, selectedDate);
-      }
-      fetchData();
-      return;
-    }
-
-    // Handle job dragging (existing logic)
-    const jobId = draggableId;
-    const sourceAssignment = assignments.find(a => a.jobId === jobId);
-    const jobToUpdate = jobs.find(j => j.id === jobId);
-
-    if (!jobToUpdate) return;
-
-    const originalSourceTruckId = sourceAssignment?.truckId;
-    const originalSourceTimeSlotId = sourceAssignment?.timeSlotId;
-
-    if (destination.droppableId === 'unscheduled') {
-      if (sourceAssignment) {
-        await base44.entities.Assignment.delete(sourceAssignment.id);
-        await base44.entities.Job.update(jobId, { ...jobToUpdate, status: 'APPROVED' });
-        if (originalSourceTruckId && originalSourceTimeSlotId) {
-          await reorderTimeSlot(originalSourceTruckId, originalSourceTimeSlotId, selectedDate);
-        }
-      }
-      fetchData();
-      return;
-    }
-    
-    const parts = destination.droppableId.split('-');
-    const requestedSlotPosition = parseInt(parts[parts.length - 1]);
-    const destinationTimeSlotId = parts.slice(1, parts.length - 1).join('-');
-    const destinationTruckId = parts[0];
-    
-    const assignmentsExcludingCurrentJob = assignments.filter(a => a.jobId !== jobId);
-    
-    let finalSlotPosition;
-
-    const isTargetingBlock1 = requestedSlotPosition <= 2;
-    
-    const primaryBlockStart = isTargetingBlock1 ? 1 : 3;
-    const primaryBlockEnd = isTargetingBlock1 ? 2 : 4;
-
-    const secondaryBlockStart = isTargetingBlock1 ? 3 : 1;
-    const secondaryBlockEnd = isTargetingBlock1 ? 4 : 2;
-
-    const primaryBlockOccupied = assignmentsExcludingCurrentJob.some(a => 
-      a.truckId === destinationTruckId && 
-      a.timeSlotId === destinationTimeSlotId && 
-      a.slotPosition >= primaryBlockStart &&
-      a.slotPosition <= primaryBlockEnd
-    );
-
-    if (!primaryBlockOccupied) {
-      finalSlotPosition = primaryBlockStart;
-    } else {
-      const secondaryBlockOccupied = assignmentsExcludingCurrentJob.some(a => 
-        a.truckId === destinationTruckId && 
-        a.timeSlotId === destinationTimeSlotId && 
-        a.slotPosition >= secondaryBlockStart &&
-        a.slotPosition <= secondaryBlockEnd
-      );
-
-      if (!secondaryBlockOccupied) {
-        finalSlotPosition = secondaryBlockStart;
-      } else {
-        toast({
-          title: "Time Window Full",
-          description: "Both delivery blocks in this time window are occupied. Please choose a different time or truck.",
-          variant: "destructive",
-        });
-        return;
-      }
-    }
-    
-    if (sourceAssignment) {
-      await base44.entities.Assignment.update(sourceAssignment.id, { 
-        truckId: destinationTruckId, 
-        timeSlotId: destinationTimeSlotId, 
-        slotPosition: finalSlotPosition 
-      });
-
-      // Reorder source and destination slots
-      if (originalSourceTruckId !== destinationTruckId || originalSourceTimeSlotId !== destinationTimeSlotId) {
-        if (originalSourceTruckId && originalSourceTimeSlotId) {
-          await reorderTimeSlot(originalSourceTruckId, originalSourceTimeSlotId, selectedDate);
-        }
-      }
-      await reorderTimeSlot(destinationTruckId, destinationTimeSlotId, selectedDate);
-    } else {
-      await base44.entities.Assignment.create({
-        jobId,
-        truckId: destinationTruckId,
-        timeSlotId: destinationTimeSlotId,
-        slotPosition: finalSlotPosition,
-        date: selectedDate,
-      });
-      await base44.entities.Job.update(jobId, { ...jobToUpdate, status: 'SCHEDULED' });
-      await reorderTimeSlot(destinationTruckId, destinationTimeSlotId, selectedDate);
-    }
-    fetchData();
-  };
 
   const updateDateInUrl = (date) => {
     const url = new URL(window.location.href);
@@ -790,7 +599,7 @@ export default function SchedulingBoard() {
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                   <h1 className="text-xl md:text-2xl font-bold text-gray-900">Delivery Scheduler</h1>
-                  <p className="text-sm md:text-base text-gray-600 mt-1">Drag jobs to schedule them in time slots</p>
+                  <p className="text-sm md:text-base text-gray-600 mt-1">Schedule and manage daily deliveries</p>
                 </div>
                 <div className="flex items-center gap-3 flex-wrap">
                   {/* Notification Dropdown - Only for admins and dispatchers */}
@@ -1030,7 +839,6 @@ export default function SchedulingBoard() {
                   placeholders={placeholders}
                   selectedDate={selectedDate}
                   deliveryTypes={deliveryTypes}
-                  dragDropEnabled={true}
                   onOpenPlaceholderDialog={handleOpenPlaceholderDialog}
                   onJobClick={handleJobClick}
                 />
