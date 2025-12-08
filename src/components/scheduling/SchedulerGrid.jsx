@@ -23,14 +23,13 @@ const parseAddress = (address) => {
   if (!address) return { unit: '', street: '', suburb: '' };
   
   // Split by comma
-  const parts = address.split(',').map(p => p.trim()).filter(Boolean); // Filter out empty strings
+  const parts = address.split(',').map(p => p.trim()).filter(Boolean);
   
   let unit = '';
   let street = '';
   let suburb = '';
   
   if (parts.length >= 3) {
-    // Check if first part looks like a unit/lot (contains "Unit", "Lot", "U" followed by number, or starts with number/letter)
     const firstPart = parts[0];
     if (/^(Unit|Lot|U|L)\s*\d+/i.test(firstPart) || /^\d+[A-Z]?$/i.test(firstPart)) {
       unit = firstPart;
@@ -47,17 +46,15 @@ const parseAddress = (address) => {
     street = parts[0];
   }
   
-  // Filter out QLD, Queensland, and Australia from suburb UNLESS it contains NSW
   if (suburb) {
     const hasNSW = /NSW|New South Wales/i.test(suburb);
     
     if (!hasNSW) {
-      // Remove QLD, Queensland, Australia, and extra whitespace
       suburb = suburb
         .replace(/,?\s*(QLD|Queensland|Australia)\s*/gi, '')
-        .replace(/\s+/g, ' ') // Normalize multiple spaces to single space
+        .replace(/\s+/g, ' ')
         .trim()
-        .replace(/,\s*$/, ''); // Remove trailing comma if it's the last character after removal
+        .replace(/,\s*$/, '');
     }
   }
   
@@ -72,6 +69,7 @@ const DraggableJobBlock = ({ job, onClick, deliveryTypes, pickupLocations }) => 
   const style = transform ? {
     transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
   } : undefined;
+
   const isLargeJob = job.sqm > 2000;
   const deliveryType = deliveryTypes?.find((dt) => dt.id === job.deliveryTypeId);
   const cardStyles = getJobCardInlineStyles(deliveryType, job);
@@ -130,14 +128,10 @@ const DraggableJobBlock = ({ job, onClick, deliveryTypes, pickupLocations }) => 
             )}
           </div>
 
-          <div 
-            className="font-semibold truncate text-sm mb-0.5 text-gray-900"
-          >
+          <div className="font-semibold truncate text-sm mb-0.5 text-gray-900">
             {job.customerName}
           </div>
-          <div 
-            className="text-[11px] leading-tight text-gray-700"
-          >
+          <div className="text-[11px] leading-tight text-gray-700">
             {addressParts.unit && <div className="truncate">{addressParts.unit}</div>}
             {addressParts.street && <div className="truncate">{addressParts.street}</div>}
             {addressParts.suburb && <div className="truncate">{addressParts.suburb}</div>}
@@ -181,6 +175,7 @@ const DraggableScheduledJobBlock = ({ job, onClick, deliveryTypes, pickupLocatio
   const style = transform ? {
     transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
   } : undefined;
+
   const isLargeJob = job.sqm > 2000;
   const deliveryType = deliveryTypes?.find((dt) => dt.id === job.deliveryTypeId);
   const cardStyles = getJobCardInlineStyles(deliveryType, job);
@@ -245,14 +240,10 @@ const DraggableScheduledJobBlock = ({ job, onClick, deliveryTypes, pickupLocatio
             )}
           </div>
 
-          <div
-            className="font-semibold truncate text-sm mb-0.5 text-gray-900"
-          >
+          <div className="font-semibold truncate text-sm mb-0.5 text-gray-900">
             {job.customerName}
           </div>
-          <div 
-            className="text-[11px] leading-tight text-gray-700"
-          >
+          <div className="text-[11px] leading-tight text-gray-700">
             {addressParts.unit && <div className="truncate">{addressParts.unit}</div>}
             {addressParts.street && <div className="truncate">{addressParts.street}</div>}
             {addressParts.suburb && <div className="truncate">{addressParts.suburb}</div>}
@@ -406,7 +397,6 @@ export default function SchedulerGrid({
   const getJobsForCell = (truckId, timeSlotId, slotPosition) => {
     const cellAssignments = assignments.filter((a) => {
       if (a.truckId !== truckId || a.timeSlotId !== timeSlotId) return false;
-      // Block 1: positions 1-2, Block 2: positions 3-4+
       if (slotPosition === 1) {
         return a.slotPosition >= 1 && a.slotPosition <= 2;
       } else if (slotPosition === 3) {
@@ -421,9 +411,7 @@ export default function SchedulerGrid({
     return placeholders.filter((p) => {
       if (p.truckId !== truckId || p.timeSlotId !== timeSlotId) return false;
       
-      // If placeholder has a slotPosition defined, check which block it belongs to
       if (p.slotPosition) {
-        // Block 1: positions 1-2, Block 2: positions 3-4+
         if (slotPosition === 1) {
           return p.slotPosition >= 1 && p.slotPosition <= 2;
         } else if (slotPosition === 3) {
@@ -432,7 +420,6 @@ export default function SchedulerGrid({
         return false;
       }
       
-      // If placeholder doesn't have slotPosition, only show in block 1 (backward compatibility)
       return slotPosition === 1;
     });
   };
@@ -551,7 +538,6 @@ export default function SchedulerGrid({
 
                 <div className="flex flex-1 relative">
                   {TIME_SLOTS.map((slot) => {
-                    // Get all jobs for this time slot (both blocks)
                     const allJobsInSlot = [1, 3].flatMap((blockStart) => 
                       getJobsForCell(truck.id, slot.id, blockStart)
                     );
@@ -559,7 +545,6 @@ export default function SchedulerGrid({
                       getPlaceholdersForCell(truck.id, slot.id, blockStart)
                     );
                     
-                    // Determine how many slots to show based on content
                     const totalItems = allJobsInSlot.length + allPlaceholdersInSlot.length;
                     const blocksToShow = totalItems > 1 ? [1, 3] : [1];
 
@@ -569,38 +554,85 @@ export default function SchedulerGrid({
                         className={`${slot.color} border-r border-gray-200 flex flex-1`}
                         style={{ minWidth: '200px' }}>
                         {blocksToShow.map((blockStart) => {
-const DraggableJobBlock = ({ job, onClick, deliveryTypes, pickupLocations }) => {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
-    id: job.id,
-  });
+                          const slotJobs = getJobsForCell(truck.id, slot.id, blockStart);
+                          const slotPlaceholders = getPlaceholdersForCell(truck.id, slot.id, blockStart);
+                          const droppableId = `${truck.id}-${slot.id}-${blockStart}`;
 
-  const style = transform ? {
-    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-  } : undefined;
-  const isLargeJob = job.sqm > 2000;
-  const deliveryType = deliveryTypes?.find((dt) => dt.id === job.deliveryTypeId);
-  const cardStyles = getJobCardInlineStyles(deliveryType, job);
-  const textStyles = getJobCardStyles(deliveryType, job);
-  
-  const isUnitDelivery = deliveryType?.code && ['UNITUP', 'UNITDWN', 'CRANE'].includes(deliveryType.code);
-  const hasPodNotes = job.podNotes && job.podNotes.trim().length > 0;
-  const addressParts = parseAddress(job.deliveryLocation);
-  
-  const pickupLocation = pickupLocations?.find(loc => loc.id === job.pickupLocationId);
-  const pickupShortname = pickupLocation?.shortname;
+                          return (
+                            <DroppableCell key={blockStart} id={droppableId}>
+                              <div className="flex flex-col gap-2 items-center justify-center w-full px-1 relative">
+                                {slotJobs.map((job, index) => (
+                                  <div key={job.id} className="relative w-full max-w-[196px] group/job">
+                                    {canCreatePlaceholder && (
+                                      <button
+                                        onClick={() => onOpenPlaceholderDialog(truck.id, slot.id, blockStart, 'before', index)}
+                                        className="absolute left-0 top-1/2 transform -translate-x-full -translate-y-1/2 opacity-0 group-hover/job:opacity-100 transition-opacity bg-white hover:bg-gray-100 border-2 border-gray-300 rounded-full p-1 z-20 shadow-sm ml-[-4px]"
+                                        style={{ width: '24px', height: '24px' }}>
+                                        <Plus className="h-3 w-3 text-gray-600" />
+                                      </button>
+                                    )}
 
-  const jobCard = (
-    <div
-      ref={setNodeRef}
-      style={{ ...style, ...cardStyles }}
-      {...listeners}
-      {...attributes}
-      className={`w-full h-full border-2 rounded p-2 text-xs cursor-pointer transition-all overflow-hidden ${
-        isDragging ? 'opacity-50' : ''
-      }`}
-      onClick={onClick}
-      aria-label={`${textStyles.name} delivery for ${job.customerName}`}
-    >
+                                    <div style={{ width: '100%', minHeight: '100px' }}>
+                                      <DraggableScheduledJobBlock
+                                        job={job}
+                                        onClick={() => (onJobClick ? onJobClick(job) : handleJobClick(job))}
+                                        deliveryTypes={deliveryTypes}
+                                        pickupLocations={pickupLocations}
+                                      />
+                                    </div>
+
+                                    {canCreatePlaceholder && (
+                                      <button
+                                        onClick={() => onOpenPlaceholderDialog(truck.id, slot.id, blockStart, 'after', index)}
+                                        className="absolute right-0 top-1/2 transform translate-x-full -translate-y-1/2 opacity-0 group-hover/job:opacity-100 transition-opacity bg-white hover:bg-gray-100 border-2 border-gray-300 rounded-full p-1 z-20 shadow-sm mr-[-4px]"
+                                        style={{ width: '24px', height: '24px' }}>
+                                        <Plus className="h-3 w-3 text-gray-600" />
+                                      </button>
+                                    )}
+                                  </div>
+                                ))}
+
+                                {slotPlaceholders.map((placeholder, phIndex) => (
+                                  <div key={`placeholder-${placeholder.id}`} className="relative w-full max-w-[196px] group/placeholder">
+                                    {canCreatePlaceholder && (
+                                      <button
+                                        onClick={() => onOpenPlaceholderDialog(truck.id, slot.id, blockStart, 'before', slotJobs.length + phIndex)}
+                                        className="absolute left-0 top-1/2 transform -translate-x-full -translate-y-1/2 opacity-0 group-hover/placeholder:opacity-100 transition-opacity bg-white hover:bg-gray-100 border-2 border-gray-300 rounded-full p-1 z-20 shadow-sm ml-[-4px]"
+                                        style={{ width: '24px', height: '24px' }}>
+                                        <Plus className="h-3 w-3 text-gray-600" />
+                                      </button>
+                                    )}
+
+                                    <div style={{ minHeight: '60px', width: '100%' }}>
+                                      <PlaceholderBlock
+                                        placeholder={placeholder}
+                                        onUpdated={() => window.location.reload()}
+                                        isDragging={false}
+                                      />
+                                    </div>
+
+                                    {canCreatePlaceholder && (
+                                      <button
+                                        onClick={() => onOpenPlaceholderDialog(truck.id, slot.id, blockStart, 'after', slotJobs.length + phIndex)}
+                                        className="absolute right-0 top-1/2 transform translate-x-full -translate-y-1/2 opacity-0 group-hover/placeholder:opacity-100 transition-opacity bg-white hover:bg-gray-100 border-2 border-gray-300 rounded-full p-1 z-20 shadow-sm mr-[-4px]"
+                                        style={{ width: '24px', height: '24px' }}>
+                                        <Plus className="h-3 w-3 text-gray-600" />
+                                      </button>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+
+                              {canCreatePlaceholder && slotJobs.length === 0 && slotPlaceholders.length === 0 && (
+                                <button
+                                  onClick={() => onOpenPlaceholderDialog(truck.id, slot.id, blockStart)}
+                                  className="opacity-0 group-hover:opacity-100 transition-opacity bg-white hover:bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg p-2 z-10"
+                                  style={{ width: '48px', height: '48px' }}>
+                                  <Plus className="h-6 w-6 text-gray-400" />
+                                </button>
+                              )}
+                            </DroppableCell>
+                          );
                         })}
                       </div>
                     );
