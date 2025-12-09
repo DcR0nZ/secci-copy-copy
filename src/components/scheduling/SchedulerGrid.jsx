@@ -128,13 +128,13 @@ const DraggableJobBlock = ({ job, onClick, deliveryTypes, pickupLocations }) => 
             )}
           </div>
 
-          <div className="font-semibold truncate text-sm mb-0.5 text-gray-900">
+          <div className="text-[10px] text-gray-500 mb-1 truncate">
             {job.customerName}
           </div>
-          <div className="text-[11px] leading-tight text-gray-700">
-            {addressParts.unit && <div className="truncate">{addressParts.unit}</div>}
-            {addressParts.street && <div className="truncate">{addressParts.street}</div>}
-            {addressParts.suburb && <div className="truncate">{addressParts.suburb}</div>}
+          <div className="text-sm leading-tight text-gray-900 font-medium">
+            {addressParts.unit && <div className="truncate text-xs">{addressParts.unit}</div>}
+            {addressParts.street && <div className="truncate font-semibold">{addressParts.street}</div>}
+            {addressParts.suburb && <div className="truncate text-xs text-gray-600">{addressParts.suburb}</div>}
           </div>
         </div>
         <div className="flex flex-col items-center gap-0.5 flex-shrink-0">
