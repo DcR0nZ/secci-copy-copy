@@ -26,11 +26,29 @@ const COLOR_OPTIONS = [
   { value: 'pink', label: 'Pink', bg: 'bg-pink-100', text: 'text-pink-800', border: 'border-pink-300' }
 ];
 
+const TRUCKS = [
+  { id: 'ACCO1', name: 'ACCO1' },
+  { id: 'ACCO2', name: 'ACCO2' },
+  { id: 'FUSO', name: 'FUSO' },
+  { id: 'ISUZU', name: 'ISUZU' },
+  { id: 'UD', name: 'UD' }
+];
+
+const DELIVERY_WINDOWS = [
+  { id: 'first-am', label: '6-8am (1st AM)' },
+  { id: 'second-am', label: '8-10am (2nd AM)' },
+  { id: 'lunch', label: '10am-12pm (LUNCH)' },
+  { id: 'first-pm', label: '12-2pm (1st PM)' },
+  { id: 'second-pm', label: '2-4pm (2nd PM)' }
+];
+
 export default function PlaceholderBlock({ placeholder, onUpdated, isDragging }) {
   const [showEdit, setShowEdit] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
   const [label, setLabel] = useState(placeholder.label);
   const [color, setColor] = useState(placeholder.color);
+  const [truckId, setTruckId] = useState(placeholder.truckId);
+  const [timeSlotId, setTimeSlotId] = useState(placeholder.timeSlotId);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -38,13 +56,18 @@ export default function PlaceholderBlock({ placeholder, onUpdated, isDragging })
 
   const handleUpdate = async (e) => {
     e.preventDefault();
-    if (!label.trim()) return;
+    if (!label.trim() || !truckId || !timeSlotId) {
+      alert('Please fill in all required fields');
+      return;
+    }
 
     setSaving(true);
     try {
       await base44.entities.Placeholder.update(placeholder.id, {
         label: label.trim(),
-        color
+        color,
+        truckId,
+        timeSlotId
       });
       setShowEdit(false);
       onUpdated();
@@ -73,12 +96,13 @@ export default function PlaceholderBlock({ placeholder, onUpdated, isDragging })
   return (
     <>
       <div
-        className={`${colorOption.bg} ${colorOption.border} border-2 rounded p-2 shadow-sm text-xs transition-all group relative ${isDragging ? 'opacity-50 scale-105 z-50' : ''}`}
+        className={`${colorOption.bg} ${colorOption.border} border-2 rounded p-2 shadow-sm text-xs transition-all group relative cursor-pointer hover:shadow-md ${isDragging ? 'opacity-50 scale-105 z-50' : ''}`}
         style={{
           minHeight: '60px',
           width: '100%',
           boxShadow: isDragging ? '0 10px 15px -3px rgba(0, 0, 0, 0.1)' : undefined
         }}
+        onClick={() => setShowEdit(true)}
       >
         <div className="flex items-start justify-between gap-1 h-full">
           <div className="flex-1 min-w-0 overflow-hidden">
@@ -125,7 +149,7 @@ export default function PlaceholderBlock({ placeholder, onUpdated, isDragging })
           <form onSubmit={handleUpdate}>
             <div className="space-y-4 py-4">
               <div>
-                <Label htmlFor="edit-label">Label/Note</Label>
+                <Label htmlFor="edit-label">Label/Note *</Label>
                 <Input
                   id="edit-label"
                   value={label}
@@ -133,6 +157,35 @@ export default function PlaceholderBlock({ placeholder, onUpdated, isDragging })
                   required
                 />
               </div>
+              
+              <div>
+                <Label htmlFor="edit-truck">Truck *</Label>
+                <Select value={truckId} onValueChange={setTruckId} required>
+                  <SelectTrigger id="edit-truck">
+                    <SelectValue placeholder="Select truck..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TRUCKS.map(truck => (
+                      <SelectItem key={truck.id} value={truck.id}>{truck.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="edit-timeslot">Time Window *</Label>
+                <Select value={timeSlotId} onValueChange={setTimeSlotId} required>
+                  <SelectTrigger id="edit-timeslot">
+                    <SelectValue placeholder="Select time window..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DELIVERY_WINDOWS.map(window => (
+                      <SelectItem key={window.id} value={window.id}>{window.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div>
                 <Label htmlFor="edit-color">Color</Label>
                 <Select value={color} onValueChange={setColor}>
