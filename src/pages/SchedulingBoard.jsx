@@ -12,6 +12,7 @@ import CreateJobForm from '../components/scheduling/CreateJobForm';
 import JobDetailsDialog from '../components/scheduling/JobDetailsDialog';
 import CreatePlaceholderDialog from '../components/scheduling/CreatePlaceholderDialog';
 import ScheduleJobDialog from '../components/scheduling/ScheduleJobDialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,6 +22,7 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/components/ui/use-toast';
 import { getJobCardInlineStyles, getBadgeStyles, getJobCardStyles } from '../components/scheduling/DeliveryTypeColorUtils';
+import EditPlaceholderForm from '../components/scheduling/EditPlaceholderForm';
 
 
 const TRUCKS = [
@@ -250,6 +252,22 @@ export default function SchedulingBoard() {
     const placeholderSqm = truckPlaceholders.reduce((sum, item) => sum + (item.sqm || 0), 0);
     
     return jobSqm + placeholderSqm;
+  };
+
+  const getPlaceholdersForTruck = (truckId) => {
+    return placeholders.filter(p => p.truckId === truckId).map(p => ({
+      placeholder: p,
+      timeSlot: p.timeSlotId,
+      slotPosition: p.slotPosition
+    }));
+  };
+
+  const [selectedPlaceholder, setSelectedPlaceholder] = useState(null);
+  const [isPlaceholderDialogOpen, setPlaceholderDialogOpen] = useState(false);
+
+  const handlePlaceholderClick = (placeholder) => {
+    setSelectedPlaceholder(placeholder);
+    setPlaceholderDialogOpen(true);
   };
 
   const handleMarkAsRead = async (jobId) => {
@@ -601,6 +619,7 @@ export default function SchedulingBoard() {
 
                 {TRUCKS.map(truck => {
                   const truckJobs = getJobsForTruck(truck.id);
+                  const truckPlaceholders = getPlaceholdersForTruck(truck.id);
                   const totalSqm = getTruckUtilization(truck.id);
                   const utilizationPercent = Math.min((totalSqm / 2500) * 100, 100); 
                   
@@ -619,7 +638,7 @@ export default function SchedulingBoard() {
                             <Truck className="h-5 w-5 text-blue-600" />
                             <span>{truck.name}</span>
                           </span>
-                          <Badge variant="secondary">{truckJobs.length}</Badge>
+                          <Badge variant="secondary">{truckJobs.length + truckPlaceholders.length}</Badge>
                         </CardTitle>
                         <div className="mt-2">
                           <div className="flex justify-between text-xs text-gray-600 mb-1">
@@ -632,13 +651,15 @@ export default function SchedulingBoard() {
                         </div>
                       </CardHeader>
                       <CardContent className="space-y-3">
-                        {truckJobs.length === 0 ? (
+                        {truckJobs.length === 0 && truckPlaceholders.length === 0 ? (
                           <p className="text-sm text-gray-500 text-center py-4">No jobs scheduled</p>
                         ) : (
                           <>
                             {TIME_SLOTS.map(timeSlot => {
                               const slotJobs = truckJobs.filter(item => item.timeSlot === timeSlot.id);
-                              if (slotJobs.length === 0) return null;
+                              const slotPlaceholders = truckPlaceholders.filter(item => item.timeSlot === timeSlot.id);
+                              
+                              if (slotJobs.length === 0 && slotPlaceholders.length === 0) return null;
 
                               return (
                                 <div key={timeSlot.id} className="space-y-2">
@@ -702,18 +723,43 @@ export default function SchedulingBoard() {
                                         </div>
                                         <p className="text-sm text-gray-600">{job.deliveryLocation}</p>
                                         <p className="text-xs text-gray-500 mt-1">{job.deliveryTypeName}</p>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              );
-                            })}
-                          </>
-                        )}
-                      </CardContent>
-                    </Card>
-                  );
-                })}
+                                        </div>
+                                        );
+                                        })}
+                                        {slotPlaceholders.map(({ placeholder }) => {
+                                        const colorOptions = [
+                                        { value: 'gray', bg: 'bg-gray-100', text: 'text-gray-800', border: 'border-gray-300' },
+                                        { value: 'blue', bg: 'bg-blue-100', text: 'text-blue-800', border: 'border-blue-300' },
+                                        { value: 'green', bg: 'bg-green-100', text: 'text-green-800', border: 'border-green-300' },
+                                        { value: 'yellow', bg: 'bg-yellow-100', text: 'text-yellow-800', border: 'border-yellow-300' },
+                                        { value: 'purple', bg: 'bg-purple-100', text: 'text-purple-800', border: 'border-purple-300' },
+                                        { value: 'pink', bg: 'bg-pink-100', text: 'text-pink-800', border: 'border-pink-300' }
+                                        ];
+                                        const colorOption = colorOptions.find(opt => opt.value === placeholder.color) || colorOptions[0];
+
+                                        return (
+                                        <div
+                                        key={placeholder.id}
+                                        onClick={() => handlePlaceholderClick(placeholder)}
+                                        className={`p-3 rounded-lg border-2 active:bg-gray-50 transition-colors ${colorOption.bg} ${colorOption.border}`}
+                                        >
+                                        <div className="flex justify-between items-start gap-2">
+                                         <div className="flex-1 min-w-0">
+                                           <span className={`font-semibold text-sm block ${colorOption.text}`}>{placeholder.label}</span>
+                                         </div>
+                                        </div>
+                                        </div>
+                                        );
+                                        })}
+                                        </div>
+                                        );
+                                        })}
+                                        </>
+                                        )}
+                                        </CardContent>
+                                        </Card>
+                                        );
+                                        })}
             </div>
           )}
         </div>
@@ -747,6 +793,24 @@ export default function SchedulingBoard() {
           onOpenChange={setScheduleDialogOpen}
           onScheduled={fetchData}
         />
+
+        {selectedPlaceholder && (
+          <Dialog open={isPlaceholderDialogOpen} onOpenChange={setPlaceholderDialogOpen}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Edit Placeholder</DialogTitle>
+              </DialogHeader>
+              <EditPlaceholderForm
+                placeholder={selectedPlaceholder}
+                onSaved={() => {
+                  setPlaceholderDialogOpen(false);
+                  fetchData();
+                }}
+                onCancel={() => setPlaceholderDialogOpen(false)}
+              />
+            </DialogContent>
+          </Dialog>
+        )}
         </>
         );
         }
