@@ -354,56 +354,7 @@ export default function DailyJobBoard() {
                           <p className="text-sm text-gray-500 text-center py-4">No jobs or placeholders scheduled</p>
                         ) : (
                           <>
-                            {(() => {
-                              const jobsWithPos = slotJobs.map(job => ({
-                                item: job,
-                                slotPosition: assignments.find(a => a.jobId === job.id)?.slotPosition || 1,
-                                isPlaceholder: false
-                              }));
-                              const placeholdersWithPos = slotPlaceholders.map(p => ({
-                                item: p,
-                                slotPosition: p.slotPosition || 1,
-                                isPlaceholder: true
-                              }));
-
-                              return [...jobsWithPos, ...placeholdersWithPos]
-                                .sort((a, b) => a.slotPosition - b.slotPosition)
-                                .map(({ item, isPlaceholder }) => {
-                                  if (isPlaceholder) {
-                                    const placeholder = item;
-                                    const colorScheme = COLOR_OPTIONS[placeholder.color] || COLOR_OPTIONS.gray;
-                                    const canEdit = currentUser?.role === 'admin' || currentUser?.appRole === 'dispatcher';
-                                    return (
-                                      <div
-                                        key={placeholder.id}
-                                        onClick={() => handlePlaceholderClick(placeholder)}
-                                        className={`p-3 rounded-lg border-2 ${colorScheme.bg} ${colorScheme.border} ${canEdit ? 'cursor-pointer active:opacity-80 transition-all' : ''}`}
-                                      >
-                                        <div className="flex items-center justify-between gap-2">
-                                          <div className="flex items-center gap-2">
-                                            <Package className={`h-4 w-4 ${colorScheme.text}`} />
-                                            <span className={`font-medium text-sm ${colorScheme.text}`}>
-                                              {placeholder.label}
-                                            </span>
-                                          </div>
-                                          {placeholder.truckId && (
-                                            <Badge variant="outline" className="text-xs bg-white/90 text-gray-700 border-gray-400">
-                                              <Truck className="h-3 w-3 mr-1" />
-                                              {placeholder.truckId}
-                                            </Badge>
-                                          )}
-                                        </div>
-                                      </div>
-                                    );
-                                  }
-
-                                  const job = item;
-                              const deliveryType = deliveryTypes.find(dt => dt.id === job.deliveryTypeId);
-                              const pickupShortname = job.pickupLocation?.shortname;
-                              const cardStyles = getJobCardInlineStyles(deliveryType, job);
-                              const badgeStyles = getBadgeStyles(getJobCardStyles(deliveryType, job));
-
-                              return (
+                            {slotJobs.map((item) => {
                               const deliveryType = deliveryTypes.find(dt => dt.id === item.job.deliveryTypeId);
                               const pickupShortname = item.job.pickupLocation?.shortname;
                               const cardStyles = getJobCardInlineStyles(deliveryType, item.job);
@@ -511,9 +462,37 @@ export default function DailyJobBoard() {
                                   </div>
                                 </div>
                               );
-                              </>
-                              )}
-                              </div>
+                            })}
+
+                            {slotPlaceholders.map((placeholder) => {
+                              const colorScheme = COLOR_OPTIONS[placeholder.color] || COLOR_OPTIONS.gray;
+                              const canEdit = currentUser?.role === 'admin' || currentUser?.appRole === 'dispatcher';
+                              return (
+                                <div
+                                  key={placeholder.id}
+                                  onClick={() => handlePlaceholderClick(placeholder)}
+                                  className={`p-3 rounded-lg border-2 ${colorScheme.bg} ${colorScheme.border} ${canEdit ? 'cursor-pointer active:opacity-80 transition-all' : ''}`}
+                                >
+                                  <div className="flex items-center justify-between gap-2">
+                                    <div className="flex items-center gap-2">
+                                      <Package className={`h-4 w-4 ${colorScheme.text}`} />
+                                      <span className={`font-medium text-sm ${colorScheme.text}`}>
+                                        {placeholder.label}
+                                      </span>
+                                    </div>
+                                    {placeholder.truckId && (
+                                      <Badge variant="outline" className="text-xs bg-white/90 text-gray-700 border-gray-400">
+                                        <Truck className="h-3 w-3 mr-1" />
+                                        {placeholder.truckId}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </>
+                        )}
+                      </div>
                     </CardContent>
                   </Card>
                 );
@@ -642,56 +621,7 @@ export default function DailyJobBoard() {
                         <p className="text-sm text-gray-500 text-center py-4">No jobs or placeholders scheduled</p>
                       ) : (
                         <>
-                          {(() => {
-                            const jobsWithPos = slotJobs.map(job => ({
-                              item: job,
-                              slotPosition: assignments.find(a => a.jobId === job.id)?.slotPosition || 1,
-                              isPlaceholder: false
-                            }));
-                            const placeholdersWithPos = slotPlaceholders.map(p => ({
-                              item: p,
-                              slotPosition: p.slotPosition || 1,
-                              isPlaceholder: true
-                            }));
-
-                            return [...jobsWithPos, ...placeholdersWithPos]
-                              .sort((a, b) => a.slotPosition - b.slotPosition)
-                              .map(({ item, isPlaceholder }) => {
-                                if (isPlaceholder) {
-                                  const placeholder = item;
-                                  const colorScheme = COLOR_OPTIONS[placeholder.color] || COLOR_OPTIONS.gray;
-                                  const canEdit = currentUser?.role === 'admin' || currentUser?.appRole === 'dispatcher';
-                                  return (
-                                    <div
-                                      key={placeholder.id}
-                                      onClick={() => handlePlaceholderClick(placeholder)}
-                                      className={`p-3 rounded-lg border-2 ${colorScheme.bg} ${colorScheme.border} ${canEdit ? 'cursor-pointer hover:opacity-90 transition-all' : ''}`}
-                                    >
-                                      <div className="flex items-center justify-between gap-2">
-                                        <div className="flex items-center gap-2">
-                                          <Package className={`h-4 w-4 ${colorScheme.text}`} />
-                                          <span className={`font-medium text-sm ${colorScheme.text}`}>
-                                            {placeholder.label}
-                                          </span>
-                                        </div>
-                                        {placeholder.truckId && (
-                                          <Badge variant="outline" className="text-xs bg-white/90 text-gray-700 border-gray-400">
-                                            <Truck className="h-3 w-3 mr-1" />
-                                            {placeholder.truckId}
-                                          </Badge>
-                                        )}
-                                      </div>
-                                    </div>
-                                  );
-                                }
-
-                                const job = item;
-                            const deliveryType = deliveryTypes.find(dt => dt.id === job.deliveryTypeId);
-                            const pickupShortname = job.pickupLocation?.shortname;
-                            const cardStyles = getJobCardInlineStyles(deliveryType, job);
-                            const badgeStyles = getBadgeStyles(getJobCardStyles(deliveryType, job));
-
-                            return (
+                          {slotJobs.map((item) => {
                             const deliveryType = deliveryTypes.find(dt => dt.id === item.job.deliveryTypeId);
                             const pickupShortname = item.job.pickupLocation?.shortname;
                             const cardStyles = getJobCardInlineStyles(deliveryType, item.job);
@@ -794,12 +724,38 @@ export default function DailyJobBoard() {
                                   </Badge>
                                 )}
                               </div>
-                              );
-                              });
-                              })()}
-                              </>
-                              )}
-                              </CardContent>
+                            );
+                          })}
+
+                          {slotPlaceholders.map((placeholder) => {
+                            const colorScheme = COLOR_OPTIONS[placeholder.color] || COLOR_OPTIONS.gray;
+                            const canEdit = currentUser?.role === 'admin' || currentUser?.appRole === 'dispatcher';
+                            return (
+                              <div
+                                key={placeholder.id}
+                                onClick={() => handlePlaceholderClick(placeholder)}
+                                className={`p-3 rounded-lg border-2 ${colorScheme.bg} ${colorScheme.border} ${canEdit ? 'cursor-pointer hover:opacity-90 transition-all' : ''}`}
+                              >
+                                <div className="flex items-center justify-between gap-2">
+                                  <div className="flex items-center gap-2">
+                                    <Package className={`h-4 w-4 ${colorScheme.text}`} />
+                                    <span className={`font-medium text-sm ${colorScheme.text}`}>
+                                      {placeholder.label}
+                                    </span>
+                                  </div>
+                                  {placeholder.truckId && (
+                                    <Badge variant="outline" className="text-xs bg-white/90 text-gray-700 border-gray-400">
+                                      <Truck className="h-3 w-3 mr-1" />
+                                      {placeholder.truckId}
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </>
+                      )}
+                    </CardContent>
                   </Card>
                 );
               })}
