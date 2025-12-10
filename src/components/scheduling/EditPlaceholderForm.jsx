@@ -35,6 +35,7 @@ export default function EditPlaceholderForm({ placeholder, onSaved, onCancel }) 
   const [color, setColor] = useState(placeholder.color);
   const [truckId, setTruckId] = useState(placeholder.truckId);
   const [timeSlotId, setTimeSlotId] = useState(placeholder.timeSlotId);
+  const [slotPosition, setSlotPosition] = useState(placeholder.slotPosition || 1);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -51,7 +52,8 @@ export default function EditPlaceholderForm({ placeholder, onSaved, onCancel }) 
         label: label.trim(),
         color,
         truckId,
-        timeSlotId
+        timeSlotId,
+        slotPosition: parseInt(slotPosition)
       });
       onSaved();
     } catch (error) {
@@ -114,6 +116,19 @@ export default function EditPlaceholderForm({ placeholder, onSaved, onCancel }) 
               {DELIVERY_WINDOWS.map(window => (
                 <SelectItem key={window.id} value={window.id}>{window.label}</SelectItem>
               ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <Label htmlFor="slotPosition">Delivery Slot *</Label>
+          <Select value={slotPosition.toString()} onValueChange={(val) => setSlotPosition(parseInt(val))} required>
+            <SelectTrigger id="slotPosition">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1">Slot 1 (First)</SelectItem>
+              <SelectItem value="3">Slot 2 (Second)</SelectItem>
             </SelectContent>
           </Select>
         </div>
