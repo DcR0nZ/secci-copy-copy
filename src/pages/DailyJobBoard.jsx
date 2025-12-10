@@ -12,6 +12,8 @@ import { useToast } from '@/components/ui/use-toast';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getJobCardInlineStyles, getBadgeStyles, getJobCardStyles } from '../components/scheduling/DeliveryTypeColorUtils';
 import DeliveryTypeLegend from '../components/scheduling/DeliveryTypeLegend';
+import EditPlaceholderForm from '../components/scheduling/EditPlaceholderForm';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const TRUCKS = [
   { id: 'ACCO1', name: 'ACCO1' },
@@ -45,6 +47,8 @@ export default function DailyJobBoard() {
   const [createJobOpen, setCreateJobOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [selectedPlaceholder, setSelectedPlaceholder] = useState(null);
+  const [isPlaceholderDialogOpen, setPlaceholderDialogOpen] = useState(false);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -225,6 +229,14 @@ export default function DailyJobBoard() {
   const handleJobClick = (job) => {
     setSelectedJob(job);
     setJobDialogOpen(true);
+  };
+
+  const handlePlaceholderClick = (placeholder) => {
+    // Only dispatchers and admins can edit placeholders
+    if (currentUser?.role === 'admin' || currentUser?.appRole === 'dispatcher') {
+      setSelectedPlaceholder(placeholder);
+      setPlaceholderDialogOpen(true);
+    }
   };
 
   const handleJobUpdated = () => {
@@ -454,10 +466,12 @@ export default function DailyJobBoard() {
 
                             {slotPlaceholders.map((placeholder) => {
                               const colorScheme = COLOR_OPTIONS[placeholder.color] || COLOR_OPTIONS.gray;
+                              const canEdit = currentUser?.role === 'admin' || currentUser?.appRole === 'dispatcher';
                               return (
                                 <div
                                   key={placeholder.id}
-                                  className={`p-3 rounded-lg border-2 ${colorScheme.bg} ${colorScheme.border}`}
+                                  onClick={() => handlePlaceholderClick(placeholder)}
+                                  className={`p-3 rounded-lg border-2 ${colorScheme.bg} ${colorScheme.border} ${canEdit ? 'cursor-pointer active:opacity-80 transition-all' : ''}`}
                                 >
                                   <div className="flex items-center justify-between gap-2">
                                     <div className="flex items-center gap-2">
@@ -501,6 +515,24 @@ export default function DailyJobBoard() {
           customers={customers}
           deliveryTypes={deliveryTypes}
         />
+
+        {selectedPlaceholder && (
+          <Dialog open={isPlaceholderDialogOpen} onOpenChange={setPlaceholderDialogOpen}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Edit Placeholder</DialogTitle>
+              </DialogHeader>
+              <EditPlaceholderForm
+                placeholder={selectedPlaceholder}
+                onSaved={() => {
+                  setPlaceholderDialogOpen(false);
+                  handleJobUpdated();
+                }}
+                onCancel={() => setPlaceholderDialogOpen(false)}
+              />
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
     );
   }
@@ -697,10 +729,12 @@ export default function DailyJobBoard() {
 
                           {slotPlaceholders.map((placeholder) => {
                             const colorScheme = COLOR_OPTIONS[placeholder.color] || COLOR_OPTIONS.gray;
+                            const canEdit = currentUser?.role === 'admin' || currentUser?.appRole === 'dispatcher';
                             return (
                               <div
                                 key={placeholder.id}
-                                className={`p-3 rounded-lg border-2 ${colorScheme.bg} ${colorScheme.border}`}
+                                onClick={() => handlePlaceholderClick(placeholder)}
+                                className={`p-3 rounded-lg border-2 ${colorScheme.bg} ${colorScheme.border} ${canEdit ? 'cursor-pointer hover:opacity-90 transition-all' : ''}`}
                               >
                                 <div className="flex items-center justify-between gap-2">
                                   <div className="flex items-center gap-2">
@@ -744,6 +778,24 @@ export default function DailyJobBoard() {
         customers={customers}
         deliveryTypes={deliveryTypes}
       />
+
+      {selectedPlaceholder && (
+        <Dialog open={isPlaceholderDialogOpen} onOpenChange={setPlaceholderDialogOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Edit Placeholder</DialogTitle>
+            </DialogHeader>
+            <EditPlaceholderForm
+              placeholder={selectedPlaceholder}
+              onSaved={() => {
+                setPlaceholderDialogOpen(false);
+                handleJobUpdated();
+              }}
+              onCancel={() => setPlaceholderDialogOpen(false)}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </>
   );
 }
