@@ -18,17 +18,33 @@ const DELIVERY_WINDOWS = [
   { id: 'second-pm', label: '2-4pm (2nd PM)' }
 ];
 
+const TRUCKS = [
+  { id: 'ACCO1', name: 'ACCO1' },
+  { id: 'ACCO2', name: 'ACCO2' },
+  { id: 'FUSO', name: 'FUSO' },
+  { id: 'ISUZU', name: 'ISUZU' },
+  { id: 'UD', name: 'UD' }
+];
+
+const SLOT_POSITIONS = [
+  { value: 1, label: 'Slot 1 (Top)' },
+  { value: 2, label: 'Slot 2 (Middle)' },
+  { value: 3, label: 'Slot 3 (Bottom)' }
+];
+
 export default function EditJobDialog({ job, open, onOpenChange, onJobUpdated }) {
   const [customers, setCustomers] = useState([]);
   const [deliveryTypes, setDeliveryTypes] = useState([]);
   const [pickupLocations, setPickupLocations] = useState([]);
+  const [assignments, setAssignments] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
   const [formData, setFormData] = useState({
     customerId: '',
     deliveryTypeId: '',
     pickupLocationId: '',
     deliveryLocation: '',
-    deliveryLatitude: null, // New field
-    deliveryLongitude: null, // New field
+    deliveryLatitude: null,
+    deliveryLongitude: null,
     requestedDate: '',
     totalUnits: '',
     poSalesDocketNumber: '',
@@ -52,6 +68,12 @@ export default function EditJobDialog({ job, open, onOpenChange, onJobUpdated })
       otherDetails: ''
     }
   });
+  const [manualSchedule, setManualSchedule] = useState({
+    enabled: false,
+    truckId: '',
+    timeSlotId: '',
+    slotPosition: 1
+  });
   const [docketNumbers, setDocketNumbers] = useState([]);
   const [docketNotes, setDocketNotes] = useState([]);
   const [attachments, setAttachments] = useState([]);
@@ -61,23 +83,27 @@ export default function EditJobDialog({ job, open, onOpenChange, onJobUpdated })
   
   const { toast } = useToast();
 
-  // Load customers, delivery types, and pickup locations
+  // Load customers, delivery types, pickup locations, user, and assignments
   useEffect(() => {
     if (open) {
       const fetchData = async () => {
-        const [customersData, typesData, locationsData] = await Promise.all([
+        const [customersData, typesData, locationsData, user, assignmentsData] = await Promise.all([
           base44.entities.Customer.filter({ status: 'ACTIVE' }),
           base44.entities.DeliveryType.list(),
-          base44.entities.PickupLocation.filter({ status: 'ACTIVE' })
+          base44.entities.PickupLocation.filter({ status: 'ACTIVE' }),
+          base44.auth.me(),
+          job ? base44.entities.Assignment.filter({ jobId: job.id }) : Promise.resolve([])
         ]);
         setCustomers(customersData);
         setDeliveryTypes(typesData);
         setPickupLocations(locationsData);
+        setCurrentUser(user);
+        setAssignments(assignmentsData);
         setDataLoaded(true);
       };
       fetchData();
     }
-  }, [open]);
+  }, [open, job]);
 
   // Populate form when job changes and data is loaded
   useEffect(() => {
@@ -141,8 +167,26 @@ export default function EditJobDialog({ job, open, onOpenChange, onJobUpdated })
       setDocketNumbers(parsedDocketNumbers);
       setDocketNotes(parsedDocketNotes);
       setAttachments(job.attachments || []);
+      
+      // Load existing assignment for manual schedule
+      const existingAssignment = assignments[0];
+      if (existingAssignment) {
+        setManualSchedule({
+          enabled: true,
+          truckId: existingAssignment.truckId || '',
+          timeSlotId: existingAssignment.timeSlotId || '',
+          slotPosition: existingAssignment.slotPosition || 1
+        });
+      } else {
+        setManualSchedule({
+          enabled: false,
+          truckId: '',
+          timeSlotId: '',
+          slotPosition: 1
+        });
+      }
     }
-  }, [job, dataLoaded, open, deliveryTypes]);
+  }, [job, dataLoaded, open, deliveryTypes, assignments]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -272,6 +316,13 @@ export default function EditJobDialog({ job, open, onOpenChange, onJobUpdated })
         throw new Error("Please fill in all required fields: Customer, Delivery Type, and Pickup Location.");
       }
 
+      // Validate manual schedule if enabled
+      if (manualSchedule.enabled) {
+        if (!manualSchedule.truckId || !manualSchedule.timeSlotId || !formData.requestedDate) {
+          throw new Error("Please complete manual scheduling by selecting truck, time slot, and date.");
+        }
+      }
+
       const selectedCustomer = customers.find(c => c.id === formData.customerId);
       const selectedType = deliveryTypes.find(t => t.id === formData.deliveryTypeId);
       const selectedLocation = pickupLocations.find(l => l.id === formData.pickupLocationId);
@@ -293,13 +344,21 @@ export default function EditJobDialog({ job, open, onOpenChange, onJobUpdated })
         return false;
       });
 
+      // Determine job status based on manual scheduling
+      let newStatus = job.status;
+      if (manualSchedule.enabled && manualSchedule.truckId && manualSchedule.timeSlotId) {
+        newStatus = 'SCHEDULED';
+      } else if (!manualSchedule.enabled && job.status === 'SCHEDULED') {
+        newStatus = 'APPROVED';
+      }
+
       await base44.entities.Job.update(job.id, {
         customerId: formData.customerId,
         deliveryTypeId: formData.deliveryTypeId,
         pickupLocationId: formData.pickupLocationId,
         deliveryLocation: formData.deliveryLocation,
-        deliveryLatitude: formData.deliveryLatitude || undefined, // New field
-        deliveryLongitude: formData.deliveryLongitude || undefined, // New field
+        deliveryLatitude: formData.deliveryLatitude || undefined,
+        deliveryLongitude: formData.deliveryLongitude || undefined,
         requestedDate: formData.requestedDate,
         totalUnits: formData.totalUnits ? Number(formData.totalUnits) : undefined,
         poSalesDocketNumber: docketInfo,
@@ -313,6 +372,7 @@ export default function EditJobDialog({ job, open, onOpenChange, onJobUpdated })
         customerName: selectedCustomer.customerName,
         deliveryTypeName: selectedType.name,
         pickupLocation: `${selectedLocation.company} - ${selectedLocation.name}`,
+        status: newStatus,
         nonStandardDelivery: hasNonStandard ? {
           longWalk: formData.nonStandardDelivery.longWalk || false,
           longWalkDistance: formData.nonStandardDelivery.longWalkDistance ? Number(formData.nonStandardDelivery.longWalkDistance) : undefined,
@@ -327,6 +387,32 @@ export default function EditJobDialog({ job, open, onOpenChange, onJobUpdated })
           otherDetails: formData.nonStandardDelivery.otherDetails || undefined
         } : undefined
       });
+
+      // Handle manual schedule assignment
+      if (manualSchedule.enabled && manualSchedule.truckId && manualSchedule.timeSlotId) {
+        const existingAssignment = assignments[0];
+        if (existingAssignment) {
+          // Update existing assignment
+          await base44.entities.Assignment.update(existingAssignment.id, {
+            truckId: manualSchedule.truckId,
+            timeSlotId: manualSchedule.timeSlotId,
+            slotPosition: parseInt(manualSchedule.slotPosition) || 1,
+            date: formData.requestedDate
+          });
+        } else {
+          // Create new assignment
+          await base44.entities.Assignment.create({
+            jobId: job.id,
+            truckId: manualSchedule.truckId,
+            timeSlotId: manualSchedule.timeSlotId,
+            slotPosition: parseInt(manualSchedule.slotPosition) || 1,
+            date: formData.requestedDate
+          });
+        }
+      } else if (!manualSchedule.enabled && assignments[0]) {
+        // Remove assignment if manual schedule is disabled
+        await base44.entities.Assignment.delete(assignments[0].id);
+      }
 
       toast({
         title: "Job Updated!",
@@ -470,6 +556,79 @@ export default function EditJobDialog({ job, open, onOpenChange, onJobUpdated })
                       <SelectItem value="Any Time">Any Time</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+              )}
+
+              {/* Manual Schedule Section - Only for Admin/Dispatcher */}
+              {currentUser && (currentUser.role === 'admin' || currentUser.appRole === 'dispatcher') && formData.requestedDate && (
+                <div className="md:col-span-2 border-t pt-4 mt-2">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <input
+                      type="checkbox"
+                      id="manualScheduleEnabled"
+                      checked={manualSchedule.enabled}
+                      onChange={(e) => setManualSchedule(prev => ({ ...prev, enabled: e.target.checked }))}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="manualScheduleEnabled" className="text-sm font-semibold text-gray-900">
+                      Manually Assign to Schedule
+                    </label>
+                  </div>
+
+                  {manualSchedule.enabled && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <label htmlFor="manualTruck" className="block text-sm font-medium text-gray-700 mb-1">Truck *</label>
+                        <Select 
+                          value={manualSchedule.truckId} 
+                          onValueChange={(value) => setManualSchedule(prev => ({ ...prev, truckId: value }))}
+                        >
+                          <SelectTrigger id="manualTruck">
+                            <SelectValue placeholder="Select truck..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {TRUCKS.map(truck => (
+                              <SelectItem key={truck.id} value={truck.id}>{truck.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <label htmlFor="manualTimeSlot" className="block text-sm font-medium text-gray-700 mb-1">Time Slot *</label>
+                        <Select 
+                          value={manualSchedule.timeSlotId} 
+                          onValueChange={(value) => setManualSchedule(prev => ({ ...prev, timeSlotId: value }))}
+                        >
+                          <SelectTrigger id="manualTimeSlot">
+                            <SelectValue placeholder="Select time slot..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {DELIVERY_WINDOWS.map(window => (
+                              <SelectItem key={window.id} value={window.id}>{window.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <label htmlFor="manualSlotPosition" className="block text-sm font-medium text-gray-700 mb-1">Slot Position *</label>
+                        <Select 
+                          value={manualSchedule.slotPosition.toString()} 
+                          onValueChange={(value) => setManualSchedule(prev => ({ ...prev, slotPosition: parseInt(value) }))}
+                        >
+                          <SelectTrigger id="manualSlotPosition">
+                            <SelectValue placeholder="Select slot..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {SLOT_POSITIONS.map(slot => (
+                              <SelectItem key={slot.value} value={slot.value.toString()}>{slot.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
               
