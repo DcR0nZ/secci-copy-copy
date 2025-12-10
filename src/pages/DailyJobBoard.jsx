@@ -356,19 +356,27 @@ export default function DailyJobBoard() {
                         ) : (
                           <>
                             {(() => {
+                              const truckOrder = ['ACCO1', 'ACCO2', 'FUSO', 'ISUZU', 'UD'];
                               const jobsWithPos = slotJobs.map(job => ({
                                 item: job,
+                                truckId: job.truckId,
                                 slotPosition: job.slotPosition || 1,
                                 isPlaceholder: false
                               }));
                               const placeholdersWithPos = slotPlaceholders.map(p => ({
                                 item: p,
+                                truckId: p.truckId,
                                 slotPosition: p.slotPosition || 1,
                                 isPlaceholder: true
                               }));
 
                               return [...jobsWithPos, ...placeholdersWithPos]
-                                .sort((a, b) => a.slotPosition - b.slotPosition)
+                                .sort((a, b) => {
+                                  const truckA = truckOrder.indexOf(a.truckId);
+                                  const truckB = truckOrder.indexOf(b.truckId);
+                                  if (truckA !== truckB) return truckA - truckB;
+                                  return a.slotPosition - b.slotPosition;
+                                })
                                 .map(({ item, isPlaceholder }) => {
                                   if (isPlaceholder) {
                                     const placeholder = item;
@@ -640,19 +648,27 @@ export default function DailyJobBoard() {
                       ) : (
                         <>
                           {(() => {
+                            const truckOrder = ['ACCO1', 'ACCO2', 'FUSO', 'ISUZU', 'UD'];
                             const jobsWithPos = slotJobs.map(job => ({
                               item: job,
-                              slotPosition: assignments.find(a => a.jobId === job.id)?.slotPosition || 1,
+                              truckId: job.truckId,
+                              slotPosition: job.slotPosition || 1,
                               isPlaceholder: false
                             }));
                             const placeholdersWithPos = slotPlaceholders.map(p => ({
                               item: p,
+                              truckId: p.truckId,
                               slotPosition: p.slotPosition || 1,
                               isPlaceholder: true
                             }));
 
                             return [...jobsWithPos, ...placeholdersWithPos]
-                              .sort((a, b) => a.slotPosition - b.slotPosition)
+                              .sort((a, b) => {
+                                const truckA = truckOrder.indexOf(a.truckId);
+                                const truckB = truckOrder.indexOf(b.truckId);
+                                if (truckA !== truckB) return truckA - truckB;
+                                return a.slotPosition - b.slotPosition;
+                              })
                               .map(({ item, isPlaceholder }) => {
                                 if (isPlaceholder) {
                                   const placeholder = item;
