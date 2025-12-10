@@ -216,7 +216,8 @@ export default function DailyJobBoard() {
     return slotAssignments.map((a) => ({
       job: filteredJobs.find((j) => j.id === a.jobId),
       truckId: a.truckId,
-      assignment: a
+      assignment: a,
+      slotPosition: a.slotPosition || 1
     })).filter((item) => item.job).
       sort((a, b) => a.truckId.localeCompare(b.truckId));
   };
@@ -354,145 +355,162 @@ export default function DailyJobBoard() {
                           <p className="text-sm text-gray-500 text-center py-4">No jobs or placeholders scheduled</p>
                         ) : (
                           <>
-                            {slotJobs.map((item) => {
-                              const deliveryType = deliveryTypes.find(dt => dt.id === item.job.deliveryTypeId);
-                              const pickupShortname = item.job.pickupLocation?.shortname;
-                              const cardStyles = getJobCardInlineStyles(deliveryType, item.job);
-                              const badgeStyles = getBadgeStyles(getJobCardStyles(deliveryType, item.job));
+                            {(() => {
+                              const jobsWithPos = slotJobs.map(job => ({
+                                item: job,
+                                slotPosition: assignments.find(a => a.jobId === job.id)?.slotPosition || 1,
+                                isPlaceholder: false
+                              }));
+                              const placeholdersWithPos = slotPlaceholders.map(p => ({
+                                item: p,
+                                slotPosition: p.slotPosition || 1,
+                                isPlaceholder: true
+                              }));
 
-                              return (
-                                <div
-                                  key={item.job.id}
-                                  onClick={() => {
-                                    setSelectedJob(item.job);
-                                    setJobDialogOpen(true);
-                                  }}
-                                  className="p-3 rounded-lg border-2 active:opacity-80 transition-all cursor-pointer"
-                                  style={{
-                                    ...cardStyles,
-                                    boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
-                                  }}
-                                  onTouchStart={(e) => {
-                                    const rgb = cardStyles['--card-color-rgb'];
-                                    if (rgb) {
-                                      e.currentTarget.style.backgroundColor = `rgba(${rgb}, 0.08)`;
-                                    }
-                                  }}
-                                  onTouchEnd={(e) => {
-                                    const rgb = cardStyles['--card-color-rgb'];
-                                    if (rgb) {
-                                      e.currentTarget.style.backgroundColor = `rgba(${rgb}, 0.06)`;
-                                    }
-                                  }}
-                                  aria-label={`${deliveryType?.name || 'Standard'} delivery for ${item.job.customerName}`}
-                                >
-                                  <div className="flex items-start justify-between gap-2 mb-2">
-                                    <div className="flex items-center gap-2">
-                                      <Truck className="h-4 w-4 flex-shrink-0 text-gray-700" />
-                                      <Badge 
-                                        variant="outline" 
-                                        className="text-xs bg-white/90 text-gray-900"
-                                        style={{ borderColor: cardStyles.borderColor }}
+                              return [...jobsWithPos, ...placeholdersWithPos]
+                                .sort((a, b) => a.slotPosition - b.slotPosition)
+                                .map(({ item, isPlaceholder }) => {
+                                  if (isPlaceholder) {
+                                    const placeholder = item;
+                                    const colorScheme = COLOR_OPTIONS[placeholder.color] || COLOR_OPTIONS.gray;
+                                    const canEdit = currentUser?.role === 'admin' || currentUser?.appRole === 'dispatcher';
+                                    return (
+                                      <div
+                                        key={placeholder.id}
+                                        onClick={() => handlePlaceholderClick(placeholder)}
+                                        className={`p-3 rounded-lg border-2 ${colorScheme.bg} ${colorScheme.border} ${canEdit ? 'cursor-pointer active:opacity-80 transition-all' : ''}`}
                                       >
-                                        {item.assignment.truckId}
-                                      </Badge>
-                                    </div>
-                                    <div className="flex flex-col gap-1 items-end">
-                                      {deliveryType?.code && (
-                                        <span 
-                                          className="px-1.5 py-0.5 rounded text-[10px] font-bold flex items-center gap-0.5 shadow-sm"
-                                          style={badgeStyles}
-                                        >
-                                          {getJobCardStyles(deliveryType, item.job).icon && (
-                                            <span className="text-sm">{getJobCardStyles(deliveryType, item.job).icon}</span>
+                                        <div className="flex items-center justify-between gap-2">
+                                          <div className="flex items-center gap-2">
+                                            <Package className={`h-4 w-4 ${colorScheme.text}`} />
+                                            <span className={`font-medium text-sm ${colorScheme.text}`}>
+                                              {placeholder.label}
+                                            </span>
+                                          </div>
+                                          {placeholder.truckId && (
+                                            <Badge variant="outline" className="text-xs bg-white/90 text-gray-700 border-gray-400">
+                                              <Truck className="h-3 w-3 mr-1" />
+                                              {placeholder.truckId}
+                                            </Badge>
                                           )}
-                                          {deliveryType.code}
-                                        </span>
-                                      )}
-                                      {pickupShortname && (
-                                        <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-purple-100 text-purple-700">
-                                          {pickupShortname}
-                                        </span>
-                                      )}
-                                      {item.job.sqm && (
-                                        <Badge variant="outline" className="text-xs bg-white/90 text-gray-900">
-                                          {item.job.sqm.toLocaleString()}m²
-                                        </Badge>
-                                      )}
-                                      {item.job.totalUnits && (
-                                        <Badge variant="outline" className="text-xs bg-indigo-50 text-indigo-700 border-indigo-300">
-                                          {item.job.totalUnits} units
-                                        </Badge>
-                                      )}
-                                    </div>
-                                  </div>
-                                  <div className="space-y-1">
-                                    <p className="font-semibold text-sm text-gray-900">
-                                      {item.job.customerName}
-                                    </p>
-                                    <p className="text-sm text-gray-700">
-                                      {item.job.deliveryLocation}
-                                    </p>
-                                    <p className="text-xs text-gray-600">
-                                      {item.job.deliveryTypeName}
-                                    </p>
-                                    {item.job.siteContactName && (
-                                      <p className="text-xs flex items-center gap-1 mt-2 text-gray-600">
-                                        <User className="h-3 w-3" />
-                                        {item.job.siteContactName} - {item.job.siteContactPhone}
-                                      </p>
-                                    )}
-                                    {item.job.status === 'DELIVERED' && (
-                                      <Badge className="bg-green-600 text-white text-xs mt-2">
-                                        <CheckCircle2 className="h-3 w-3 mr-1" />
-                                        DELIVERED
-                                      </Badge>
-                                    )}
-                                    {(item.job.status === 'RETURNED' || item.job.isReturned) && (
-                                      <Badge className="bg-black text-white text-xs mt-2">
-                                        <ArrowLeft className="h-3 w-3 mr-1" />
-                                        RETURNED
-                                      </Badge>
-                                    )}
-                                    {item.job.podNotes && item.job.podNotes.trim().length > 0 && (
-                                      <Badge className="bg-blue-500 text-white text-xs mt-2">
-                                        <AlertTriangle className="h-3 w-3 mr-1" />POD Notes
-                                      </Badge>
-                                    )}
-                                  </div>
-                                </div>
-                              );
-                            })}
+                                        </div>
+                                      </div>
+                                    );
+                                  }
 
-                            {slotPlaceholders.map((placeholder) => {
-                              const colorScheme = COLOR_OPTIONS[placeholder.color] || COLOR_OPTIONS.gray;
-                              const canEdit = currentUser?.role === 'admin' || currentUser?.appRole === 'dispatcher';
-                              return (
-                                <div
-                                  key={placeholder.id}
-                                  onClick={() => handlePlaceholderClick(placeholder)}
-                                  className={`p-3 rounded-lg border-2 ${colorScheme.bg} ${colorScheme.border} ${canEdit ? 'cursor-pointer active:opacity-80 transition-all' : ''}`}
-                                >
-                                  <div className="flex items-center justify-between gap-2">
-                                    <div className="flex items-center gap-2">
-                                      <Package className={`h-4 w-4 ${colorScheme.text}`} />
-                                      <span className={`font-medium text-sm ${colorScheme.text}`}>
-                                        {placeholder.label}
-                                      </span>
+                                  const job = item.job;
+                                  const deliveryType = deliveryTypes.find(dt => dt.id === job.deliveryTypeId);
+                                  const pickupShortname = job.pickupLocation?.shortname;
+                                  const cardStyles = getJobCardInlineStyles(deliveryType, job);
+                                  const badgeStyles = getBadgeStyles(getJobCardStyles(deliveryType, job));
+
+                                  return (
+                                    <div
+                                      key={job.id}
+                                      onClick={() => {
+                                        setSelectedJob(job);
+                                        setJobDialogOpen(true);
+                                      }}
+                                      className="p-3 rounded-lg border-2 active:opacity-80 transition-all cursor-pointer"
+                                      style={{
+                                        ...cardStyles,
+                                        boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
+                                      }}
+                                      onTouchStart={(e) => {
+                                        const rgb = cardStyles['--card-color-rgb'];
+                                        if (rgb) {
+                                          e.currentTarget.style.backgroundColor = `rgba(${rgb}, 0.08)`;
+                                        }
+                                      }}
+                                      onTouchEnd={(e) => {
+                                        const rgb = cardStyles['--card-color-rgb'];
+                                        if (rgb) {
+                                          e.currentTarget.style.backgroundColor = `rgba(${rgb}, 0.06)`;
+                                        }
+                                      }}
+                                      aria-label={`${deliveryType?.name || 'Standard'} delivery for ${job.customerName}`}
+                                    >
+                                      <div className="flex items-start justify-between gap-2 mb-2">
+                                        <div className="flex items-center gap-2">
+                                          <Truck className="h-4 w-4 flex-shrink-0 text-gray-700" />
+                                          <Badge 
+                                            variant="outline" 
+                                            className="text-xs bg-white/90 text-gray-900"
+                                            style={{ borderColor: cardStyles.borderColor }}
+                                          >
+                                            {item.assignment.truckId}
+                                          </Badge>
+                                        </div>
+                                        <div className="flex flex-col gap-1 items-end">
+                                          {deliveryType?.code && (
+                                            <span 
+                                              className="px-1.5 py-0.5 rounded text-[10px] font-bold flex items-center gap-0.5 shadow-sm"
+                                              style={badgeStyles}
+                                            >
+                                              {getJobCardStyles(deliveryType, job).icon && (
+                                                <span className="text-sm">{getJobCardStyles(deliveryType, job).icon}</span>
+                                              )}
+                                              {deliveryType.code}
+                                            </span>
+                                          )}
+                                          {pickupShortname && (
+                                            <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-purple-100 text-purple-700">
+                                              {pickupShortname}
+                                            </span>
+                                          )}
+                                          {job.sqm && (
+                                            <Badge variant="outline" className="text-xs bg-white/90 text-gray-900">
+                                              {job.sqm.toLocaleString()}m²
+                                            </Badge>
+                                          )}
+                                          {job.totalUnits && (
+                                            <Badge variant="outline" className="text-xs bg-indigo-50 text-indigo-700 border-indigo-300">
+                                              {job.totalUnits} units
+                                            </Badge>
+                                          )}
+                                        </div>
+                                      </div>
+                                      <div className="space-y-1">
+                                        <p className="font-semibold text-sm text-gray-900">
+                                          {job.customerName}
+                                        </p>
+                                        <p className="text-sm text-gray-700">
+                                          {job.deliveryLocation}
+                                        </p>
+                                        <p className="text-xs text-gray-600">
+                                          {job.deliveryTypeName}
+                                        </p>
+                                        {job.siteContactName && (
+                                          <p className="text-xs flex items-center gap-1 mt-2 text-gray-600">
+                                            <User className="h-3 w-3" />
+                                            {job.siteContactName} - {job.siteContactPhone}
+                                          </p>
+                                        )}
+                                        {job.status === 'DELIVERED' && (
+                                          <Badge className="bg-green-600 text-white text-xs mt-2">
+                                            <CheckCircle2 className="h-3 w-3 mr-1" />
+                                            DELIVERED
+                                          </Badge>
+                                        )}
+                                        {(job.status === 'RETURNED' || job.isReturned) && (
+                                          <Badge className="bg-black text-white text-xs mt-2">
+                                            <ArrowLeft className="h-3 w-3 mr-1" />
+                                            RETURNED
+                                          </Badge>
+                                        )}
+                                        {job.podNotes && job.podNotes.trim().length > 0 && (
+                                          <Badge className="bg-blue-500 text-white text-xs mt-2">
+                                            <AlertTriangle className="h-3 w-3 mr-1" />POD Notes
+                                          </Badge>
+                                        )}
+                                      </div>
                                     </div>
-                                    {placeholder.truckId && (
-                                      <Badge variant="outline" className="text-xs bg-white/90 text-gray-700 border-gray-400">
-                                        <Truck className="h-3 w-3 mr-1" />
-                                        {placeholder.truckId}
-                                      </Badge>
-                                    )}
+                                  );
+                                  });
+                                  })()}
+                                  </>
+                                  )}
                                   </div>
-                                </div>
-                              );
-                            })}
-                          </>
-                        )}
-                      </div>
                     </CardContent>
                   </Card>
                 );
@@ -621,138 +639,155 @@ export default function DailyJobBoard() {
                         <p className="text-sm text-gray-500 text-center py-4">No jobs or placeholders scheduled</p>
                       ) : (
                         <>
-                          {slotJobs.map((item) => {
-                            const deliveryType = deliveryTypes.find(dt => dt.id === item.job.deliveryTypeId);
-                            const pickupShortname = item.job.pickupLocation?.shortname;
-                            const cardStyles = getJobCardInlineStyles(deliveryType, item.job);
-                            const badgeStyles = getBadgeStyles(getJobCardStyles(deliveryType, item.job));
+                          {(() => {
+                            const jobsWithPos = slotJobs.map(job => ({
+                              item: job,
+                              slotPosition: assignments.find(a => a.jobId === job.id)?.slotPosition || 1,
+                              isPlaceholder: false
+                            }));
+                            const placeholdersWithPos = slotPlaceholders.map(p => ({
+                              item: p,
+                              slotPosition: p.slotPosition || 1,
+                              isPlaceholder: true
+                            }));
 
-                            return (
-                              <div
-                                key={item.job.id}
-                                onClick={() => handleJobClick(item.job)}
-                                className="p-3 rounded-lg border-2 cursor-pointer transition-all"
-                                style={{
-                                  ...cardStyles,
-                                  boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
-                                }}
-                                onMouseEnter={(e) => {
-                                  const rgb = cardStyles['--card-color-rgb'];
-                                  if (rgb) {
-                                    e.currentTarget.style.backgroundColor = `rgba(${rgb}, 0.10)`;
-                                    e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)';
-                                  }
-                                }}
-                                onMouseLeave={(e) => {
-                                  const rgb = cardStyles['--card-color-rgb'];
-                                  if (rgb) {
-                                    e.currentTarget.style.backgroundColor = `rgba(${rgb}, 0.06)`;
-                                    e.currentTarget.style.boxShadow = '0 1px 2px 0 rgba(0, 0, 0, 0.05)';
-                                  }
-                                }}
-                                aria-label={`${deliveryType?.name || 'Standard'} delivery for ${item.job.customerName}`}
-                              >
-                                <div className="flex items-start justify-between gap-2">
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 mb-1">
-                                      <Truck className="h-4 w-4 flex-shrink-0 text-gray-700" />
-                                      <Badge 
-                                        variant="outline" 
-                                        className="text-xs bg-white/90 text-gray-900"
-                                        style={{ borderColor: cardStyles.borderColor }}
-                                      >
-                                        {item.assignment.truckId}
-                                      </Badge>
-                                    </div>
-                                    {deliveryType?.code && (
-                                      <div className="mb-1">
-                                        <span 
-                                          className="px-1.5 py-0.5 rounded text-[10px] font-bold inline-flex items-center gap-0.5 shadow-sm"
-                                          style={badgeStyles}
-                                        >
-                                          {getJobCardStyles(deliveryType, item.job).icon && (
-                                            <span className="text-sm">{getJobCardStyles(deliveryType, item.job).icon}</span>
-                                          )}
-                                          {deliveryType.code}
-                                        </span>
+                            return [...jobsWithPos, ...placeholdersWithPos]
+                              .sort((a, b) => a.slotPosition - b.slotPosition)
+                              .map(({ item, isPlaceholder }) => {
+                                if (isPlaceholder) {
+                                  const placeholder = item;
+                                  const colorScheme = COLOR_OPTIONS[placeholder.color] || COLOR_OPTIONS.gray;
+                                  const canEdit = currentUser?.role === 'admin' || currentUser?.appRole === 'dispatcher';
+                                  return (
+                                    <div
+                                      key={placeholder.id}
+                                      onClick={() => handlePlaceholderClick(placeholder)}
+                                      className={`p-3 rounded-lg border-2 ${colorScheme.bg} ${colorScheme.border} ${canEdit ? 'cursor-pointer hover:opacity-90 transition-all' : ''}`}
+                                    >
+                                      <div className="flex items-center justify-between gap-2">
+                                        <div className="flex items-center gap-2">
+                                          <Package className={`h-4 w-4 ${colorScheme.text}`} />
+                                          <span className={`font-medium text-sm ${colorScheme.text}`}>
+                                            {placeholder.label}
+                                          </span>
+                                        </div>
+                                        {placeholder.truckId && (
+                                          <Badge variant="outline" className="text-xs bg-white/90 text-gray-700 border-gray-400">
+                                            <Truck className="h-3 w-3 mr-1" />
+                                            {placeholder.truckId}
+                                          </Badge>
+                                        )}
                                       </div>
-                                    )}
-                                    <h4 className="font-semibold text-sm mb-0.5 text-gray-900">
-                                      {item.job.customerName}
-                                    </h4>
-                                    <p className="text-xs truncate text-gray-700">
-                                      {item.job.deliveryLocation}
-                                    </p>
-                                    <p className="text-xs mt-0.5 text-gray-600">
-                                      {item.job.deliveryTypeName}
-                                    </p>
-                                  </div>
-                                  <div className="flex flex-col gap-1 items-end flex-shrink-0">
-                                    {item.job.sqm && (
-                                      <Badge variant="outline" className="text-xs bg-white/90 text-gray-900">
-                                        {item.job.sqm.toLocaleString()}m²
-                                      </Badge>
-                                    )}
-                                    {item.job.totalUnits && (
-                                      <Badge variant="outline" className="text-xs bg-indigo-50 text-indigo-700 border-indigo-300">
-                                        {item.job.totalUnits} units
-                                      </Badge>
-                                    )}
-                                  </div>
-                                </div>
-                                {item.job.siteContactName && (
-                                  <p className="text-xs flex items-center gap-1 mt-2 text-gray-600">
-                                    <User className="h-3 w-3" />
-                                    {item.job.siteContactName} - {item.job.siteContactPhone}
-                                  </p>
-                                )}
-                                {item.job.status === 'DELIVERED' && (
-                                  <Badge className="bg-green-600 text-white text-xs mt-2">
-                                    <CheckCircle2 className="h-3 w-3 mr-1" />
-                                    DELIVERED
-                                  </Badge>
-                                )}
-                                {(item.job.status === 'RETURNED' || item.job.isReturned) && (
-                                  <Badge className="bg-black text-white text-xs mt-2">
-                                    <ArrowLeft className="h-3 w-3 mr-1" />
-                                    RETURNED
-                                  </Badge>
-                                )}
-                                {item.job.podNotes && item.job.podNotes.trim().length > 0 && (
-                                  <Badge className="bg-blue-500 text-white text-xs mt-2">
-                                    <AlertTriangle className="h-3 w-3 mr-1" />POD Notes
-                                  </Badge>
-                                )}
-                              </div>
-                            );
-                          })}
+                                    </div>
+                                  );
+                                }
 
-                          {slotPlaceholders.map((placeholder) => {
-                            const colorScheme = COLOR_OPTIONS[placeholder.color] || COLOR_OPTIONS.gray;
-                            const canEdit = currentUser?.role === 'admin' || currentUser?.appRole === 'dispatcher';
-                            return (
-                              <div
-                                key={placeholder.id}
-                                onClick={() => handlePlaceholderClick(placeholder)}
-                                className={`p-3 rounded-lg border-2 ${colorScheme.bg} ${colorScheme.border} ${canEdit ? 'cursor-pointer hover:opacity-90 transition-all' : ''}`}
-                              >
-                                <div className="flex items-center justify-between gap-2">
-                                  <div className="flex items-center gap-2">
-                                    <Package className={`h-4 w-4 ${colorScheme.text}`} />
-                                    <span className={`font-medium text-sm ${colorScheme.text}`}>
-                                      {placeholder.label}
-                                    </span>
+                                const job = item.job;
+                                const deliveryType = deliveryTypes.find(dt => dt.id === job.deliveryTypeId);
+                                const pickupShortname = job.pickupLocation?.shortname;
+                                const cardStyles = getJobCardInlineStyles(deliveryType, job);
+                                const badgeStyles = getBadgeStyles(getJobCardStyles(deliveryType, job));
+
+                                return (
+                                  <div
+                                    key={job.id}
+                                    onClick={() => handleJobClick(job)}
+                                    className="p-3 rounded-lg border-2 cursor-pointer transition-all"
+                                    style={{
+                                      ...cardStyles,
+                                      boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                      const rgb = cardStyles['--card-color-rgb'];
+                                      if (rgb) {
+                                        e.currentTarget.style.backgroundColor = `rgba(${rgb}, 0.10)`;
+                                        e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)';
+                                      }
+                                    }}
+                                    onMouseLeave={(e) => {
+                                      const rgb = cardStyles['--card-color-rgb'];
+                                      if (rgb) {
+                                        e.currentTarget.style.backgroundColor = `rgba(${rgb}, 0.06)`;
+                                        e.currentTarget.style.boxShadow = '0 1px 2px 0 rgba(0, 0, 0, 0.05)';
+                                      }
+                                    }}
+                                    aria-label={`${deliveryType?.name || 'Standard'} delivery for ${job.customerName}`}
+                                  >
+                                    <div className="flex items-start justify-between gap-2">
+                                      <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 mb-1">
+                                          <Truck className="h-4 w-4 flex-shrink-0 text-gray-700" />
+                                          <Badge 
+                                            variant="outline" 
+                                            className="text-xs bg-white/90 text-gray-900"
+                                            style={{ borderColor: cardStyles.borderColor }}
+                                          >
+                                            {item.assignment.truckId}
+                                          </Badge>
+                                        </div>
+                                        {deliveryType?.code && (
+                                          <div className="mb-1">
+                                            <span 
+                                              className="px-1.5 py-0.5 rounded text-[10px] font-bold inline-flex items-center gap-0.5 shadow-sm"
+                                              style={badgeStyles}
+                                            >
+                                              {getJobCardStyles(deliveryType, job).icon && (
+                                                <span className="text-sm">{getJobCardStyles(deliveryType, job).icon}</span>
+                                              )}
+                                              {deliveryType.code}
+                                            </span>
+                                          </div>
+                                        )}
+                                        <h4 className="font-semibold text-sm mb-0.5 text-gray-900">
+                                          {job.customerName}
+                                        </h4>
+                                        <p className="text-xs truncate text-gray-700">
+                                          {job.deliveryLocation}
+                                        </p>
+                                        <p className="text-xs mt-0.5 text-gray-600">
+                                          {job.deliveryTypeName}
+                                        </p>
+                                      </div>
+                                      <div className="flex flex-col gap-1 items-end flex-shrink-0">
+                                        {job.sqm && (
+                                          <Badge variant="outline" className="text-xs bg-white/90 text-gray-900">
+                                            {job.sqm.toLocaleString()}m²
+                                          </Badge>
+                                        )}
+                                        {job.totalUnits && (
+                                          <Badge variant="outline" className="text-xs bg-indigo-50 text-indigo-700 border-indigo-300">
+                                            {job.totalUnits} units
+                                          </Badge>
+                                        )}
+                                      </div>
+                                    </div>
+                                    {job.siteContactName && (
+                                      <p className="text-xs flex items-center gap-1 mt-2 text-gray-600">
+                                        <User className="h-3 w-3" />
+                                        {job.siteContactName} - {job.siteContactPhone}
+                                      </p>
+                                    )}
+                                    {job.status === 'DELIVERED' && (
+                                      <Badge className="bg-green-600 text-white text-xs mt-2">
+                                        <CheckCircle2 className="h-3 w-3 mr-1" />
+                                        DELIVERED
+                                      </Badge>
+                                    )}
+                                    {(job.status === 'RETURNED' || job.isReturned) && (
+                                      <Badge className="bg-black text-white text-xs mt-2">
+                                        <ArrowLeft className="h-3 w-3 mr-1" />
+                                        RETURNED
+                                      </Badge>
+                                    )}
+                                    {job.podNotes && job.podNotes.trim().length > 0 && (
+                                      <Badge className="bg-blue-500 text-white text-xs mt-2">
+                                        <AlertTriangle className="h-3 w-3 mr-1" />POD Notes
+                                      </Badge>
+                                    )}
                                   </div>
-                                  {placeholder.truckId && (
-                                    <Badge variant="outline" className="text-xs bg-white/90 text-gray-700 border-gray-400">
-                                      <Truck className="h-3 w-3 mr-1" />
-                                      {placeholder.truckId}
-                                    </Badge>
-                                  )}
-                                </div>
-                              </div>
-                            );
-                          })}
+                                );
+                              });
+                          })()}
                         </>
                       )}
                     </CardContent>
