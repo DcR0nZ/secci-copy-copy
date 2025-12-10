@@ -405,9 +405,9 @@ export default function SchedulerGrid({
       return false;
     });
     return cellAssignments
-      .map((a) => ({ job: jobs.find((j) => j.id === a.jobId), assignment: a }))
+      .map((a) => ({ job: jobs.find((j) => j.id === a.jobId), assignment: a, slotPosition: a.slotPosition }))
       .filter((item) => item.job)
-      .sort((a, b) => (a.assignment.slotPosition || 1) - (b.assignment.slotPosition || 1))
+      .sort((a, b) => (a.slotPosition || 1) - (b.slotPosition || 1))
       .map((item) => item.job);
   };
 
@@ -565,13 +565,21 @@ export default function SchedulerGrid({
                           return (
                             <DroppableCell key={blockStart} id={droppableId}>
                               <div className="flex flex-col gap-2 items-center justify-center w-full px-1 relative">
-                                {[...slotJobs, ...slotPlaceholders.map(p => ({ ...p, _isPlaceholder: true }))]
-                                  .sort((a, b) => {
-                                    const aPos = a._isPlaceholder ? a.slotPosition : assignments.find(assn => assn.jobId === a.id)?.slotPosition || 1;
-                                    const bPos = b._isPlaceholder ? b.slotPosition : assignments.find(assn => assn.jobId === b.id)?.slotPosition || 1;
-                                    return (aPos || 1) - (bPos || 1);
-                                  })
-                                  .map((item, index) => {
+                                {(() => {
+                                  const jobsWithPos = slotJobs.map(job => ({
+                                    item: job,
+                                    slotPosition: assignments.find(a => a.jobId === job.id)?.slotPosition || 1,
+                                    isPlaceholder: false
+                                  }));
+                                  const placeholdersWithPos = slotPlaceholders.map(p => ({
+                                    item: p,
+                                    slotPosition: p.slotPosition || 1,
+                                    isPlaceholder: true
+                                  }));
+
+                                  return [...jobsWithPos, ...placeholdersWithPos]
+                                    .sort((a, b) => a.slotPosition - b.slotPosition)
+                                    .map(({ item, isPlaceholder }, index) => {
                                     if (item._isPlaceholder) {
                                       const placeholder = item;
                                       return (
@@ -634,9 +642,10 @@ export default function SchedulerGrid({
                                         <Plus className="h-3 w-3 text-gray-600" />
                                       </button>
                                     )}
-                                  </div>
-                                  );
-                                  })}
+                                    </div>
+                                    );
+                                    });
+                                    })()}
                               </div>
 
                               {canCreatePlaceholder && slotJobs.length === 0 && slotPlaceholders.length === 0 && (
