@@ -404,7 +404,11 @@ export default function SchedulerGrid({
       }
       return false;
     });
-    return cellAssignments.map((a) => jobs.find((j) => j.id === a.jobId)).filter(Boolean);
+    return cellAssignments
+      .map((a) => ({ job: jobs.find((j) => j.id === a.jobId), assignment: a }))
+      .filter((item) => item.job)
+      .sort((a, b) => (a.assignment.slotPosition || 1) - (b.assignment.slotPosition || 1))
+      .map((item) => item.job);
   };
 
   const getPlaceholdersForCell = (truckId, timeSlotId, slotPosition) => {
@@ -421,7 +425,7 @@ export default function SchedulerGrid({
       }
       
       return slotPosition === 1;
-    });
+    }).sort((a, b) => (a.slotPosition || 1) - (b.slotPosition || 1));
   };
 
   const getUnscheduledJobs = () => {
@@ -561,7 +565,48 @@ export default function SchedulerGrid({
                           return (
                             <DroppableCell key={blockStart} id={droppableId}>
                               <div className="flex flex-col gap-2 items-center justify-center w-full px-1 relative">
-                                {slotJobs.map((job, index) => (
+                                {[...slotJobs, ...slotPlaceholders.map(p => ({ ...p, _isPlaceholder: true }))]
+                                  .sort((a, b) => {
+                                    const aPos = a._isPlaceholder ? a.slotPosition : assignments.find(assn => assn.jobId === a.id)?.slotPosition || 1;
+                                    const bPos = b._isPlaceholder ? b.slotPosition : assignments.find(assn => assn.jobId === b.id)?.slotPosition || 1;
+                                    return (aPos || 1) - (bPos || 1);
+                                  })
+                                  .map((item, index) => {
+                                    if (item._isPlaceholder) {
+                                      const placeholder = item;
+                                      return (
+                                        <div key={`placeholder-${placeholder.id}`} className="relative w-full max-w-[196px] group/placeholder">
+                                          {canCreatePlaceholder && (
+                                            <button
+                                              onClick={() => onOpenPlaceholderDialog(truck.id, slot.id, blockStart, 'before', index)}
+                                              className="absolute left-0 top-1/2 transform -translate-x-full -translate-y-1/2 opacity-0 group-hover/placeholder:opacity-100 transition-opacity bg-white hover:bg-gray-100 border-2 border-gray-300 rounded-full p-1 z-20 shadow-sm ml-[-4px]"
+                                              style={{ width: '24px', height: '24px' }}>
+                                              <Plus className="h-3 w-3 text-gray-600" />
+                                            </button>
+                                          )}
+
+                                          <div style={{ minHeight: '60px', width: '100%' }}>
+                                            <PlaceholderBlock
+                                              placeholder={placeholder}
+                                              onUpdated={() => window.location.reload()}
+                                              isDragging={false}
+                                            />
+                                          </div>
+
+                                          {canCreatePlaceholder && (
+                                            <button
+                                              onClick={() => onOpenPlaceholderDialog(truck.id, slot.id, blockStart, 'after', index)}
+                                              className="absolute right-0 top-1/2 transform translate-x-full -translate-y-1/2 opacity-0 group-hover/placeholder:opacity-100 transition-opacity bg-white hover:bg-gray-100 border-2 border-gray-300 rounded-full p-1 z-20 shadow-sm mr-[-4px]"
+                                              style={{ width: '24px', height: '24px' }}>
+                                              <Plus className="h-3 w-3 text-gray-600" />
+                                            </button>
+                                          )}
+                                        </div>
+                                      );
+                                    }
+
+                                    const job = item;
+                                    return (
                                   <div key={job.id} className="relative w-full max-w-[196px] group/job">
                                     {canCreatePlaceholder && (
                                       <button
@@ -590,37 +635,8 @@ export default function SchedulerGrid({
                                       </button>
                                     )}
                                   </div>
-                                ))}
-
-                                {slotPlaceholders.map((placeholder, phIndex) => (
-                                  <div key={`placeholder-${placeholder.id}`} className="relative w-full max-w-[196px] group/placeholder">
-                                    {canCreatePlaceholder && (
-                                      <button
-                                        onClick={() => onOpenPlaceholderDialog(truck.id, slot.id, blockStart, 'before', slotJobs.length + phIndex)}
-                                        className="absolute left-0 top-1/2 transform -translate-x-full -translate-y-1/2 opacity-0 group-hover/placeholder:opacity-100 transition-opacity bg-white hover:bg-gray-100 border-2 border-gray-300 rounded-full p-1 z-20 shadow-sm ml-[-4px]"
-                                        style={{ width: '24px', height: '24px' }}>
-                                        <Plus className="h-3 w-3 text-gray-600" />
-                                      </button>
-                                    )}
-
-                                    <div style={{ minHeight: '60px', width: '100%' }}>
-                                      <PlaceholderBlock
-                                        placeholder={placeholder}
-                                        onUpdated={() => window.location.reload()}
-                                        isDragging={false}
-                                      />
-                                    </div>
-
-                                    {canCreatePlaceholder && (
-                                      <button
-                                        onClick={() => onOpenPlaceholderDialog(truck.id, slot.id, blockStart, 'after', slotJobs.length + phIndex)}
-                                        className="absolute right-0 top-1/2 transform translate-x-full -translate-y-1/2 opacity-0 group-hover/placeholder:opacity-100 transition-opacity bg-white hover:bg-gray-100 border-2 border-gray-300 rounded-full p-1 z-20 shadow-sm mr-[-4px]"
-                                        style={{ width: '24px', height: '24px' }}>
-                                        <Plus className="h-3 w-3 text-gray-600" />
-                                      </button>
-                                    )}
-                                  </div>
-                                ))}
+                                  );
+                                  })}
                               </div>
 
                               {canCreatePlaceholder && slotJobs.length === 0 && slotPlaceholders.length === 0 && (

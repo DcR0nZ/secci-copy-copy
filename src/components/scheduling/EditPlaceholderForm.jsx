@@ -124,11 +124,13 @@ export default function EditPlaceholderForm({ placeholder, onSaved, onCancel }) 
           <Label htmlFor="slotPosition">Delivery Slot *</Label>
           <Select value={slotPosition.toString()} onValueChange={(val) => setSlotPosition(parseInt(val))} required>
             <SelectTrigger id="slotPosition">
-              <SelectValue />
+              <SelectValue placeholder="Select slot..." />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="1">Slot 1 (First)</SelectItem>
-              <SelectItem value="3">Slot 2 (Second)</SelectItem>
+              <SelectItem value="2">Slot 2 (Second)</SelectItem>
+              <SelectItem value="3">Slot 3 (Third)</SelectItem>
+              <SelectItem value="4">Slot 4 (Fourth)</SelectItem>
             </SelectContent>
           </Select>
         </div>
