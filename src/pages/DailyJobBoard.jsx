@@ -358,7 +358,7 @@ export default function DailyJobBoard() {
                             {(() => {
                               const jobsWithPos = slotJobs.map(job => ({
                                 item: job,
-                                slotPosition: assignments.find(a => a.jobId === job.id)?.slotPosition || 1,
+                                slotPosition: job.slotPosition || 1,
                                 isPlaceholder: false
                               }));
                               const placeholdersWithPos = slotPlaceholders.map(p => ({
@@ -506,11 +506,11 @@ export default function DailyJobBoard() {
                                       </div>
                                     </div>
                                   );
-                                  });
-                                  })()}
-                                  </>
-                                  )}
-                                  </div>
+                                });
+                            })()}
+                            </>
+                            )}
+                            </div>
                     </CardContent>
                   </Card>
                 );
