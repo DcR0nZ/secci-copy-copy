@@ -18,7 +18,14 @@ const COLOR_OPTIONS = [
 export default function CreatePlaceholderDialog({ open, onOpenChange, truckId, timeSlotId, slotPosition, date, onCreated }) {
   const [label, setLabel] = useState('');
   const [color, setColor] = useState('gray');
+  const [selectedSlotPosition, setSelectedSlotPosition] = useState(slotPosition || 1);
   const [saving, setSaving] = useState(false);
+
+  React.useEffect(() => {
+    if (open) {
+      setSelectedSlotPosition(slotPosition || 1);
+    }
+  }, [open, slotPosition]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -29,7 +36,7 @@ export default function CreatePlaceholderDialog({ open, onOpenChange, truckId, t
       await base44.entities.Placeholder.create({
         truckId,
         timeSlotId,
-        slotPosition: slotPosition || 1, // Added slotPosition, defaulting to 1 if not provided
+        slotPosition: parseInt(selectedSlotPosition),
         date,
         label: label.trim(),
         color
@@ -65,6 +72,20 @@ export default function CreatePlaceholderDialog({ open, onOpenChange, truckId, t
                 required
                 autoFocus
               />
+            </div>
+            <div>
+              <Label htmlFor="slotPosition">Delivery Slot *</Label>
+              <Select value={selectedSlotPosition.toString()} onValueChange={(val) => setSelectedSlotPosition(parseInt(val))} required>
+                <SelectTrigger id="slotPosition">
+                  <SelectValue placeholder="Select slot..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">Slot 1 (First)</SelectItem>
+                  <SelectItem value="2">Slot 2 (Second)</SelectItem>
+                  <SelectItem value="3">Slot 3 (Third)</SelectItem>
+                  <SelectItem value="4">Slot 4 (Fourth)</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label htmlFor="color">Color</Label>
