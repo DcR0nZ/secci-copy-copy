@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChevronLeft, ChevronRight, Calendar, Plus, Package, Truck, Clock, AlertTriangle, Bell } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, Plus, Package, Truck, Clock, AlertTriangle, Bell, CalendarClock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { format, addDays, subDays, startOfDay } from 'date-fns';
 import { base44 } from '@/api/base44Client';
@@ -11,6 +11,7 @@ import SchedulerGrid from '../components/scheduling/SchedulerGrid';
 import CreateJobForm from '../components/scheduling/CreateJobForm';
 import JobDetailsDialog from '../components/scheduling/JobDetailsDialog';
 import CreatePlaceholderDialog from '../components/scheduling/CreatePlaceholderDialog';
+import ScheduleJobDialog from '../components/scheduling/ScheduleJobDialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -72,6 +73,8 @@ export default function SchedulingBoard() {
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [createPlaceholderOpen, setCreatePlaceholderOpen] = useState(false);
   const [placeholderSlot, setPlaceholderSlot] = useState(null);
+  const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
+  const [jobToSchedule, setJobToSchedule] = useState(null);
 
   const [notificationReadStatus, setNotificationReadStatus] = useState([]);
   const [unreadNotifications, setUnreadNotifications] = useState([]);
@@ -518,14 +521,10 @@ export default function SchedulingBoard() {
                         const cardStyles = getJobCardInlineStyles(deliveryType, job);
                         const badgeStyles = getBadgeStyles(getJobCardStyles(deliveryType, job));
                         const textStyles = getJobCardStyles(deliveryType, job);
-                        
+
                         return (
                           <div
                             key={job.id}
-                            onClick={() => {
-                              setSelectedJob(job);
-                              setJobDialogOpen(true);
-                            }}
                             className="p-3 rounded-lg border-2 active:bg-gray-50 transition-colors"
                             style={{
                               ...cardStyles,
@@ -567,6 +566,32 @@ export default function SchedulingBoard() {
                             </div>
                             <p className="text-sm text-gray-600">{job.deliveryLocation}</p>
                             <p className="text-xs text-gray-500 mt-1">{job.deliveryTypeName}</p>
+                            <div className="flex gap-2 mt-3">
+                              <Button
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setJobToSchedule(job);
+                                  setScheduleDialogOpen(true);
+                                }}
+                                className="flex-1"
+                              >
+                                <CalendarClock className="h-4 w-4 mr-1" />
+                                Schedule
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedJob(job);
+                                  setJobDialogOpen(true);
+                                }}
+                                className="flex-1"
+                              >
+                                View
+                              </Button>
+                            </div>
                           </div>
                         );
                       })}
@@ -715,9 +740,16 @@ export default function SchedulingBoard() {
           date={selectedDate}
           onCreated={fetchData}
         />
-      </>
-    );
-  }
+
+        <ScheduleJobDialog
+          job={jobToSchedule}
+          open={scheduleDialogOpen}
+          onOpenChange={setScheduleDialogOpen}
+          onScheduled={fetchData}
+        />
+        </>
+        );
+        }
 
   // DESKTOP VIEW
   return (
