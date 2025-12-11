@@ -315,10 +315,12 @@ export default function SchedulingBoard() {
   };
 
   const handleDragStart = (event) => {
+    event.preventDefault?.();
     setActiveId(event.active.id);
   };
 
   const handleDragEnd = async (event) => {
+    event.preventDefault?.();
     const { active, over } = event;
     setActiveId(null);
 
@@ -336,7 +338,17 @@ export default function SchedulingBoard() {
       if (!placeholder) return;
 
       if (droppedOnId === 'unscheduled') {
-        await base44.entities.Placeholder.delete(placeholderId);
+        try {
+          await base44.entities.Placeholder.delete(placeholderId);
+          await fetchData();
+        } catch (error) {
+          console.error('Error deleting placeholder:', error);
+          toast({
+            title: "Error",
+            description: "Failed to remove placeholder. Please try again.",
+            variant: "destructive",
+          });
+        }
       } else {
         const parts = droppedOnId.split('-');
         const requestedSlotPosition = parseInt(parts[parts.length - 1]);
@@ -345,14 +357,23 @@ export default function SchedulingBoard() {
 
         const finalSlotPosition = requestedSlotPosition <= 2 ? 1 : 3;
 
-        await base44.entities.Placeholder.update(placeholderId, {
-          truckId: destinationTruckId,
-          timeSlotId: destinationTimeSlotId,
-          slotPosition: finalSlotPosition,
-          date: selectedDate
-        });
+        try {
+          await base44.entities.Placeholder.update(placeholderId, {
+            truckId: destinationTruckId,
+            timeSlotId: destinationTimeSlotId,
+            slotPosition: finalSlotPosition,
+            date: selectedDate
+          });
+          await fetchData();
+        } catch (error) {
+          console.error('Error updating placeholder:', error);
+          toast({
+            title: "Error",
+            description: "Failed to move placeholder. Please try again.",
+            variant: "destructive",
+          });
+        }
       }
-      fetchData();
       return;
     }
 
@@ -364,10 +385,19 @@ export default function SchedulingBoard() {
 
     if (droppedOnId === 'unscheduled') {
       if (sourceAssignment) {
-        await base44.entities.Assignment.delete(sourceAssignment.id);
-        await base44.entities.Job.update(jobId, { ...jobToUpdate, status: 'APPROVED' });
+        try {
+          await base44.entities.Assignment.delete(sourceAssignment.id);
+          await base44.entities.Job.update(jobId, { ...jobToUpdate, status: 'APPROVED' });
+          await fetchData();
+        } catch (error) {
+          console.error('Error unscheduling job:', error);
+          toast({
+            title: "Error",
+            description: "Failed to unschedule job. Please try again.",
+            variant: "destructive",
+          });
+        }
       }
-      fetchData();
       return;
     }
     
@@ -417,23 +447,32 @@ export default function SchedulingBoard() {
       }
     }
     
-    if (sourceAssignment) {
-      await base44.entities.Assignment.update(sourceAssignment.id, { 
-        truckId: destinationTruckId, 
-        timeSlotId: destinationTimeSlotId, 
-        slotPosition: finalSlotPosition 
+    try {
+      if (sourceAssignment) {
+        await base44.entities.Assignment.update(sourceAssignment.id, { 
+          truckId: destinationTruckId, 
+          timeSlotId: destinationTimeSlotId, 
+          slotPosition: finalSlotPosition 
+        });
+      } else {
+        await base44.entities.Assignment.create({
+          jobId,
+          truckId: destinationTruckId,
+          timeSlotId: destinationTimeSlotId,
+          slotPosition: finalSlotPosition,
+          date: selectedDate,
+        });
+        await base44.entities.Job.update(jobId, { ...jobToUpdate, status: 'SCHEDULED' });
+      }
+      await fetchData();
+    } catch (error) {
+      console.error('Error scheduling job:', error);
+      toast({
+        title: "Error",
+        description: "Failed to schedule job. Please try again.",
+        variant: "destructive",
       });
-    } else {
-      await base44.entities.Assignment.create({
-        jobId,
-        truckId: destinationTruckId,
-        timeSlotId: destinationTimeSlotId,
-        slotPosition: finalSlotPosition,
-        date: selectedDate,
-      });
-      await base44.entities.Job.update(jobId, { ...jobToUpdate, status: 'SCHEDULED' });
     }
-    fetchData();
   };
 
   const activeJob = activeId && !activeId.startsWith('placeholder-') 
