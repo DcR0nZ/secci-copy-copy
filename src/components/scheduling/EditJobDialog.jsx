@@ -576,56 +576,70 @@ export default function EditJobDialog({ job, open, onOpenChange, onJobUpdated })
                   </div>
 
                   {manualSchedule.enabled && (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-4">
                       <div>
-                        <label htmlFor="manualTruck" className="block text-sm font-medium text-gray-700 mb-1">Truck *</label>
-                        <Select 
-                          value={manualSchedule.truckId} 
-                          onValueChange={(value) => setManualSchedule(prev => ({ ...prev, truckId: value }))}
-                        >
-                          <SelectTrigger id="manualTruck">
-                            <SelectValue placeholder="Select truck..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {TRUCKS.map(truck => (
-                              <SelectItem key={truck.id} value={truck.id}>{truck.name}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <label htmlFor="manualDate" className="block text-sm font-medium text-gray-700 mb-1">Scheduled Date *</label>
+                        <Input 
+                          id="manualDate" 
+                          name="requestedDate" 
+                          type="date" 
+                          value={formData.requestedDate} 
+                          onChange={handleChange} 
+                          required 
+                        />
                       </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                          <label htmlFor="manualTruck" className="block text-sm font-medium text-gray-700 mb-1">Truck *</label>
+                          <Select 
+                            value={manualSchedule.truckId} 
+                            onValueChange={(value) => setManualSchedule(prev => ({ ...prev, truckId: value }))}
+                          >
+                            <SelectTrigger id="manualTruck">
+                              <SelectValue placeholder="Select truck..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {TRUCKS.map(truck => (
+                                <SelectItem key={truck.id} value={truck.id}>{truck.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
 
-                      <div>
-                        <label htmlFor="manualTimeSlot" className="block text-sm font-medium text-gray-700 mb-1">Time Slot *</label>
-                        <Select 
-                          value={manualSchedule.timeSlotId} 
-                          onValueChange={(value) => setManualSchedule(prev => ({ ...prev, timeSlotId: value }))}
-                        >
-                          <SelectTrigger id="manualTimeSlot">
-                            <SelectValue placeholder="Select time slot..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {DELIVERY_WINDOWS.map(window => (
-                              <SelectItem key={window.id} value={window.id}>{window.label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
+                        <div>
+                          <label htmlFor="manualTimeSlot" className="block text-sm font-medium text-gray-700 mb-1">Time Slot *</label>
+                          <Select 
+                            value={manualSchedule.timeSlotId} 
+                            onValueChange={(value) => setManualSchedule(prev => ({ ...prev, timeSlotId: value }))}
+                          >
+                            <SelectTrigger id="manualTimeSlot">
+                              <SelectValue placeholder="Select time slot..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {DELIVERY_WINDOWS.map(window => (
+                                <SelectItem key={window.id} value={window.id}>{window.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
 
-                      <div>
-                        <label htmlFor="manualSlotPosition" className="block text-sm font-medium text-gray-700 mb-1">Slot Position *</label>
-                        <Select 
-                          value={manualSchedule.slotPosition.toString()} 
-                          onValueChange={(value) => setManualSchedule(prev => ({ ...prev, slotPosition: parseInt(value) }))}
-                        >
-                          <SelectTrigger id="manualSlotPosition">
-                            <SelectValue placeholder="Select slot..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {SLOT_POSITIONS.map(slot => (
-                              <SelectItem key={slot.value} value={slot.value.toString()}>{slot.label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <div>
+                          <label htmlFor="manualSlotPosition" className="block text-sm font-medium text-gray-700 mb-1">Slot Position *</label>
+                          <Select 
+                            value={manualSchedule.slotPosition.toString()} 
+                            onValueChange={(value) => setManualSchedule(prev => ({ ...prev, slotPosition: parseInt(value) }))}
+                          >
+                            <SelectTrigger id="manualSlotPosition">
+                              <SelectValue placeholder="Select slot..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {SLOT_POSITIONS.map(slot => (
+                                <SelectItem key={slot.value} value={slot.value.toString()}>{slot.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
                     </div>
                   )}
