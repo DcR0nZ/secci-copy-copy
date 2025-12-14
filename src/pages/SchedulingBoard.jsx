@@ -1092,7 +1092,7 @@ export default function SchedulingBoard() {
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
               </div>
             ) : (
-              <div className="flex-1 overflow-auto">
+              <div className="flex-1 overflow-hidden">
                 <DndContext
                   onDragStart={handleDragStart}
                   onDragEnd={handleDragEnd}
