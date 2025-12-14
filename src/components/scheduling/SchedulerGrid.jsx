@@ -345,7 +345,7 @@ const DroppableUnscheduled = ({ children }) => {
   return (
     <div
       ref={setNodeRef}
-      className={`flex-1 flex gap-2 p-3 overflow-x-auto min-h-[100px] ${
+      className={`flex-1 flex gap-2 p-3 overflow-x-auto min-h-[130px] ${
         isOver ? 'bg-yellow-100' : ''
       }`}
     >
@@ -468,7 +468,7 @@ export default function SchedulerGrid({
                 key={job.id}
                 style={{
                   width: '200px',
-                  height: '80px',
+                  height: '110px',
                   flexShrink: 0
                 }}>
                 <DraggableJobBlock
