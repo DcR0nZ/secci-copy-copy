@@ -479,7 +479,7 @@ export default function SchedulingBoard() {
   // MOBILE VIEW
   if (isMobile) {
     return (
-      <>
+      <DndProvider backend={HTML5Backend}>
         <div className="min-h-screen bg-gray-50 overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
           <div className="bg-white border-b px-4 py-4 shadow-sm">
             <div className="flex items-center justify-between mb-3">
