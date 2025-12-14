@@ -347,9 +347,10 @@ const DroppableUnscheduled = ({ children }) => {
   return (
     <div
       ref={setNodeRef}
-      className={`flex-1 flex gap-2 p-3 overflow-x-auto min-h-[100px] ${
-        isOver ? 'bg-yellow-100' : ''
+      className={`flex-1 flex gap-2 p-3 overflow-x-auto min-h-[120px] ${
+        isOver ? 'bg-yellow-200 border-2 border-yellow-500' : ''
       }`}
+      style={{ position: 'relative', zIndex: 1 }}
     >
       {children}
     </div>
