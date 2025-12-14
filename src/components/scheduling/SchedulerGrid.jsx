@@ -530,7 +530,7 @@ export default function SchedulerGrid({
                 key={truck.id}
                 className={`flex ${
                   isLastTruck ? 'border-b-2 border-gray-400' : 'border-b-2 border-gray-300'
-                } min-h-[140px] mb-6`}>
+                } min-h-[100px]`}>
                 {/* Sticky Truck Column */}
                 <div className="w-24 lg:w-32 flex-shrink-0 p-2 bg-gray-50 border-r-2 border-gray-300 sticky left-0 z-10">
                   <div className="font-semibold text-xs text-gray-900">{truck.name}</div>
