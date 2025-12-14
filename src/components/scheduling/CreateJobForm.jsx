@@ -728,7 +728,7 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
                       <SelectTrigger id="deliveryWindow"><SelectValue placeholder="Select delivery window..." /></SelectTrigger>
                       <SelectContent>
                         {DELIVERY_WINDOWS.map(window => (
-                          <SelectItem key={window.id} value={window.id}>{window.label}</SelectItem>
+                          <SelectItem key={window.id} value={window.label}>{window.label}</SelectItem>
                         ))}
                         <SelectItem value="Any Time">Any Time</SelectItem>
                       </SelectContent>
