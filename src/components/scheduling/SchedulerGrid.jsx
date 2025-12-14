@@ -86,8 +86,6 @@ const DraggableJobBlock = ({ job, onClick, deliveryTypes, pickupLocations }) => 
     <div
       ref={setNodeRef}
       style={{ ...style, ...cardStyles }}
-      {...listeners}
-      {...attributes}
       className={`w-full h-full border-2 rounded p-2 text-xs cursor-pointer transition-all overflow-hidden ${
         isDragging ? 'opacity-50' : ''
       }`}
@@ -194,8 +192,6 @@ const DraggableScheduledJobBlock = ({ job, onClick, deliveryTypes, pickupLocatio
     <div
       ref={setNodeRef}
       style={{ ...style, ...cardStyles }}
-      {...listeners}
-      {...attributes}
       className={`w-full h-full border-2 rounded p-2 text-xs cursor-pointer transition-all overflow-hidden ${
         isDragging ? 'opacity-50' : ''
       }`}
