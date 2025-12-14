@@ -836,9 +836,10 @@ export default function SchedulingBoard() {
             </DialogContent>
           </Dialog>
         )}
-        </>
-        );
-        }
+        </DndProvider>
+      </>
+    );
+  }
 
   // DESKTOP VIEW
   return (
