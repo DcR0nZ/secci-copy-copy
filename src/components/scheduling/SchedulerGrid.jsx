@@ -86,6 +86,8 @@ const DraggableJobBlock = ({ job, onClick, deliveryTypes, pickupLocations }) => 
     <div
       ref={setNodeRef}
       style={{ ...style, ...cardStyles }}
+      {...listeners}
+      {...attributes}
       className={`w-full h-full border-2 rounded p-2 text-xs cursor-pointer transition-all overflow-hidden ${
         isDragging ? 'opacity-50' : ''
       }`}
@@ -135,7 +137,7 @@ const DraggableJobBlock = ({ job, onClick, deliveryTypes, pickupLocations }) => 
             {addressParts.suburb && <div className="truncate text-[10px] text-gray-600">{addressParts.suburb}</div>}
           </div>
         </div>
-        <div {...listeners} {...attributes} className="flex flex-col items-center gap-0.5 flex-shrink-0 cursor-grab active:cursor-grabbing p-1 -mr-1">
+        <div className="flex flex-col items-center gap-0.5 flex-shrink-0">
           {hasPodNotes && (
             <div className="h-3 w-3 rounded-full bg-blue-500 text-white flex items-center justify-center text-[8px] font-bold">
               ?
@@ -190,6 +192,8 @@ const DraggableScheduledJobBlock = ({ job, onClick, deliveryTypes, pickupLocatio
     <div
       ref={setNodeRef}
       style={{ ...style, ...cardStyles }}
+      {...listeners}
+      {...attributes}
       className={`w-full h-full border-2 rounded p-2 text-xs cursor-pointer transition-all overflow-hidden ${
         isDragging ? 'opacity-50' : ''
       }`}
@@ -245,7 +249,7 @@ const DraggableScheduledJobBlock = ({ job, onClick, deliveryTypes, pickupLocatio
             {addressParts.suburb && <div className="truncate">{addressParts.suburb}</div>}
           </div>
         </div>
-        <div {...listeners} {...attributes} className="flex flex-col items-center gap-0.5 flex-shrink-0 cursor-grab active:cursor-grabbing p-1 -mr-1">
+        <div className="flex flex-col items-center gap-0.5 flex-shrink-0">
           {hasPodNotes && (
             <div className="h-3 w-3 rounded-full bg-blue-500 text-white flex items-center justify-center text-[8px] font-bold">
               ?
@@ -341,7 +345,7 @@ const DroppableUnscheduled = ({ children }) => {
   return (
     <div
       ref={setNodeRef}
-      className={`flex-1 flex gap-2 p-3 overflow-x-auto min-h-[130px] ${
+      className={`flex-1 flex gap-2 p-3 overflow-x-auto min-h-[100px] ${
         isOver ? 'bg-yellow-100' : ''
       }`}
     >
@@ -464,7 +468,7 @@ export default function SchedulerGrid({
                 key={job.id}
                 style={{
                   width: '200px',
-                  height: '110px',
+                  height: '80px',
                   flexShrink: 0
                 }}>
                 <DraggableJobBlock
@@ -526,7 +530,7 @@ export default function SchedulerGrid({
                 key={truck.id}
                 className={`flex ${
                   isLastTruck ? 'border-b-2 border-gray-400' : 'border-b-2 border-gray-300'
-                } min-h-[100px]`}>
+                } min-h-[140px] mb-6`}>
                 {/* Sticky Truck Column */}
                 <div className="w-24 lg:w-32 flex-shrink-0 p-2 bg-gray-50 border-r-2 border-gray-300 sticky left-0 z-10">
                   <div className="font-semibold text-xs text-gray-900">{truck.name}</div>
