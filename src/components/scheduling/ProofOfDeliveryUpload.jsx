@@ -296,14 +296,49 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
           try {
             setProcessingIndex(i);
             const photo = photos[i];
-            console.log(`Attempting direct upload of photo ${i + 1}:`, photo.name, photo.type, photo.size);
+            console.log(`Attempting direct upload of photo ${i + 1}:`, {
+              name: photo.name,
+              type: photo.type,
+              size: photo.size,
+              lastModified: photo.lastModified
+            });
             
-            // Validate photo before upload
-            if (!photo || !photo.type || !photo.type.startsWith('image/')) {
-              throw new Error('Invalid image file');
+            // More lenient validation - allow any file that looks like an image
+            if (!photo) {
+              throw new Error('Photo is null or undefined');
             }
             
-            const result = await base44.integrations.Core.UploadFile({ file: photo });
+            if (!photo.size || photo.size === 0) {
+              throw new Error('Photo file is empty (0 bytes)');
+            }
+            
+            if (photo.size > MAX_FILE_SIZE) {
+              throw new Error(`Photo too large (${(photo.size / 1024 / 1024).toFixed(1)}MB, max 10MB)`);
+            }
+            
+            // Try to fix missing or incorrect MIME types
+            let fileToUpload = photo;
+            if (!photo.type || !photo.type.startsWith('image/')) {
+              console.warn(`Photo ${i + 1} has invalid MIME type: "${photo.type}", attempting to fix...`);
+              // Create a new file with correct MIME type based on extension or default to jpeg
+              const fileName = photo.name || `photo-${i + 1}.jpg`;
+              const extension = fileName.split('.').pop()?.toLowerCase();
+              let mimeType = 'image/jpeg'; // default
+              
+              if (extension === 'png') mimeType = 'image/png';
+              else if (extension === 'gif') mimeType = 'image/gif';
+              else if (extension === 'webp') mimeType = 'image/webp';
+              else if (extension === 'heic' || extension === 'heif') mimeType = 'image/heic';
+              
+              fileToUpload = new File([photo], fileName, { 
+                type: mimeType,
+                lastModified: photo.lastModified || Date.now()
+              });
+              console.log(`Fixed MIME type for photo ${i + 1}: ${mimeType}`);
+            }
+            
+            console.log(`Uploading photo ${i + 1} with type: ${fileToUpload.type}`);
+            const result = await base44.integrations.Core.UploadFile({ file: fileToUpload });
             
             if (!result || !result.file_url) {
               throw new Error('Upload returned no URL');
@@ -316,8 +351,8 @@ export default function ProofOfDeliveryUpload({ job, open, onOpenChange, onPODUp
             setUploadProgress(Math.round(progress));
           } catch (directErr) {
             const errorMsg = directErr?.message || String(directErr);
-            console.error(`Direct upload failed for photo ${i + 1}:`, errorMsg);
-            directUploadErrors.push(`Photo ${i + 1}: ${errorMsg}`);
+            console.error(`Direct upload failed for photo ${i + 1}:`, errorMsg, directErr);
+            directUploadErrors.push(`Photo ${i + 1} (${photos[i]?.name || 'unknown'}): ${errorMsg}`);
           }
         }
         setProcessingIndex(-1);
