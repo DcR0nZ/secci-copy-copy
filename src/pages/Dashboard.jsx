@@ -13,6 +13,7 @@ export default function DashboardPage() {
     totalWeight: 0,
     scheduledJobs: 0,
     approvedJobs: 0,
+    completedToday: 0,
     difficultDeliveries: 0
   });
   const [weekAheadStats, setWeekAheadStats] = useState({
@@ -73,7 +74,7 @@ export default function DashboardPage() {
         ]);
 
         const isOutreach = user.appRole === 'outreach';
-        const isCustomer = user.role !== 'admin' && user.appRole !== 'dispatcher' && user.appRole !== 'manager' && user.appRole !== 'outreach' && user.appRole !== 'driver';
+        const isCustomer = user.role !== 'admin' && (user.appRole === 'customer' || !user.appRole);
         
         // Determine filtering based on user role
         let filteredJobs = allJobs;
@@ -98,11 +99,13 @@ export default function DashboardPage() {
         // Today's stats (jobs scheduled for today)
         const jobIds = todayAssignments.map(a => a.jobId);
         const todayJobs = filteredJobs.filter(job => jobIds.includes(job.id));
+        const completedTodayJobs = todayJobs.filter(job => job.status === 'DELIVERED');
 
         const totalSqm = todayJobs.reduce((sum, job) => sum + (job.sqm || 0), 0);
         const totalWeight = todayJobs.reduce((sum, job) => sum + (job.weightKg || 0), 0);
         const scheduledJobs = filteredJobs.filter(job => job.status === 'SCHEDULED').length;
         const approvedJobs = filteredJobs.filter(job => job.status === 'APPROVED' || job.status === 'PENDING_APPROVAL').length;
+        const completedToday = completedTodayJobs.length;
         const difficultDeliveries = todayJobs.filter(job => job.isDifficultDelivery).length;
 
         setTodayStats({
@@ -111,6 +114,7 @@ export default function DashboardPage() {
           totalWeight,
           scheduledJobs,
           approvedJobs,
+          completedToday,
           difficultDeliveries
         });
 
@@ -202,6 +206,7 @@ export default function DashboardPage() {
   }
 
   const isOutreach = currentUser?.appRole === 'outreach';
+  const isCustomer = currentUser?.role !== 'admin' && (currentUser?.appRole === 'customer' || !currentUser?.appRole);
 
   return (
     <div className="space-y-6">
@@ -281,7 +286,7 @@ export default function DashboardPage() {
           <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => window.location.href = createPageUrl('DailyJobBoard')}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-gray-600">
-                {isOutreach ? 'Jobs Today' : 'Deliveries Today'}
+                {isOutreach ? 'Jobs Today' : isCustomer ? 'Deliveries Expected Today' : 'Deliveries Today'}
               </CardTitle>
               <Truck className="h-5 w-5 text-blue-600" />
             </CardHeader>
@@ -309,17 +314,17 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          {/* Pending Approval */}
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => window.location.href = createPageUrl('SchedulingBoard')}>
+          {/* Completed Today or Awaiting Schedule */}
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => window.location.href = createPageUrl(isCustomer ? 'AdminJobs' : 'SchedulingBoard')}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-gray-600">
-                Awaiting Schedule
+                {isCustomer ? 'Completed Deliveries Today' : 'Awaiting Schedule'}
               </CardTitle>
               <Package className="h-5 w-5 text-amber-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-gray-900">{todayStats.approvedJobs}</div>
-              <p className="text-xs text-gray-500 mt-1">Jobs ready to schedule</p>
+              <div className="text-3xl font-bold text-gray-900">{isCustomer ? todayStats.completedToday : todayStats.approvedJobs}</div>
+              <p className="text-xs text-gray-500 mt-1">{isCustomer ? 'Deliveries completed today' : 'Jobs ready to schedule'}</p>
             </CardContent>
           </Card>
 
