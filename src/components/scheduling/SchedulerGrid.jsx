@@ -97,35 +97,35 @@ const DraggableJobBlock = ({ job, onClick, deliveryTypes, pickupLocations }) => 
       <div className="flex items-start justify-between gap-1 h-full">
         <div className="flex-1 min-w-0 overflow-hidden">
           <div className="flex items-center gap-1 mb-1 flex-wrap">
-            {deliveryType?.code && (
-              <span 
-                className="px-1.5 py-0.5 rounded text-[10px] font-bold flex items-center gap-0.5 shadow-sm"
-                style={getBadgeStyles(textStyles)}
-              >
-                {textStyles.icon && <span className="text-sm">{textStyles.icon}</span>}
-                {deliveryType.code}
-              </span>
-            )}
-            {pickupShortname && (
-              <span className="px-1 py-0.5 rounded text-[9px] font-semibold bg-purple-100 text-purple-700">
-                {pickupShortname}
-              </span>
-            )}
-            {job.sqm && (
-              <span className="bg-white/80 text-gray-900 px-1 py-0.5 font-bold rounded text-[9px] shadow-sm">
-                {job.sqm.toLocaleString()}m²
-              </span>
-            )}
-            {job.weightKg && (
-              <span className="bg-white/80 text-gray-900 px-1 py-0.5 font-bold rounded text-[9px] shadow-sm">
-                {(job.weightKg / 1000).toFixed(1)}t
-              </span>
-            )}
-            {isUnitDelivery && job.totalUnits && (
-              <span className="px-1 py-0.5 rounded text-[9px] font-semibold bg-indigo-100 text-indigo-700">
-                {job.totalUnits} units
-              </span>
-            )}
+          {deliveryType?.code && (
+            <span 
+              className="px-1 py-0.5 rounded text-[8px] font-bold flex items-center gap-0.5 shadow-sm"
+              style={getBadgeStyles(textStyles)}
+            >
+              {textStyles.icon && <span className="text-xs">{textStyles.icon}</span>}
+              {deliveryType.code}
+            </span>
+          )}
+          {pickupShortname && (
+            <span className="px-1 py-0.5 rounded text-[9px] font-semibold bg-purple-100 text-purple-700">
+              {pickupShortname}
+            </span>
+          )}
+          {job.sqm && (
+            <span className="bg-white/80 text-gray-900 px-1 py-0.5 font-bold rounded text-[9px] shadow-sm">
+              {job.sqm.toLocaleString()}m²
+            </span>
+          )}
+          {job.weightKg && (
+            <span className="bg-white/80 text-gray-900 px-1 py-0.5 font-bold rounded text-[9px] shadow-sm">
+              {(job.weightKg / 1000).toFixed(1)}t
+            </span>
+          )}
+          {isUnitDelivery && job.totalUnits && (
+            <span className="px-1 py-0.5 rounded text-[9px] font-semibold bg-indigo-100 text-indigo-700">
+              {job.totalUnits} units
+            </span>
+          )}
           </div>
 
           <div className="text-[10px] text-gray-500 mb-1 truncate">
