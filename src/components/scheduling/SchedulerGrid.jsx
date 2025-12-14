@@ -135,16 +135,14 @@ const DraggableJobBlock = ({ job, onClick, deliveryTypes, pickupLocations }) => 
             {addressParts.suburb && <div className="truncate text-[10px] text-gray-600">{addressParts.suburb}</div>}
           </div>
         </div>
-        <div className="flex flex-col items-center gap-0.5 flex-shrink-0">
+        <div {...listeners} {...attributes} className="flex flex-col items-center gap-0.5 flex-shrink-0 cursor-grab active:cursor-grabbing p-1 -mr-1">
           {hasPodNotes && (
             <div className="h-3 w-3 rounded-full bg-blue-500 text-white flex items-center justify-center text-[8px] font-bold">
               ?
             </div>
           )}
           {isLargeJob && <AlertTriangle className="h-2.5 w-2.5 text-orange-500" />}
-          <div {...listeners} {...attributes} className="cursor-grab active:cursor-grabbing">
-            <GripVertical className="h-2.5 w-2.5 text-gray-500" />
-          </div>
+          <GripVertical className="h-2.5 w-2.5 text-gray-500" />
         </div>
       </div>
     </div>
@@ -247,7 +245,7 @@ const DraggableScheduledJobBlock = ({ job, onClick, deliveryTypes, pickupLocatio
             {addressParts.suburb && <div className="truncate">{addressParts.suburb}</div>}
           </div>
         </div>
-        <div className="flex flex-col items-center gap-0.5 flex-shrink-0">
+        <div {...listeners} {...attributes} className="flex flex-col items-center gap-0.5 flex-shrink-0 cursor-grab active:cursor-grabbing p-1 -mr-1">
           {hasPodNotes && (
             <div className="h-3 w-3 rounded-full bg-blue-500 text-white flex items-center justify-center text-[8px] font-bold">
               ?
@@ -257,9 +255,7 @@ const DraggableScheduledJobBlock = ({ job, onClick, deliveryTypes, pickupLocatio
             <AlertTriangle className="h-2.5 w-2.5 text-orange-500" />
           )}
           {job.status === 'DELIVERED' && <CheckCircle2 className="h-3 w-3 text-green-600" />}
-          <div {...listeners} {...attributes} className="cursor-grab active:cursor-grabbing">
-            <GripVertical className="h-2.5 w-2.5 text-gray-500" />
-          </div>
+          <GripVertical className="h-2.5 w-2.5 text-gray-500" />
         </div>
       </div>
     </div>
