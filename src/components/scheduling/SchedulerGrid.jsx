@@ -82,26 +82,19 @@ const DraggableJobBlock = ({ job, onClick, deliveryTypes, pickupLocations }) => 
   const pickupLocation = pickupLocations?.find(loc => loc.id === job.pickupLocationId);
   const pickupShortname = pickupLocation?.shortname;
 
-  const handleClick = (e) => {
-    if (!isDragging && onClick) {
-      onClick(e);
-    }
-  };
-
   const jobCard = (
     <div
       ref={setNodeRef}
       style={{ ...style, ...cardStyles }}
-      {...listeners}
       {...attributes}
-      className={`w-full h-full border-2 rounded p-2 text-xs cursor-pointer transition-all overflow-hidden ${
+      className={`w-full h-full border-2 rounded p-2 text-xs transition-all overflow-hidden ${
         isDragging ? 'opacity-50' : ''
       }`}
-      onClick={handleClick}
+      onClick={onClick}
       aria-label={`${textStyles.name} delivery for ${job.customerName}`}
     >
       <div className="flex items-start justify-between gap-1 h-full">
-        <div className="flex-1 min-w-0 overflow-hidden">
+        <div className="flex-1 min-w-0 overflow-hidden cursor-pointer">
           <div className="flex items-center gap-1 mb-1 flex-wrap">
           {deliveryType?.code && textStyles.icon && (
             <span 
@@ -150,7 +143,9 @@ const DraggableJobBlock = ({ job, onClick, deliveryTypes, pickupLocations }) => 
             </div>
           )}
           {isLargeJob && <AlertTriangle className="h-2.5 w-2.5 text-orange-500" />}
-          <GripVertical className="h-2.5 w-2.5 text-gray-500" />
+          <div {...listeners} className="cursor-grab active:cursor-grabbing p-1">
+            <GripVertical className="h-2.5 w-2.5 text-gray-500" />
+          </div>
         </div>
       </div>
     </div>
