@@ -836,11 +836,11 @@ export default function SchedulingBoard() {
               />
             </DialogContent>
           </Dialog>
-        )}
-        </DndProvider>
-      </>
-    );
-  }
+          )}
+          </>
+          </DndProvider>
+          );
+          }
 
   // DESKTOP VIEW
   return (
