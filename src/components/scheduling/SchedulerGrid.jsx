@@ -86,54 +86,55 @@ const DraggableJobBlock = ({ job, onClick, deliveryTypes, pickupLocations }) => 
     <div
       ref={setNodeRef}
       style={{ ...style, ...cardStyles }}
+      {...listeners}
       {...attributes}
-      className={`w-full h-full border-2 rounded p-2 text-xs transition-all overflow-hidden ${
+      className={`w-full h-full border-2 rounded p-2 text-xs cursor-pointer transition-all overflow-hidden ${
         isDragging ? 'opacity-50' : ''
       }`}
       onClick={onClick}
       aria-label={`${textStyles.name} delivery for ${job.customerName}`}
     >
       <div className="flex items-start justify-between gap-1 h-full">
-        <div className="flex-1 min-w-0 overflow-hidden cursor-pointer">
+        <div className="flex-1 min-w-0 overflow-hidden">
           <div className="flex items-center gap-1 mb-1 flex-wrap">
-          {deliveryType?.code && textStyles.icon && (
-            <span 
-              className="px-1 py-0.5 rounded text-xs font-bold flex items-center shadow-sm"
-              style={getBadgeStyles(textStyles)}
-              title={deliveryType.code}
-            >
-              {textStyles.icon}
-            </span>
-          )}
-          {pickupShortname && (
-            <span className="px-1 py-0.5 rounded text-[9px] font-semibold bg-purple-100 text-purple-700">
-              {pickupShortname}
-            </span>
-          )}
-          {job.sqm && (
-            <span className="bg-white/80 text-gray-900 px-1 py-0.5 font-bold rounded text-[9px] shadow-sm">
-              {job.sqm.toLocaleString()}m²
-            </span>
-          )}
-          {job.weightKg && (
-            <span className="bg-white/80 text-gray-900 px-1 py-0.5 font-bold rounded text-[9px] shadow-sm">
-              {(job.weightKg / 1000).toFixed(1)}t
-            </span>
-          )}
-          {isUnitDelivery && job.totalUnits && (
-            <span className="px-1 py-0.5 rounded text-[9px] font-semibold bg-indigo-100 text-indigo-700">
-              {job.totalUnits} units
-            </span>
-          )}
+            {deliveryType?.code && (
+              <span 
+                className="px-1.5 py-0.5 rounded text-[10px] font-bold flex items-center gap-0.5 shadow-sm"
+                style={getBadgeStyles(textStyles)}
+              >
+                {textStyles.icon && <span className="text-sm">{textStyles.icon}</span>}
+                {deliveryType.code}
+              </span>
+            )}
+            {pickupShortname && (
+              <span className="px-1 py-0.5 rounded text-[9px] font-semibold bg-purple-100 text-purple-700">
+                {pickupShortname}
+              </span>
+            )}
+            {job.sqm && (
+              <span className="bg-white/80 text-gray-900 px-1 py-0.5 font-bold rounded text-[9px] shadow-sm">
+                {job.sqm.toLocaleString()}m²
+              </span>
+            )}
+            {job.weightKg && (
+              <span className="bg-white/80 text-gray-900 px-1 py-0.5 font-bold rounded text-[9px] shadow-sm">
+                {(job.weightKg / 1000).toFixed(1)}t
+              </span>
+            )}
+            {isUnitDelivery && job.totalUnits && (
+              <span className="px-1 py-0.5 rounded text-[9px] font-semibold bg-indigo-100 text-indigo-700">
+                {job.totalUnits} units
+              </span>
+            )}
           </div>
 
           <div className="text-[10px] text-gray-500 mb-1 truncate">
             {job.customerName}
           </div>
-          <div className="text-xs leading-tight text-gray-900 font-medium">
-            {addressParts.unit && <div className="truncate text-[10px]">{addressParts.unit}</div>}
+          <div className="text-sm leading-tight text-gray-900 font-medium">
+            {addressParts.unit && <div className="truncate text-xs">{addressParts.unit}</div>}
             {addressParts.street && <div className="truncate font-semibold">{addressParts.street}</div>}
-            {addressParts.suburb && <div className="truncate text-[10px] text-gray-600">{addressParts.suburb}</div>}
+            {addressParts.suburb && <div className="truncate text-xs text-gray-600">{addressParts.suburb}</div>}
           </div>
         </div>
         <div className="flex flex-col items-center gap-0.5 flex-shrink-0">
@@ -143,9 +144,7 @@ const DraggableJobBlock = ({ job, onClick, deliveryTypes, pickupLocations }) => 
             </div>
           )}
           {isLargeJob && <AlertTriangle className="h-2.5 w-2.5 text-orange-500" />}
-          <div {...listeners} className="cursor-grab active:cursor-grabbing p-1">
-            <GripVertical className="h-2.5 w-2.5 text-gray-500" />
-          </div>
+          <GripVertical className="h-2.5 w-2.5 text-gray-500" />
         </div>
       </div>
     </div>
@@ -193,15 +192,16 @@ const DraggableScheduledJobBlock = ({ job, onClick, deliveryTypes, pickupLocatio
     <div
       ref={setNodeRef}
       style={{ ...style, ...cardStyles }}
+      {...listeners}
       {...attributes}
-      className={`w-full h-full border-2 rounded p-2 text-xs transition-all overflow-hidden ${
+      className={`w-full h-full border-2 rounded p-2 text-xs cursor-pointer transition-all overflow-hidden ${
         isDragging ? 'opacity-50' : ''
       }`}
       onClick={onClick}
       aria-label={`${textStyles.name} delivery for ${job.customerName}`}
     >
       <div className="flex items-start justify-between gap-1 h-full">
-        <div className="flex-1 min-w-0 overflow-hidden cursor-pointer">
+        <div className="flex-1 min-w-0 overflow-hidden">
           <div className="flex items-center gap-1 mb-1 flex-wrap">
             {deliveryType?.code && (
               <span 
@@ -259,9 +259,7 @@ const DraggableScheduledJobBlock = ({ job, onClick, deliveryTypes, pickupLocatio
             <AlertTriangle className="h-2.5 w-2.5 text-orange-500" />
           )}
           {job.status === 'DELIVERED' && <CheckCircle2 className="h-3 w-3 text-green-600" />}
-          <div {...listeners} className="cursor-grab active:cursor-grabbing p-1">
-            <GripVertical className="h-2.5 w-2.5 text-gray-500" />
-          </div>
+          <GripVertical className="h-2.5 w-2.5 text-gray-500" />
         </div>
       </div>
     </div>
@@ -347,8 +345,9 @@ const DroppableUnscheduled = ({ children }) => {
   return (
     <div
       ref={setNodeRef}
-      className={`w-full ${isOver ? 'bg-yellow-300' : ''}`}
-      style={{ minHeight: '140px', pointerEvents: 'auto' }}
+      className={`flex-1 flex gap-2 p-3 overflow-x-auto min-h-[100px] ${
+        isOver ? 'bg-yellow-100' : ''
+      }`}
     >
       {children}
     </div>
@@ -453,41 +452,38 @@ export default function SchedulerGrid({
     <>
       <div className="w-full h-full flex flex-col overflow-hidden">
         {/* Unscheduled Row */}
-        <DroppableUnscheduled>
-          <div className="flex border-2 border-gray-400 bg-yellow-50 mb-4 rounded-lg overflow-hidden shadow-sm flex-shrink-0 w-full" style={{ pointerEvents: 'none' }}>
-            <div className="w-24 lg:w-32 flex-shrink-0 p-3 bg-yellow-100 border-r-2 border-gray-400 flex flex-col justify-center">
-              <div className="flex items-center">
-                <Package className="h-4 w-4 mr-1.5 text-yellow-700" />
-                <span className="font-semibold text-xs lg:text-sm text-yellow-900">Unscheduled</span>
-              </div>
-              <Badge variant="secondary" className="mt-1.5 bg-yellow-200 text-yellow-900 text-xs py-0.5 h-5 w-fit">
-                {unscheduledJobs.length} {unscheduledJobs.length === 1 ? 'job' : 'jobs'}
-              </Badge>
+        <div className="flex border-2 border-gray-400 bg-yellow-50 mb-4 rounded-lg overflow-hidden shadow-sm flex-shrink-0">
+          <div className="w-24 lg:w-32 flex-shrink-0 p-3 bg-yellow-100 border-r-2 border-gray-400 flex flex-col justify-center">
+            <div className="flex items-center">
+              <Package className="h-4 w-4 mr-1.5 text-yellow-700" />
+              <span className="font-semibold text-xs lg:text-sm text-yellow-900">Unscheduled</span>
             </div>
-            <div className="flex-1 flex gap-2 p-3 overflow-x-auto min-h-[120px]" style={{ pointerEvents: 'auto' }}>
-              {unscheduledJobs.map((job, index) => (
-                <div
-                  key={job.id}
-                  style={{
-                    width: '200px',
-                    height: '80px',
-                    flexShrink: 0,
-                    pointerEvents: 'auto'
-                  }}>
-                  <DraggableJobBlock
-                    job={job}
-                    onClick={() => (onJobClick ? onJobClick(job) : handleJobClick(job))}
-                    deliveryTypes={deliveryTypes}
-                    pickupLocations={pickupLocations}
-                  />
-                </div>
-              ))}
-              {unscheduledJobs.length === 0 && (
-                <div className="text-gray-500 text-sm p-2 flex items-center" style={{ pointerEvents: 'none' }}>No unscheduled jobs for this date</div>
-              )}
-            </div>
+            <Badge variant="secondary" className="mt-1.5 bg-yellow-200 text-yellow-900 text-xs py-0.5 h-5 w-fit">
+              {unscheduledJobs.length} {unscheduledJobs.length === 1 ? 'job' : 'jobs'}
+            </Badge>
           </div>
-        </DroppableUnscheduled>
+          <DroppableUnscheduled>
+            {unscheduledJobs.map((job, index) => (
+              <div
+                key={job.id}
+                style={{
+                  width: '200px',
+                  height: '80px',
+                  flexShrink: 0
+                }}>
+                <DraggableJobBlock
+                  job={job}
+                  onClick={() => (onJobClick ? onJobClick(job) : handleJobClick(job))}
+                  deliveryTypes={deliveryTypes}
+                  pickupLocations={pickupLocations}
+                />
+              </div>
+            ))}
+            {unscheduledJobs.length === 0 && (
+              <div className="text-gray-500 text-sm p-2 flex items-center">No unscheduled jobs for this date</div>
+            )}
+          </DroppableUnscheduled>
+        </div>
 
         {/* Time Header */}
         <div className="flex sticky top-0 z-20 bg-white border-b-2 border-gray-300 shadow-sm flex-shrink-0">
