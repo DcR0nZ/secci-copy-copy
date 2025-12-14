@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { format, addDays, subDays, startOfDay } from 'date-fns';
 import { base44 } from '@/api/base44Client';
 import { createPageUrl } from '@/utils';
-import { DndContext, DragOverlay, closestCorners } from '@dnd-kit/core';
+import { DndContext, DragOverlay, closestCorners, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import SchedulerGrid from '../components/scheduling/SchedulerGrid';
 import CreateJobForm from '../components/scheduling/CreateJobForm';
 import JobDetailsDialog from '../components/scheduling/JobDetailsDialog';
@@ -84,6 +84,14 @@ export default function SchedulingBoard() {
   const [activeId, setActiveId] = useState(null);
 
   const { toast } = useToast();
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
 
   useEffect(() => {
     const checkMobile = () => {
@@ -1094,6 +1102,7 @@ export default function SchedulingBoard() {
             ) : (
               <div className="flex-1 overflow-hidden">
                 <DndContext
+                  sensors={sensors}
                   onDragStart={handleDragStart}
                   onDragEnd={handleDragEnd}
                   collisionDetection={closestCorners}
