@@ -347,10 +347,8 @@ const DroppableUnscheduled = ({ children }) => {
   return (
     <div
       ref={setNodeRef}
-      className={`flex-1 flex gap-2 p-3 overflow-x-auto min-h-[120px] ${
-        isOver ? 'bg-yellow-200 border-2 border-yellow-500' : ''
-      }`}
-      style={{ position: 'relative', zIndex: 1 }}
+      className={`w-full ${isOver ? 'bg-yellow-300' : ''}`}
+      style={{ minHeight: '140px' }}
     >
       {children}
     </div>
@@ -455,38 +453,40 @@ export default function SchedulerGrid({
     <>
       <div className="w-full h-full flex flex-col overflow-hidden">
         {/* Unscheduled Row */}
-        <div className="flex border-2 border-gray-400 bg-yellow-50 mb-4 rounded-lg overflow-hidden shadow-sm flex-shrink-0">
-          <div className="w-24 lg:w-32 flex-shrink-0 p-3 bg-yellow-100 border-r-2 border-gray-400 flex flex-col justify-center">
-            <div className="flex items-center">
-              <Package className="h-4 w-4 mr-1.5 text-yellow-700" />
-              <span className="font-semibold text-xs lg:text-sm text-yellow-900">Unscheduled</span>
-            </div>
-            <Badge variant="secondary" className="mt-1.5 bg-yellow-200 text-yellow-900 text-xs py-0.5 h-5 w-fit">
-              {unscheduledJobs.length} {unscheduledJobs.length === 1 ? 'job' : 'jobs'}
-            </Badge>
-          </div>
-          <DroppableUnscheduled>
-            {unscheduledJobs.map((job, index) => (
-              <div
-                key={job.id}
-                style={{
-                  width: '200px',
-                  height: '80px',
-                  flexShrink: 0
-                }}>
-                <DraggableJobBlock
-                  job={job}
-                  onClick={() => (onJobClick ? onJobClick(job) : handleJobClick(job))}
-                  deliveryTypes={deliveryTypes}
-                  pickupLocations={pickupLocations}
-                />
+        <DroppableUnscheduled>
+          <div className="flex border-2 border-gray-400 bg-yellow-50 mb-4 rounded-lg overflow-hidden shadow-sm flex-shrink-0 w-full">
+            <div className="w-24 lg:w-32 flex-shrink-0 p-3 bg-yellow-100 border-r-2 border-gray-400 flex flex-col justify-center">
+              <div className="flex items-center">
+                <Package className="h-4 w-4 mr-1.5 text-yellow-700" />
+                <span className="font-semibold text-xs lg:text-sm text-yellow-900">Unscheduled</span>
               </div>
-            ))}
-            {unscheduledJobs.length === 0 && (
-              <div className="text-gray-500 text-sm p-2 flex items-center">No unscheduled jobs for this date</div>
-            )}
-          </DroppableUnscheduled>
-        </div>
+              <Badge variant="secondary" className="mt-1.5 bg-yellow-200 text-yellow-900 text-xs py-0.5 h-5 w-fit">
+                {unscheduledJobs.length} {unscheduledJobs.length === 1 ? 'job' : 'jobs'}
+              </Badge>
+            </div>
+            <div className="flex-1 flex gap-2 p-3 overflow-x-auto min-h-[120px]">
+              {unscheduledJobs.map((job, index) => (
+                <div
+                  key={job.id}
+                  style={{
+                    width: '200px',
+                    height: '80px',
+                    flexShrink: 0
+                  }}>
+                  <DraggableJobBlock
+                    job={job}
+                    onClick={() => (onJobClick ? onJobClick(job) : handleJobClick(job))}
+                    deliveryTypes={deliveryTypes}
+                    pickupLocations={pickupLocations}
+                  />
+                </div>
+              ))}
+              {unscheduledJobs.length === 0 && (
+                <div className="text-gray-500 text-sm p-2 flex items-center">No unscheduled jobs for this date</div>
+              )}
+            </div>
+          </div>
+        </DroppableUnscheduled>
 
         {/* Time Header */}
         <div className="flex sticky top-0 z-20 bg-white border-b-2 border-gray-300 shadow-sm flex-shrink-0">
