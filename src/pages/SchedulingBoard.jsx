@@ -6,7 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { format, addDays, subDays, startOfDay } from 'date-fns';
 import { base44 } from '@/api/base44Client';
 import { createPageUrl } from '@/utils';
-import { DndContext, DragOverlay, closestCorners } from '@dnd-kit/core';
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 import SchedulerGrid from '../components/scheduling/SchedulerGrid';
 import CreateJobForm from '../components/scheduling/CreateJobForm';
 import JobDetailsDialog from '../components/scheduling/JobDetailsDialog';
@@ -81,7 +82,6 @@ export default function SchedulingBoard() {
   const [notificationReadStatus, setNotificationReadStatus] = useState([]);
   const [unreadNotifications, setUnreadNotifications] = useState([]);
   const [readNotifications, setReadNotifications] = useState([]);
-  const [activeId, setActiveId] = useState(null);
 
   const { toast } = useToast();
 
@@ -314,20 +314,8 @@ export default function SchedulingBoard() {
     }
   };
 
-  const handleDragStart = (event) => {
-    event.preventDefault?.();
-    setActiveId(event.active.id);
-  };
-
-  const handleDragEnd = async (event) => {
-    event.preventDefault?.();
-    const { active, over } = event;
-    setActiveId(null);
-
-    if (!over) return;
-
-    const draggedId = active.id;
-    const droppedOnId = over.id;
+  const handleDrop = async (draggedId, droppedOnId) => {
+    if (!droppedOnId) return;
 
     const isPlaceholder = draggedId.startsWith('placeholder-');
 
@@ -475,9 +463,7 @@ export default function SchedulingBoard() {
     }
   };
 
-  const activeJob = activeId && !activeId.startsWith('placeholder-') 
-    ? jobs.find(j => j.id === activeId) 
-    : null;
+
 
   if (!currentUser) {
     return (
@@ -1093,11 +1079,7 @@ export default function SchedulingBoard() {
               </div>
             ) : (
               <div className="flex-1 overflow-auto">
-                <DndContext
-                  onDragStart={handleDragStart}
-                  onDragEnd={handleDragEnd}
-                  collisionDetection={closestCorners}
-                >
+                <DndProvider backend={HTML5Backend}>
                   <SchedulerGrid
                     trucks={TRUCKS}
                     timeSlots={TIME_SLOTS}
@@ -1108,31 +1090,9 @@ export default function SchedulingBoard() {
                     deliveryTypes={deliveryTypes}
                     onOpenPlaceholderDialog={handleOpenPlaceholderDialog}
                     onJobClick={handleJobClick}
+                    onDrop={handleDrop}
                   />
-                  <DragOverlay
-                    dropAnimation={{
-                      duration: 200,
-                      easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)',
-                    }}
-                  >
-                    {activeJob ? (
-                      <div 
-                        style={{ 
-                          width: '200px', 
-                          height: '100px',
-                          cursor: 'grabbing',
-                          transform: 'rotate(3deg)',
-                          willChange: 'transform',
-                        }}
-                      >
-                        <div className="w-full h-full border-2 rounded p-2 text-xs bg-white shadow-2xl opacity-95 pointer-events-none">
-                          <div className="font-semibold text-sm mb-1">{activeJob.customerName}</div>
-                          <div className="text-xs text-gray-600 truncate">{activeJob.deliveryLocation}</div>
-                        </div>
-                      </div>
-                    ) : null}
-                  </DragOverlay>
-                </DndContext>
+                </DndProvider>
               </div>
               )}
               </div>

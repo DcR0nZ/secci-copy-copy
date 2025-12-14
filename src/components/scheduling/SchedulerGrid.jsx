@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, Package, GripVertical, CheckCircle2, Plus } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
-import { useDraggable, useDroppable } from '@dnd-kit/core';
+import { useDrag, useDrop } from 'react-dnd';
 import { base44 } from '@/api/base44Client';
 import { getJobCardInlineStyles, getBadgeStyles, getJobCardStyles } from './DeliveryTypeColorUtils';
 
@@ -62,13 +62,13 @@ const parseAddress = (address) => {
 };
 
 const DraggableJobBlock = ({ job, onClick, deliveryTypes, pickupLocations }) => {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
-    id: job.id,
-  });
-
-  const style = transform ? {
-    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-  } : undefined;
+  const [{ isDragging }, drag] = useDrag(() => ({
+    type: 'JOB',
+    item: { id: job.id, type: 'JOB' },
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging(),
+    }),
+  }), [job.id]);
 
   const isLargeJob = job.sqm > 2000;
   const deliveryType = deliveryTypes?.find((dt) => dt.id === job.deliveryTypeId);
@@ -168,13 +168,13 @@ const DraggableJobBlock = ({ job, onClick, deliveryTypes, pickupLocations }) => 
 };
 
 const DraggableScheduledJobBlock = ({ job, onClick, deliveryTypes, pickupLocations }) => {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
-    id: job.id,
-  });
-
-  const style = transform ? {
-    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-  } : undefined;
+  const [{ isDragging }, drag] = useDrag(() => ({
+    type: 'JOB',
+    item: { id: job.id, type: 'JOB' },
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging(),
+    }),
+  }), [job.id]);
 
   const isLargeJob = job.sqm > 2000;
   const deliveryType = deliveryTypes?.find((dt) => dt.id === job.deliveryTypeId);
@@ -190,11 +190,9 @@ const DraggableScheduledJobBlock = ({ job, onClick, deliveryTypes, pickupLocatio
 
   const jobCard = (
     <div
-      ref={setNodeRef}
-      style={{ ...style, ...cardStyles }}
-      {...listeners}
-      {...attributes}
-      className={`w-full h-full border-2 rounded p-2 text-xs cursor-pointer transition-all overflow-hidden ${
+      ref={drag}
+      style={cardStyles}
+      className={`w-full h-full border-2 rounded p-2 text-xs cursor-move transition-all overflow-hidden ${
         isDragging ? 'opacity-50' : ''
       }`}
       onClick={onClick}
@@ -311,14 +309,22 @@ const DraggableScheduledJobBlock = ({ job, onClick, deliveryTypes, pickupLocatio
   return jobCard;
 };
 
-const DroppableCell = ({ id, children }) => {
-  const { setNodeRef, isOver } = useDroppable({
-    id,
-  });
+const DroppableCell = ({ id, children, onDrop }) => {
+  const [{ isOver }, drop] = useDrop(() => ({
+    accept: ['JOB', 'PLACEHOLDER'],
+    drop: (item) => {
+      if (onDrop) {
+        onDrop(item.id, id);
+      }
+    },
+    collect: (monitor) => ({
+      isOver: monitor.isOver(),
+    }),
+  }), [id, onDrop]);
 
   return (
     <div
-      ref={setNodeRef}
+      ref={drop}
       className={`relative border-r border-gray-200 group overflow-visible flex-1 ${
         isOver ? 'bg-blue-50' : ''
       }`}
@@ -337,14 +343,22 @@ const DroppableCell = ({ id, children }) => {
   );
 };
 
-const DroppableUnscheduled = ({ children }) => {
-  const { setNodeRef, isOver } = useDroppable({
-    id: 'unscheduled',
-  });
+const DroppableUnscheduled = ({ children, onDrop }) => {
+  const [{ isOver }, drop] = useDrop(() => ({
+    accept: ['JOB', 'PLACEHOLDER'],
+    drop: (item) => {
+      if (onDrop) {
+        onDrop(item.id, 'unscheduled');
+      }
+    },
+    collect: (monitor) => ({
+      isOver: monitor.isOver(),
+    }),
+  }), [onDrop]);
 
   return (
     <div
-      ref={setNodeRef}
+      ref={drop}
       className={`flex-1 flex gap-2 p-3 overflow-x-auto min-h-[100px] ${
         isOver ? 'bg-yellow-100' : ''
       }`}
@@ -363,7 +377,8 @@ export default function SchedulerGrid({
   selectedDate,
   deliveryTypes,
   onOpenPlaceholderDialog,
-  onJobClick
+  onJobClick,
+  onDrop
 }) {
   const [selectedJob, setSelectedJob] = useState(null);
   const [isJobDialogOpen, setJobDialogOpen] = useState(false);
@@ -462,7 +477,7 @@ export default function SchedulerGrid({
               {unscheduledJobs.length} {unscheduledJobs.length === 1 ? 'job' : 'jobs'}
             </Badge>
           </div>
-          <DroppableUnscheduled>
+          <DroppableUnscheduled onDrop={onDrop}>
             {unscheduledJobs.map((job, index) => (
               <div
                 key={job.id}
@@ -563,7 +578,7 @@ export default function SchedulerGrid({
                           const droppableId = `${truck.id}-${slot.id}-${blockStart}`;
 
                           return (
-                            <DroppableCell key={blockStart} id={droppableId}>
+                            <DroppableCell key={blockStart} id={droppableId} onDrop={onDrop}>
                               <div className="flex flex-col gap-2 items-center justify-center w-full px-1 relative">
                                 {(() => {
                                   const jobsWithPos = slotJobs.map(job => ({
