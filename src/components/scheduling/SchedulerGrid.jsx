@@ -66,14 +66,6 @@ const DraggableJobBlock = ({ job, onClick, deliveryTypes, pickupLocations }) => 
     id: job.id,
   });
 
-  const handleClick = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!isDragging) {
-      onClick(e);
-    }
-  };
-
   const style = transform ? {
     transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
   } : undefined;
@@ -152,7 +144,9 @@ const DraggableJobBlock = ({ job, onClick, deliveryTypes, pickupLocations }) => 
             </div>
           )}
           {isLargeJob && <AlertTriangle className="h-2.5 w-2.5 text-orange-500" />}
-          <GripVertical className="h-2.5 w-2.5 text-gray-500" />
+          <div {...listeners} {...attributes} className="cursor-grab active:cursor-grabbing">
+            <GripVertical className="h-2.5 w-2.5 text-gray-500" />
+          </div>
         </div>
       </div>
     </div>
@@ -179,14 +173,6 @@ const DraggableScheduledJobBlock = ({ job, onClick, deliveryTypes, pickupLocatio
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: job.id,
   });
-
-  const handleClick = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!isDragging) {
-      onClick(e);
-    }
-  };
 
   const style = transform ? {
     transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
@@ -275,7 +261,9 @@ const DraggableScheduledJobBlock = ({ job, onClick, deliveryTypes, pickupLocatio
             <AlertTriangle className="h-2.5 w-2.5 text-orange-500" />
           )}
           {job.status === 'DELIVERED' && <CheckCircle2 className="h-3 w-3 text-green-600" />}
-          <GripVertical className="h-2.5 w-2.5 text-gray-500" />
+          <div {...listeners} {...attributes} className="cursor-grab active:cursor-grabbing">
+            <GripVertical className="h-2.5 w-2.5 text-gray-500" />
+          </div>
         </div>
       </div>
     </div>
