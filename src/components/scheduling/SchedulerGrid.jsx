@@ -97,13 +97,13 @@ const DraggableJobBlock = ({ job, onClick, deliveryTypes, pickupLocations }) => 
       <div className="flex items-start justify-between gap-1 h-full">
         <div className="flex-1 min-w-0 overflow-hidden">
           <div className="flex items-center gap-1 mb-1 flex-wrap">
-          {deliveryType?.code && (
+          {deliveryType?.code && textStyles.icon && (
             <span 
-              className="px-1 py-0.5 rounded text-[8px] font-bold flex items-center gap-0.5 shadow-sm"
+              className="px-1 py-0.5 rounded text-xs font-bold flex items-center shadow-sm"
               style={getBadgeStyles(textStyles)}
+              title={deliveryType.code}
             >
-              {textStyles.icon && <span className="text-xs">{textStyles.icon}</span>}
-              {deliveryType.code}
+              {textStyles.icon}
             </span>
           )}
           {pickupShortname && (
