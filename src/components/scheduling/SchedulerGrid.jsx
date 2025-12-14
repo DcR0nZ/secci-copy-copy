@@ -126,14 +126,22 @@ const DraggableJobBlock = ({ job, onClick, deliveryTypes, pickupLocations }) => 
             )}
           </div>
 
-          <div className="text-[10px] text-gray-500 mb-1 truncate">
+          <div className="font-semibold text-sm mb-1 text-gray-900 truncate">
             {job.customerName}
           </div>
-          <div className="text-sm leading-tight text-gray-900 font-medium">
-            {addressParts.unit && <div className="truncate text-xs">{addressParts.unit}</div>}
-            {addressParts.street && <div className="truncate font-semibold">{addressParts.street}</div>}
-            {addressParts.suburb && <div className="truncate text-xs text-gray-600">{addressParts.suburb}</div>}
+          <div className="text-xs leading-tight text-gray-700 mb-1">
+            {addressParts.unit && <div className="truncate">{addressParts.unit}</div>}
+            {addressParts.street && <div className="truncate font-medium">{addressParts.street}</div>}
+            {addressParts.suburb && <div className="truncate">{addressParts.suburb}</div>}
           </div>
+          <div className="text-[10px] text-gray-600">
+            {job.deliveryTypeName}
+          </div>
+          {job.requestedDate && (
+            <div className="text-[10px] text-gray-500 mt-0.5">
+              Requested: {new Date(job.requestedDate).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })}
+            </div>
+          )}
         </div>
         <div className="flex flex-col items-center gap-0.5 flex-shrink-0">
           {hasPodNotes && (
@@ -328,7 +336,7 @@ const DroppableCell = ({ id, children, onDrop }) => {
       }`}
       style={{
         minWidth: '100px',
-        minHeight: '140px',
+        minHeight: '100px',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -357,7 +365,7 @@ const DroppableUnscheduled = ({ children, onDrop }) => {
   return (
     <div
       ref={drop}
-      className={`flex-1 flex gap-2 p-3 overflow-x-auto min-h-[100px] ${
+      className={`flex-1 flex gap-2 p-3 overflow-x-auto min-h-[160px] ${
         isOver ? 'bg-yellow-100' : ''
       }`}
     >
@@ -480,8 +488,8 @@ export default function SchedulerGrid({
               <div
                 key={job.id}
                 style={{
-                  width: '200px',
-                  height: '80px',
+                  width: '220px',
+                  height: '140px',
                   flexShrink: 0
                 }}>
                 <DraggableJobBlock
@@ -543,7 +551,7 @@ export default function SchedulerGrid({
                 key={truck.id}
                 className={`flex ${
                   isLastTruck ? 'border-b-2 border-gray-400' : 'border-b-2 border-gray-300'
-                } min-h-[140px] mb-6`}>
+                } min-h-[100px] mb-4`}>
                 {/* Sticky Truck Column */}
                 <div className="w-24 lg:w-32 flex-shrink-0 p-2 bg-gray-50 border-r-2 border-gray-300 sticky left-0 z-10">
                   <div className="font-semibold text-xs text-gray-900">{truck.name}</div>
