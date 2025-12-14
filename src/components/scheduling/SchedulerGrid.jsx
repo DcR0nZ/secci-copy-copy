@@ -82,6 +82,12 @@ const DraggableJobBlock = ({ job, onClick, deliveryTypes, pickupLocations }) => 
   const pickupLocation = pickupLocations?.find(loc => loc.id === job.pickupLocationId);
   const pickupShortname = pickupLocation?.shortname;
 
+  const handleClick = (e) => {
+    if (!isDragging && onClick) {
+      onClick(e);
+    }
+  };
+
   const jobCard = (
     <div
       ref={setNodeRef}
@@ -91,7 +97,7 @@ const DraggableJobBlock = ({ job, onClick, deliveryTypes, pickupLocations }) => 
       className={`w-full h-full border-2 rounded p-2 text-xs cursor-pointer transition-all overflow-hidden ${
         isDragging ? 'opacity-50' : ''
       }`}
-      onClick={onClick}
+      onClick={handleClick}
       aria-label={`${textStyles.name} delivery for ${job.customerName}`}
     >
       <div className="flex items-start justify-between gap-1 h-full">
