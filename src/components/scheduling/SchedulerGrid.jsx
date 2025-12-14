@@ -348,7 +348,7 @@ const DroppableUnscheduled = ({ children }) => {
     <div
       ref={setNodeRef}
       className={`w-full ${isOver ? 'bg-yellow-300' : ''}`}
-      style={{ minHeight: '140px' }}
+      style={{ minHeight: '140px', pointerEvents: 'auto' }}
     >
       {children}
     </div>
@@ -454,7 +454,7 @@ export default function SchedulerGrid({
       <div className="w-full h-full flex flex-col overflow-hidden">
         {/* Unscheduled Row */}
         <DroppableUnscheduled>
-          <div className="flex border-2 border-gray-400 bg-yellow-50 mb-4 rounded-lg overflow-hidden shadow-sm flex-shrink-0 w-full">
+          <div className="flex border-2 border-gray-400 bg-yellow-50 mb-4 rounded-lg overflow-hidden shadow-sm flex-shrink-0 w-full" style={{ pointerEvents: 'none' }}>
             <div className="w-24 lg:w-32 flex-shrink-0 p-3 bg-yellow-100 border-r-2 border-gray-400 flex flex-col justify-center">
               <div className="flex items-center">
                 <Package className="h-4 w-4 mr-1.5 text-yellow-700" />
@@ -464,14 +464,15 @@ export default function SchedulerGrid({
                 {unscheduledJobs.length} {unscheduledJobs.length === 1 ? 'job' : 'jobs'}
               </Badge>
             </div>
-            <div className="flex-1 flex gap-2 p-3 overflow-x-auto min-h-[120px]">
+            <div className="flex-1 flex gap-2 p-3 overflow-x-auto min-h-[120px]" style={{ pointerEvents: 'auto' }}>
               {unscheduledJobs.map((job, index) => (
                 <div
                   key={job.id}
                   style={{
                     width: '200px',
                     height: '80px',
-                    flexShrink: 0
+                    flexShrink: 0,
+                    pointerEvents: 'auto'
                   }}>
                   <DraggableJobBlock
                     job={job}
@@ -482,7 +483,7 @@ export default function SchedulerGrid({
                 </div>
               ))}
               {unscheduledJobs.length === 0 && (
-                <div className="text-gray-500 text-sm p-2 flex items-center">No unscheduled jobs for this date</div>
+                <div className="text-gray-500 text-sm p-2 flex items-center" style={{ pointerEvents: 'none' }}>No unscheduled jobs for this date</div>
               )}
             </div>
           </div>
