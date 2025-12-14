@@ -315,12 +315,10 @@ export default function SchedulingBoard() {
   };
 
   const handleDragStart = (event) => {
-    event.preventDefault?.();
     setActiveId(event.active.id);
   };
 
   const handleDragEnd = async (event) => {
-    event.preventDefault?.();
     const { active, over } = event;
     setActiveId(null);
 
