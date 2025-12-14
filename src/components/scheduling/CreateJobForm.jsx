@@ -80,6 +80,7 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
   const [manualSheetEntry, setManualSheetEntry] = useState({ description: '', quantity: '', m2: '', unit: 'sheets', weight: '' });
   const [extractionLoading, setExtractionLoading] = useState(false);
   const [extractedData, setExtractedData] = useState(null);
+  const [suggestions, setSuggestions] = useState({ deliveryType: null, requiresManitou: false, difficultDelivery: null });
   
   const { toast } = useToast();
 
@@ -140,6 +141,88 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
       }
     }
   }, [formData.customerId, customers, pickupLocations, formData.siteContactName, formData.siteContactPhone, formData.deliveryNotes, formData.pickupLocationId]);
+
+  // Smart detection based on notes and descriptions
+  useEffect(() => {
+    const detectPatterns = () => {
+      const notes = (formData.deliveryNotes || '').toLowerCase();
+      const reference = (formData.customerReference || '').toLowerCase();
+      const allText = `${notes} ${reference}`;
+      
+      const newSuggestions = { deliveryType: null, requiresManitou: false, difficultDelivery: null };
+      
+      // Detect delivery type patterns
+      if (allText.match(/\b(unit|units|apartment|level|floor|storey|story)\b/i)) {
+        const unitUpType = deliveryTypes.find(dt => dt.code === 'UNITUP' || dt.name?.toLowerCase().includes('unit up'));
+        if (unitUpType && !formData.deliveryTypeId) {
+          newSuggestions.deliveryType = unitUpType.id;
+        }
+      } else if (allText.match(/\b(crane|lift|hoist)\b/i)) {
+        const craneType = deliveryTypes.find(dt => dt.code === 'CRANE' || dt.name?.toLowerCase().includes('crane'));
+        if (craneType && !formData.deliveryTypeId) {
+          newSuggestions.deliveryType = craneType.id;
+        }
+      } else if (allText.match(/\b(manitou|forklift|telehandler)\b/i)) {
+        const mansType = deliveryTypes.find(dt => dt.code === 'MANS' || dt.name?.toLowerCase().includes('manitou'));
+        if (mansType && !formData.deliveryTypeId) {
+          newSuggestions.deliveryType = mansType.id;
+        }
+      }
+      
+      // Detect Manitou requirement
+      if (allText.match(/\b(manitou|forklift|telehandler|pass up|pass down|upstairs|level|floor|storey|story)\b/i)) {
+        newSuggestions.requiresManitou = true;
+      }
+      
+      // Detect difficult delivery patterns
+      const difficultKeywords = [
+        { pattern: /\b(long walk|far from|distant|long carry)\b/i, reason: 'Long Walk' },
+        { pattern: /\b(stair|stairs|steps|staircase|upstairs|downstairs)\b/i, reason: 'Stairs' },
+        { pattern: /\b(pass up|pass down|lift up|hand up|throw up|throw down)\b/i, reason: 'Pass Up/Down' },
+        { pattern: /\b(traffic|traffic control|road closure|blocked access)\b/i, reason: 'Traffic Control' },
+        { pattern: /\b(narrow|tight|difficult access|restricted access|hard to access)\b/i, reason: 'Difficult Access' },
+        { pattern: /\b(4 man|four man|extra hands|additional help)\b/i, reason: 'Extra Labor Required' }
+      ];
+      
+      for (const keyword of difficultKeywords) {
+        if (allText.match(keyword.pattern)) {
+          newSuggestions.difficultDelivery = keyword.reason;
+          break;
+        }
+      }
+      
+      // Auto-check non-standard delivery checkboxes based on keywords
+      const updates = {};
+      if (allText.match(/\b(long walk|far from|distant)\b/i) && !formData.nonStandardDelivery.longWalk) {
+        updates.longWalk = true;
+      }
+      if (allText.match(/\b(pass up|lift up|hand up)\b/i) && !formData.nonStandardDelivery.passUp) {
+        updates.passUp = true;
+      }
+      if (allText.match(/\b(pass down|throw down)\b/i) && !formData.nonStandardDelivery.passDown) {
+        updates.passDown = true;
+      }
+      if (allText.match(/\b(stair|stairs|steps)\b/i) && !formData.nonStandardDelivery.stairs) {
+        updates.stairs = true;
+      }
+      if (allText.match(/\b(4 man|four man)\b/i) && !formData.nonStandardDelivery.fourManNeeded) {
+        updates.fourManNeeded = true;
+      }
+      
+      if (Object.keys(updates).length > 0) {
+        setFormData(prev => ({
+          ...prev,
+          nonStandardDelivery: { ...prev.nonStandardDelivery, ...updates }
+        }));
+      }
+      
+      setSuggestions(newSuggestions);
+    };
+    
+    if (deliveryTypes.length > 0 && (formData.deliveryNotes || formData.customerReference)) {
+      detectPatterns();
+    }
+  }, [formData.deliveryNotes, formData.customerReference, deliveryTypes, formData.deliveryTypeId, formData.nonStandardDelivery]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -623,6 +706,25 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
                       {deliveryTypes.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
                     </SelectContent>
                   </Select>
+                  {suggestions.deliveryType && !formData.deliveryTypeId && (
+                    <div className="mt-2 flex items-center gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleSelectChange('deliveryTypeId', suggestions.deliveryType)}
+                        className="text-xs bg-blue-50 border-blue-300 text-blue-700 hover:bg-blue-100"
+                      >
+                        <Sparkles className="h-3 w-3 mr-1" />
+                        Use Suggested: {deliveryTypes.find(dt => dt.id === suggestions.deliveryType)?.name}
+                      </Button>
+                    </div>
+                  )}
+                  {suggestions.requiresManitou && (
+                    <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800">
+                      ⚠️ This job may require Manitou equipment based on the description
+                    </div>
+                  )}
                 </div>
 
                 {isUnitsDelivery && (
@@ -911,6 +1013,11 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
                 <div className="md:col-span-2">
                   <label htmlFor="deliveryNotes" className="block text-sm font-medium text-gray-700 mb-1">Delivery Notes</label>
                   <Textarea id="deliveryNotes" name="deliveryNotes" value={formData.deliveryNotes} onChange={handleChange} placeholder="e.g., Site access via Gate 3." />
+                  {suggestions.difficultDelivery && (
+                    <div className="mt-2 p-2 bg-orange-50 border border-orange-200 rounded text-xs text-orange-800 flex items-center justify-between">
+                      <span>⚠️ Difficult delivery detected: {suggestions.difficultDelivery}</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="md:col-span-2 border-t pt-4 mt-2">
