@@ -655,7 +655,7 @@ export default function SchedulerGrid({
           })}
         </div>
 
-        {/* Unscheduled Row - Moved to Bottom */}
+        {/* Unscheduled Row - Moved to Bottom, Grouped by Delivery Window */}
         <div className="flex border-2 border-gray-400 bg-yellow-50 mt-4 rounded-lg overflow-hidden shadow-sm flex-1 min-h-[200px]">
           <div className="w-24 lg:w-32 flex-shrink-0 p-3 bg-yellow-100 border-r-2 border-gray-400 flex flex-col justify-start">
             <div className="flex items-center">
@@ -666,27 +666,49 @@ export default function SchedulerGrid({
               {unscheduledJobs.length} {unscheduledJobs.length === 1 ? 'job' : 'jobs'}
             </Badge>
           </div>
-          <DroppableUnscheduled onDrop={onDrop}>
-            {unscheduledJobs.map((job, index) => (
-              <div
-                key={job.id}
-                style={{
-                  width: '220px',
-                  height: '140px',
-                  flexShrink: 0
-                }}>
-                <DraggableJobBlock
-                  job={job}
-                  onClick={() => (onJobClick ? onJobClick(job) : handleJobClick(job))}
-                  deliveryTypes={deliveryTypes}
-                  pickupLocations={pickupLocations}
-                />
-              </div>
-            ))}
-            {unscheduledJobs.length === 0 && (
-              <div className="text-gray-500 text-sm p-2 flex items-center">No unscheduled jobs for this date</div>
-            )}
-          </DroppableUnscheduled>
+          <div className="flex flex-1">
+            {TIME_SLOTS.map((slot) => {
+              const jobsInWindow = unscheduledJobs.filter(job => {
+                if (!job.deliveryWindow) return false;
+                return job.deliveryWindow === slot.label;
+              });
+              
+              const jobsWithoutWindow = unscheduledJobs.filter(job => !job.deliveryWindow);
+
+              return (
+                <div
+                  key={slot.id}
+                  className={`${slot.color} border-r border-gray-200 flex-1 overflow-y-auto`}
+                  style={{ minWidth: '200px' }}>
+                  <div className="p-2 space-y-2">
+                    {jobsInWindow.map((job) => (
+                      <div key={job.id} style={{ width: '100%', minHeight: '120px' }}>
+                        <DraggableJobBlock
+                          job={job}
+                          onClick={() => (onJobClick ? onJobClick(job) : handleJobClick(job))}
+                          deliveryTypes={deliveryTypes}
+                          pickupLocations={pickupLocations}
+                        />
+                      </div>
+                    ))}
+                    {slot.id === 'first-am' && jobsWithoutWindow.map((job) => (
+                      <div key={job.id} style={{ width: '100%', minHeight: '120px' }}>
+                        <DraggableJobBlock
+                          job={job}
+                          onClick={() => (onJobClick ? onJobClick(job) : handleJobClick(job))}
+                          deliveryTypes={deliveryTypes}
+                          pickupLocations={pickupLocations}
+                        />
+                      </div>
+                    ))}
+                    {jobsInWindow.length === 0 && (slot.id !== 'first-am' || jobsWithoutWindow.length === 0) && (
+                      <div className="text-gray-400 text-xs text-center py-4">-</div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
 
