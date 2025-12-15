@@ -393,18 +393,18 @@ export default function SchedulingBoard() {
     const requestedSlotPosition = parseInt(parts[parts.length - 1]);
     const destinationTimeSlotId = parts.slice(1, parts.length - 1).join('-');
     const destinationTruckId = parts[0];
-    
+
     const assignmentsExcludingCurrentJob = assignments.filter(a => a.jobId !== jobId);
-    
+
     let finalSlotPosition;
 
-    const isTargetingBlock1 = requestedSlotPosition <= 2;
-    
-    const primaryBlockStart = isTargetingBlock1 ? 1 : 3;
-    const primaryBlockEnd = isTargetingBlock1 ? 2 : 4;
+    const isTargetingBlock1 = requestedSlotPosition <= 4;
 
-    const secondaryBlockStart = isTargetingBlock1 ? 3 : 1;
-    const secondaryBlockEnd = isTargetingBlock1 ? 4 : 2;
+    const primaryBlockStart = isTargetingBlock1 ? 1 : 5;
+    const primaryBlockEnd = isTargetingBlock1 ? 4 : 8;
+
+    const secondaryBlockStart = isTargetingBlock1 ? 5 : 1;
+    const secondaryBlockEnd = isTargetingBlock1 ? 8 : 4;
 
     const primaryBlockOccupied = assignmentsExcludingCurrentJob.some(a => 
       a.truckId === destinationTruckId && 
@@ -847,6 +847,7 @@ export default function SchedulingBoard() {
     <>
       <div className="h-full flex flex-col bg-gray-50 overflow-hidden">
             <div className="bg-white border-b px-4 md:px-6 py-4 flex-shrink-0 z-30">
+              {/* Header content */}
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                   <h1 className="text-xl md:text-2xl font-bold text-gray-900">Delivery Scheduler</h1>

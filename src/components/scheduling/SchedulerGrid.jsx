@@ -419,9 +419,9 @@ export default function SchedulerGrid({
     const cellAssignments = assignments.filter((a) => {
       if (a.truckId !== truckId || a.timeSlotId !== timeSlotId) return false;
       if (slotPosition === 1) {
-        return a.slotPosition >= 1 && a.slotPosition <= 2;
-      } else if (slotPosition === 3) {
-        return a.slotPosition >= 3;
+        return a.slotPosition >= 1 && a.slotPosition <= 4;
+      } else if (slotPosition === 5) {
+        return a.slotPosition >= 5;
       }
       return false;
     });
@@ -435,16 +435,16 @@ export default function SchedulerGrid({
   const getPlaceholdersForCell = (truckId, timeSlotId, slotPosition) => {
     return placeholders.filter((p) => {
       if (p.truckId !== truckId || p.timeSlotId !== timeSlotId) return false;
-      
+
       if (p.slotPosition) {
         if (slotPosition === 1) {
-          return p.slotPosition >= 1 && p.slotPosition <= 2;
-        } else if (slotPosition === 3) {
-          return p.slotPosition >= 3;
+          return p.slotPosition >= 1 && p.slotPosition <= 4;
+        } else if (slotPosition === 5) {
+          return p.slotPosition >= 5;
         }
         return false;
       }
-      
+
       return slotPosition === 1;
     }).sort((a, b) => (a.slotPosition || 1) - (b.slotPosition || 1));
   };
@@ -563,15 +563,15 @@ export default function SchedulerGrid({
 
                 <div className="flex flex-1 relative">
                   {TIME_SLOTS.map((slot) => {
-                    const allJobsInSlot = [1, 3].flatMap((blockStart) => 
+                    const allJobsInSlot = [1, 5].flatMap((blockStart) => 
                       getJobsForCell(truck.id, slot.id, blockStart)
                     );
-                    const allPlaceholdersInSlot = [1, 3].flatMap((blockStart) => 
+                    const allPlaceholdersInSlot = [1, 5].flatMap((blockStart) => 
                       getPlaceholdersForCell(truck.id, slot.id, blockStart)
                     );
-                    
+
                     const totalItems = allJobsInSlot.length + allPlaceholdersInSlot.length;
-                    const blocksToShow = totalItems > 1 ? [1, 3] : [1];
+                    const blocksToShow = totalItems > 1 ? [1, 5] : [1];
 
                     return (
                       <div
