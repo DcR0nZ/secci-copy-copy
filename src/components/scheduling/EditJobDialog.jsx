@@ -344,6 +344,16 @@ export default function EditJobDialog({ job, open, onOpenChange, onJobUpdated })
         return false;
       });
 
+      // Determine if this is a difficult delivery
+      const isDifficult = formData.nonStandardDelivery.longWalk || 
+                         formData.nonStandardDelivery.passUp || 
+                         formData.nonStandardDelivery.passDown || 
+                         formData.nonStandardDelivery.stairs || 
+                         formData.nonStandardDelivery.fourManNeeded || 
+                         formData.nonStandardDelivery.moreThan2000Sqm || 
+                         formData.nonStandardDelivery.zoneC || 
+                         formData.nonStandardDelivery.other;
+
       // Determine job status based on manual scheduling
       let newStatus = job.status;
       if (manualSchedule.enabled && manualSchedule.truckId && manualSchedule.timeSlotId) {
@@ -373,6 +383,7 @@ export default function EditJobDialog({ job, open, onOpenChange, onJobUpdated })
         deliveryTypeName: selectedType.name,
         pickupLocation: `${selectedLocation.company} - ${selectedLocation.name}`,
         status: newStatus,
+        isDifficultDelivery: isDifficult,
         nonStandardDelivery: hasNonStandard ? {
           longWalk: formData.nonStandardDelivery.longWalk || false,
           longWalkDistance: formData.nonStandardDelivery.longWalkDistance ? Number(formData.nonStandardDelivery.longWalkDistance) : undefined,
