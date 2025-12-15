@@ -418,10 +418,35 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
         }
 
         if (extracted.supplier_name) {
-          const matchedLocation = pickupLocations.find(loc => 
-            loc.company?.toLowerCase().includes(extracted.supplier_name.toLowerCase()) ||
-            extracted.supplier_name.toLowerCase().includes(loc.company?.toLowerCase())
+          const supplierLower = extracted.supplier_name.toLowerCase();
+          
+          // Try exact match first
+          let matchedLocation = pickupLocations.find(loc => 
+            loc.company?.toLowerCase() === supplierLower
           );
+          
+          // If no exact match, try matching with location name included (e.g., "Bayside Plasterboard Morningside")
+          if (!matchedLocation) {
+            matchedLocation = pickupLocations.find(loc => {
+              const companyLower = loc.company?.toLowerCase() || '';
+              const locationNameLower = loc.name?.toLowerCase() || '';
+              return supplierLower.includes(companyLower) && supplierLower.includes(locationNameLower);
+            });
+          }
+          
+          // If still no match, try partial company match but only if there's a single result
+          if (!matchedLocation) {
+            const partialMatches = pickupLocations.filter(loc => 
+              loc.company?.toLowerCase().includes(supplierLower) ||
+              supplierLower.includes(loc.company?.toLowerCase())
+            );
+            
+            // Only auto-select if there's exactly one match to avoid ambiguity
+            if (partialMatches.length === 1) {
+              matchedLocation = partialMatches[0];
+            }
+          }
+          
           if (matchedLocation) {
             updates.pickupLocationId = matchedLocation.id;
           }
