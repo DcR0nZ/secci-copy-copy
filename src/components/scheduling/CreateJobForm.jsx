@@ -507,6 +507,16 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
         return false;
       });
 
+      // Determine if this is a difficult delivery
+      const isDifficult = formData.nonStandardDelivery.longWalk || 
+                         formData.nonStandardDelivery.passUp || 
+                         formData.nonStandardDelivery.passDown || 
+                         formData.nonStandardDelivery.stairs || 
+                         formData.nonStandardDelivery.fourManNeeded || 
+                         formData.nonStandardDelivery.moreThan2000Sqm || 
+                         formData.nonStandardDelivery.zoneC || 
+                         formData.nonStandardDelivery.other;
+
       const newJob = await base44.entities.Job.create({
         customerId: formData.customerId,
         deliveryTypeId: formData.deliveryTypeId,
@@ -531,6 +541,7 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
         deliveryTypeName: selectedType.name,
         pickupLocation: `${selectedLocation.company} - ${selectedLocation.name}`,
         status: jobStatus,
+        isDifficultDelivery: isDifficult,
         nonStandardDelivery: hasNonStandard ? {
           longWalk: formData.nonStandardDelivery.longWalk || false,
           longWalkDistance: formData.nonStandardDelivery.longWalkDistance ? Number(formData.nonStandardDelivery.longWalkDistance) : undefined,
