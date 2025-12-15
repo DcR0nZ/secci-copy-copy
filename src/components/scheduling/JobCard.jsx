@@ -1,25 +1,13 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { AlertTriangle, ArrowUp, Construction, ArrowLeft } from 'lucide-react';
 
-export default function JobCard({ job, deliveryTypes, isCustomer, onMoveToWindow }) {
-  const [showWindowSelector, setShowWindowSelector] = useState(false);
-  
-  const DELIVERY_WINDOWS = [
-    { id: 'first-am', label: '6-8am (1st AM)' },
-    { id: 'second-am', label: '8-10am (2nd AM)' },
-    { id: 'lunch', label: '10am-12pm (LUNCH)' },
-    { id: 'first-pm', label: '12-2pm (1st PM)' },
-    { id: 'second-pm', label: '2-4pm (2nd PM)' }
-  ];
+export default function JobCard({ job, deliveryTypes }) {
   const deliveryType = deliveryTypes?.find(dt => dt.id === job.deliveryTypeId);
   const isUnitDelivery = deliveryType?.code && ['UNITUP', 'UNITDWN', 'CRANE'].includes(deliveryType.code);
   const isUnitUp = deliveryType?.code === 'UNITUP';
   const isCrane = deliveryType?.code === 'CRANE';
   const isReturned = job.status === 'RETURNED' || job.isReturned;
-  const isUnscheduled = job.status === 'APPROVED' || job.status === 'PENDING_APPROVAL';
-  const isGreyscale = isCustomer && isUnscheduled;
   
   const hasNonStandard = job.nonStandardDelivery && Object.entries(job.nonStandardDelivery).some(([key, value]) => {
     if (key === 'longWalkDistance' || key === 'stairsCount' || key === 'otherDetails') return false;
@@ -51,10 +39,9 @@ export default function JobCard({ job, deliveryTypes, isCustomer, onMoveToWindow
   }
 
   return (
-    <div className="space-y-2">
-      <div
-        className={`${bgClass} ${borderClass} p-3 rounded-lg border-2 cursor-grab active:cursor-grabbing shadow-sm hover:shadow-md transition-all ${isGreyscale ? 'opacity-70 grayscale' : ''}`}
-      >
+    <div
+      className={`${bgClass} ${borderClass} p-3 rounded-lg border-2 cursor-grab active:cursor-grabbing shadow-sm hover:shadow-md transition-all`}
+    >
       <div className="flex justify-between items-start gap-2 mb-2">
         <div className="flex-1 min-w-0">
           {isReturned ? (

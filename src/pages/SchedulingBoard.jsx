@@ -393,18 +393,18 @@ export default function SchedulingBoard() {
     const requestedSlotPosition = parseInt(parts[parts.length - 1]);
     const destinationTimeSlotId = parts.slice(1, parts.length - 1).join('-');
     const destinationTruckId = parts[0];
-
+    
     const assignmentsExcludingCurrentJob = assignments.filter(a => a.jobId !== jobId);
-
+    
     let finalSlotPosition;
 
-    const isTargetingBlock1 = requestedSlotPosition <= 4;
+    const isTargetingBlock1 = requestedSlotPosition <= 2;
+    
+    const primaryBlockStart = isTargetingBlock1 ? 1 : 3;
+    const primaryBlockEnd = isTargetingBlock1 ? 2 : 4;
 
-    const primaryBlockStart = isTargetingBlock1 ? 1 : 5;
-    const primaryBlockEnd = isTargetingBlock1 ? 4 : 8;
-
-    const secondaryBlockStart = isTargetingBlock1 ? 5 : 1;
-    const secondaryBlockEnd = isTargetingBlock1 ? 8 : 4;
+    const secondaryBlockStart = isTargetingBlock1 ? 3 : 1;
+    const secondaryBlockEnd = isTargetingBlock1 ? 4 : 2;
 
     const primaryBlockOccupied = assignmentsExcludingCurrentJob.some(a => 
       a.truckId === destinationTruckId && 
@@ -544,7 +544,106 @@ export default function SchedulingBoard() {
             </div>
           ) : (
             <div className="px-4 py-4 pb-24">
-              {TRUCKS.map(truck => {
+              {allUnscheduledJobs.length > 0 && (
+                  <Card className="bg-yellow-50 border-yellow-200">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base flex items-center justify-between">
+                        <span className="flex items-center gap-2">
+                          <Package className="h-5 w-5 text-yellow-700" />
+                          <span>Unscheduled Jobs</span>
+                        </span>
+                        <Badge variant="secondary" className="bg-yellow-200 text-yellow-900">
+                          {allUnscheduledJobs.length}
+                        </Badge>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      {allUnscheduledJobs.map(job => {
+                        const deliveryType = deliveryTypes.find(dt => dt.id === job.deliveryTypeId);
+                        const pickupLocation = pickupLocations.find(loc => loc.id === job.pickupLocationId);
+                        const pickupShortname = pickupLocation?.shortname;
+                        const cardStyles = getJobCardInlineStyles(deliveryType, job);
+                        const badgeStyles = getBadgeStyles(getJobCardStyles(deliveryType, job));
+                        const textStyles = getJobCardStyles(deliveryType, job);
+
+                        return (
+                          <div
+                            key={job.id}
+                            className="p-3 rounded-lg border-2 active:bg-gray-50 transition-colors"
+                            style={{
+                              ...cardStyles,
+                              boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
+                            }}
+                          >
+                            <div className="flex justify-between items-start gap-2 mb-1">
+                              <div className="flex-1 min-w-0">
+                                {(deliveryType?.code || pickupShortname) && (
+                                  <div className="mb-1 flex gap-1 flex-wrap">
+                                    {deliveryType?.code && (
+                                      <span 
+                                        className="px-1.5 py-0.5 rounded text-[10px] font-bold flex items-center gap-0.5 shadow-sm"
+                                        style={badgeStyles}
+                                      >
+                                        {textStyles.icon && <span className="text-sm">{textStyles.icon}</span>}
+                                        {deliveryType.code}
+                                      </span>
+                                    )}
+                                    {pickupShortname && (
+                                      <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-purple-100 text-purple-700">
+                                        {pickupShortname}
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+                                <span className="font-semibold text-sm text-gray-900 block">{job.customerName}</span>
+                              </div>
+                              <div className="flex flex-col gap-1 items-end">
+                                {job.sqm && (
+                                  <Badge variant="secondary" className="text-[10px] bg-white/90 text-gray-900">
+                                    {job.sqm}m²
+                                  </Badge>
+                                )}
+                                {job.isDifficultDelivery && (
+                                  <AlertTriangle className="h-4 w-4 text-orange-500" />
+                                )}
+                              </div>
+                            </div>
+                            <p className="text-sm text-gray-600">{job.deliveryLocation}</p>
+                            <p className="text-xs text-gray-500 mt-1">{job.deliveryTypeName}</p>
+                            <div className="flex gap-2 mt-3">
+                              <Button
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setJobToSchedule(job);
+                                  setScheduleDialogOpen(true);
+                                }}
+                                className="flex-1"
+                              >
+                                <CalendarClock className="h-4 w-4 mr-1" />
+                                Schedule
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedJob(job);
+                                  setJobDialogOpen(true);
+                                }}
+                                className="flex-1"
+                              >
+                                View
+                              </Button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </CardContent>
+                  </Card>
+                )}
+
+                {TRUCKS.map(truck => {
                   const truckJobs = getJobsForTruck(truck.id);
                   const truckPlaceholders = getPlaceholdersForTruck(truck.id);
                   const totalSqm = getTruckUtilization(truck.id);
@@ -676,116 +775,17 @@ export default function SchedulingBoard() {
                                          </div>
                                         </div>
                                         </div>
-                                      );
-                                    })}
-                                  </div>
-                                );
-                              })}
-                            </>
-                          )}
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-
-                  {allUnscheduledJobs.length > 0 && (
-                                        <Card className="bg-yellow-50 border-yellow-200 mt-4">
-                                        <CardHeader className="pb-3">
-                                        <CardTitle className="text-base flex items-center justify-between">
-                                        <span className="flex items-center gap-2">
-                                        <Package className="h-5 w-5 text-yellow-700" />
-                                        <span>Unscheduled Jobs</span>
-                                        </span>
-                                        <Badge variant="secondary" className="bg-yellow-200 text-yellow-900">
-                                        {allUnscheduledJobs.length}
-                                        </Badge>
-                                        </CardTitle>
-                                        </CardHeader>
-                                        <CardContent className="space-y-2">
-                    {allUnscheduledJobs.map(job => {
-                      const deliveryType = deliveryTypes.find(dt => dt.id === job.deliveryTypeId);
-                      const pickupLocation = pickupLocations.find(loc => loc.id === job.pickupLocationId);
-                      const pickupShortname = pickupLocation?.shortname;
-                      const cardStyles = getJobCardInlineStyles(deliveryType, job);
-                      const badgeStyles = getBadgeStyles(getJobCardStyles(deliveryType, job));
-                      const textStyles = getJobCardStyles(deliveryType, job);
-
-                      return (
-                        <div
-                          key={job.id}
-                          className="p-3 rounded-lg border-2 active:bg-gray-50 transition-colors"
-                          style={{
-                            ...cardStyles,
-                            boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
-                          }}
-                        >
-                          <div className="flex justify-between items-start gap-2 mb-1">
-                            <div className="flex-1 min-w-0">
-                              {(deliveryType?.code || pickupShortname) && (
-                                <div className="mb-1 flex gap-1 flex-wrap">
-                                  {deliveryType?.code && (
-                                    <span 
-                                      className="px-1.5 py-0.5 rounded text-[10px] font-bold flex items-center gap-0.5 shadow-sm"
-                                      style={badgeStyles}
-                                    >
-                                      {textStyles.icon && <span className="text-sm">{textStyles.icon}</span>}
-                                      {deliveryType.code}
-                                    </span>
-                                  )}
-                                  {pickupShortname && (
-                                    <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-purple-100 text-purple-700">
-                                      {pickupShortname}
-                                    </span>
-                                  )}
-                                </div>
-                              )}
-                              <span className="font-semibold text-sm text-gray-900 block">{job.customerName}</span>
-                            </div>
-                            <div className="flex flex-col gap-1 items-end">
-                              {job.sqm && (
-                                <Badge variant="secondary" className="text-[10px] bg-white/90 text-gray-900">
-                                  {job.sqm}m²
-                                </Badge>
-                              )}
-                              {job.isDifficultDelivery && (
-                                <AlertTriangle className="h-4 w-4 text-orange-500" />
-                              )}
-                            </div>
-                          </div>
-                          <p className="text-sm text-gray-600">{job.deliveryLocation}</p>
-                          <p className="text-xs text-gray-500 mt-1">{job.deliveryTypeName}</p>
-                          <div className="flex gap-2 mt-3">
-                            <Button
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setJobToSchedule(job);
-                                setScheduleDialogOpen(true);
-                              }}
-                              className="flex-1"
-                            >
-                              <CalendarClock className="h-4 w-4 mr-1" />
-                              Schedule
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedJob(job);
-                                setJobDialogOpen(true);
-                              }}
-                              className="flex-1"
-                            >
-                              View
-                            </Button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </CardContent>
-                </Card>
-              )}
+                                        );
+                                        })}
+                                        </div>
+                                        );
+                                        })}
+                                        </>
+                                        )}
+                                        </CardContent>
+                                        </Card>
+                                        );
+                                        })}
             </div>
           )}
         </div>
@@ -847,7 +847,6 @@ export default function SchedulingBoard() {
     <>
       <div className="h-full flex flex-col bg-gray-50 overflow-hidden">
             <div className="bg-white border-b px-4 md:px-6 py-4 flex-shrink-0 z-30">
-              {/* Header content */}
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                   <h1 className="text-xl md:text-2xl font-bold text-gray-900">Delivery Scheduler</h1>

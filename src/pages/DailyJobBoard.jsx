@@ -240,30 +240,6 @@ export default function DailyJobBoard() {
     }
   };
 
-  const handleMoveJobToWindow = async (job, newWindowLabel) => {
-    try {
-      await base44.entities.Job.update(job.id, {
-        deliveryWindow: newWindowLabel
-      });
-      
-      toast({
-        title: "Delivery Window Updated",
-        description: `Job moved to ${newWindowLabel}`,
-      });
-      
-      queryClient.invalidateQueries({ queryKey: ['jobs'] });
-    } catch (error) {
-      console.error('Error updating delivery window:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update delivery window",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const isCustomer = currentUser?.role !== 'admin' && (currentUser?.appRole === 'customer' || !currentUser?.appRole);
-
   const handleJobUpdated = () => {
     // Invalidate all relevant queries to trigger immediate refresh
     queryClient.invalidateQueries({ queryKey: ['jobs'] });
@@ -435,8 +411,6 @@ export default function DailyJobBoard() {
                                   const pickupShortname = job.pickupLocation?.shortname;
                                   const cardStyles = getJobCardInlineStyles(deliveryType, job);
                                   const badgeStyles = getBadgeStyles(getJobCardStyles(deliveryType, job));
-                                  const isUnscheduled = job.status === 'APPROVED' || job.status === 'PENDING_APPROVAL';
-                                  const isGreyscale = isCustomer && isUnscheduled;
 
                                   return (
                                     <div
@@ -445,7 +419,7 @@ export default function DailyJobBoard() {
                                         setSelectedJob(job);
                                         setJobDialogOpen(true);
                                       }}
-                                      className={`p-3 rounded-lg border-2 active:opacity-80 transition-all cursor-pointer ${isGreyscale ? 'opacity-70 grayscale' : ''}`}
+                                      className="p-3 rounded-lg border-2 active:opacity-80 transition-all cursor-pointer"
                                       style={{
                                         ...cardStyles,
                                         boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
@@ -729,14 +703,12 @@ export default function DailyJobBoard() {
                                 const pickupShortname = job.pickupLocation?.shortname;
                                 const cardStyles = getJobCardInlineStyles(deliveryType, job);
                                 const badgeStyles = getBadgeStyles(getJobCardStyles(deliveryType, job));
-                                const isUnscheduled = job.status === 'APPROVED' || job.status === 'PENDING_APPROVAL';
-                                const isGreyscale = isCustomer && isUnscheduled;
 
                                 return (
                                   <div
                                     key={job.id}
                                     onClick={() => handleJobClick(job)}
-                                    className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${isGreyscale ? 'opacity-70 grayscale' : ''}`}
+                                    className="p-3 rounded-lg border-2 cursor-pointer transition-all"
                                     style={{
                                       ...cardStyles,
                                       boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)'

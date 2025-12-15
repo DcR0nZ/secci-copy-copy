@@ -419,9 +419,9 @@ export default function SchedulerGrid({
     const cellAssignments = assignments.filter((a) => {
       if (a.truckId !== truckId || a.timeSlotId !== timeSlotId) return false;
       if (slotPosition === 1) {
-        return a.slotPosition >= 1 && a.slotPosition <= 4;
-      } else if (slotPosition === 5) {
-        return a.slotPosition >= 5;
+        return a.slotPosition >= 1 && a.slotPosition <= 2;
+      } else if (slotPosition === 3) {
+        return a.slotPosition >= 3;
       }
       return false;
     });
@@ -435,16 +435,16 @@ export default function SchedulerGrid({
   const getPlaceholdersForCell = (truckId, timeSlotId, slotPosition) => {
     return placeholders.filter((p) => {
       if (p.truckId !== truckId || p.timeSlotId !== timeSlotId) return false;
-
+      
       if (p.slotPosition) {
         if (slotPosition === 1) {
-          return p.slotPosition >= 1 && p.slotPosition <= 4;
-        } else if (slotPosition === 5) {
-          return p.slotPosition >= 5;
+          return p.slotPosition >= 1 && p.slotPosition <= 2;
+        } else if (slotPosition === 3) {
+          return p.slotPosition >= 3;
         }
         return false;
       }
-
+      
       return slotPosition === 1;
     }).sort((a, b) => (a.slotPosition || 1) - (b.slotPosition || 1));
   };
@@ -472,6 +472,40 @@ export default function SchedulerGrid({
   return (
     <>
       <div className="w-full h-full flex flex-col overflow-hidden">
+        {/* Unscheduled Row */}
+        <div className="flex border-2 border-gray-400 bg-yellow-50 mb-4 rounded-lg overflow-hidden shadow-sm flex-shrink-0">
+          <div className="w-24 lg:w-32 flex-shrink-0 p-3 bg-yellow-100 border-r-2 border-gray-400 flex flex-col justify-center">
+            <div className="flex items-center">
+              <Package className="h-4 w-4 mr-1.5 text-yellow-700" />
+              <span className="font-semibold text-xs lg:text-sm text-yellow-900">Unscheduled</span>
+            </div>
+            <Badge variant="secondary" className="mt-1.5 bg-yellow-200 text-yellow-900 text-xs py-0.5 h-5 w-fit">
+              {unscheduledJobs.length} {unscheduledJobs.length === 1 ? 'job' : 'jobs'}
+            </Badge>
+          </div>
+          <DroppableUnscheduled onDrop={onDrop}>
+            {unscheduledJobs.map((job, index) => (
+              <div
+                key={job.id}
+                style={{
+                  width: '220px',
+                  height: '140px',
+                  flexShrink: 0
+                }}>
+                <DraggableJobBlock
+                  job={job}
+                  onClick={() => (onJobClick ? onJobClick(job) : handleJobClick(job))}
+                  deliveryTypes={deliveryTypes}
+                  pickupLocations={pickupLocations}
+                />
+              </div>
+            ))}
+            {unscheduledJobs.length === 0 && (
+              <div className="text-gray-500 text-sm p-2 flex items-center">No unscheduled jobs for this date</div>
+            )}
+          </DroppableUnscheduled>
+        </div>
+
         {/* Time Header */}
         <div className="flex sticky top-0 z-20 bg-white border-b-2 border-gray-300 shadow-sm flex-shrink-0">
           <div className="w-24 lg:w-32 flex-shrink-0 p-2 bg-gray-100 border-r-2 border-gray-300 sticky left-0 z-30">
@@ -492,7 +526,7 @@ export default function SchedulerGrid({
         </div>
 
         {/* Truck Rows */}
-        <div className="overflow-auto pb-4 flex-shrink-0">
+        <div className="flex-1 overflow-auto pb-4">
           {trucks.map((truck, truckIndex) => {
             const totalSqm = assignments
               .filter((a) => a.truckId === truck.id)
@@ -529,15 +563,15 @@ export default function SchedulerGrid({
 
                 <div className="flex flex-1 relative">
                   {TIME_SLOTS.map((slot) => {
-                    const allJobsInSlot = [1, 5].flatMap((blockStart) => 
+                    const allJobsInSlot = [1, 3].flatMap((blockStart) => 
                       getJobsForCell(truck.id, slot.id, blockStart)
                     );
-                    const allPlaceholdersInSlot = [1, 5].flatMap((blockStart) => 
+                    const allPlaceholdersInSlot = [1, 3].flatMap((blockStart) => 
                       getPlaceholdersForCell(truck.id, slot.id, blockStart)
                     );
-
+                    
                     const totalItems = allJobsInSlot.length + allPlaceholdersInSlot.length;
-                    const blocksToShow = totalItems > 1 ? [1, 5] : [1];
+                    const blocksToShow = totalItems > 1 ? [1, 3] : [1];
 
                     return (
                       <div
@@ -653,61 +687,6 @@ export default function SchedulerGrid({
               </div>
             );
           })}
-        </div>
-
-        {/* Unscheduled Row - Moved to Bottom, Grouped by Delivery Window */}
-        <div className="flex border-2 border-gray-400 bg-yellow-50 mt-4 rounded-lg overflow-hidden shadow-sm flex-1 min-h-[200px]">
-          <div className="w-24 lg:w-32 flex-shrink-0 p-3 bg-yellow-100 border-r-2 border-gray-400 flex flex-col justify-start">
-            <div className="flex items-center">
-              <Package className="h-4 w-4 mr-1.5 text-yellow-700" />
-              <span className="font-semibold text-xs lg:text-sm text-yellow-900">Unscheduled</span>
-            </div>
-            <Badge variant="secondary" className="mt-1.5 bg-yellow-200 text-yellow-900 text-xs py-0.5 h-5 w-fit">
-              {unscheduledJobs.length} {unscheduledJobs.length === 1 ? 'job' : 'jobs'}
-            </Badge>
-          </div>
-          <div className="flex flex-1">
-            {TIME_SLOTS.map((slot) => {
-              const jobsInWindow = unscheduledJobs.filter(job => {
-                if (!job.deliveryWindow) return false;
-                return job.deliveryWindow === slot.label;
-              });
-              
-              const jobsWithoutWindow = unscheduledJobs.filter(job => !job.deliveryWindow);
-
-              return (
-                <DroppableUnscheduled key={slot.id} onDrop={onDrop}>
-                  <div
-                    className={`${slot.color} border-r border-gray-200 flex-1 overflow-y-auto p-2 space-y-2`}
-                    style={{ minWidth: '200px' }}>
-                    {jobsInWindow.map((job) => (
-                      <div key={job.id} style={{ width: '100%', minHeight: '120px' }}>
-                        <DraggableJobBlock
-                          job={job}
-                          onClick={() => (onJobClick ? onJobClick(job) : handleJobClick(job))}
-                          deliveryTypes={deliveryTypes}
-                          pickupLocations={pickupLocations}
-                        />
-                      </div>
-                    ))}
-                    {slot.id === 'first-am' && jobsWithoutWindow.map((job) => (
-                      <div key={job.id} style={{ width: '100%', minHeight: '120px' }}>
-                        <DraggableJobBlock
-                          job={job}
-                          onClick={() => (onJobClick ? onJobClick(job) : handleJobClick(job))}
-                          deliveryTypes={deliveryTypes}
-                          pickupLocations={pickupLocations}
-                        />
-                      </div>
-                    ))}
-                    {jobsInWindow.length === 0 && (slot.id !== 'first-am' || jobsWithoutWindow.length === 0) && (
-                      <div className="text-gray-400 text-xs text-center py-4">-</div>
-                    )}
-                  </div>
-                </DroppableUnscheduled>
-              );
-            })}
-          </div>
         </div>
       </div>
 

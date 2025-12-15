@@ -1235,10 +1235,6 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
                             <SelectItem value="2">Slot 2</SelectItem>
                             <SelectItem value="3">Slot 3</SelectItem>
                             <SelectItem value="4">Slot 4</SelectItem>
-                            <SelectItem value="5">Slot 5</SelectItem>
-                            <SelectItem value="6">Slot 6</SelectItem>
-                            <SelectItem value="7">Slot 7</SelectItem>
-                            <SelectItem value="8">Slot 8</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
