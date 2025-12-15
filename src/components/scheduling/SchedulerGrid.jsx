@@ -492,7 +492,7 @@ export default function SchedulerGrid({
         </div>
 
         {/* Truck Rows */}
-        <div className="flex-1 overflow-auto pb-4">
+        <div className="overflow-auto pb-4 flex-shrink-0">
           {trucks.map((truck, truckIndex) => {
             const totalSqm = assignments
               .filter((a) => a.truckId === truck.id)
@@ -656,8 +656,8 @@ export default function SchedulerGrid({
         </div>
 
         {/* Unscheduled Row - Moved to Bottom */}
-        <div className="flex border-2 border-gray-400 bg-yellow-50 mt-4 rounded-lg overflow-hidden shadow-sm flex-shrink-0">
-          <div className="w-24 lg:w-32 flex-shrink-0 p-3 bg-yellow-100 border-r-2 border-gray-400 flex flex-col justify-center">
+        <div className="flex border-2 border-gray-400 bg-yellow-50 mt-4 rounded-lg overflow-hidden shadow-sm flex-1 min-h-[200px]">
+          <div className="w-24 lg:w-32 flex-shrink-0 p-3 bg-yellow-100 border-r-2 border-gray-400 flex flex-col justify-start">
             <div className="flex items-center">
               <Package className="h-4 w-4 mr-1.5 text-yellow-700" />
               <span className="font-semibold text-xs lg:text-sm text-yellow-900">Unscheduled</span>
