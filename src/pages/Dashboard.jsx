@@ -169,10 +169,12 @@ export default function DashboardPage() {
             .filter(job => job.requestedDate && isThisWeek(new Date(job.requestedDate)))
             .reduce((sum, job) => sum + (job.sqm || 0), 0);
           
+          const now = new Date();
           const customerCompletedThisWeek = filteredJobs.filter(job => 
             job.status === 'DELIVERED' && 
             job.updated_date && 
-            isThisWeek(new Date(job.updated_date))
+            new Date(job.updated_date) >= mondayThisWeek &&
+            new Date(job.updated_date) <= now
           ).length;
 
           setThisWeekStats(prev => ({
