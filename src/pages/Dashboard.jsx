@@ -76,6 +76,11 @@ export default function DashboardPage() {
         const isOutreach = user.appRole === 'outreach';
         const isCustomer = user.role !== 'admin' && (user.appRole === 'customer' || !user.appRole);
         
+        // Helper function to check if date is this week
+        const isThisWeek = (date) => {
+          return date >= mondayThisWeek && date <= sundayThisWeek;
+        };
+        
         // Determine filtering based on user role
         let filteredJobs = allJobs;
         
@@ -153,6 +158,30 @@ export default function DashboardPage() {
         setThisWeekStats({
           totalSqm: thisWeekJobs.reduce((sum, job) => sum + (job.sqm || 0), 0)
         });
+
+        // Customer-specific stats for this week
+        if (isCustomer) {
+          const customerRequestedThisWeek = filteredJobs.filter(job => 
+            job.requestedDate && isThisWeek(new Date(job.requestedDate))
+          ).length;
+          
+          const customerTotalM2ThisWeek = filteredJobs
+            .filter(job => job.requestedDate && isThisWeek(new Date(job.requestedDate)))
+            .reduce((sum, job) => sum + (job.sqm || 0), 0);
+          
+          const customerCompletedThisWeek = filteredJobs.filter(job => 
+            job.status === 'DELIVERED' && 
+            job.updated_date && 
+            isThisWeek(new Date(job.updated_date))
+          ).length;
+
+          setThisWeekStats(prev => ({
+            ...prev,
+            customerRequestedThisWeek,
+            customerTotalM2ThisWeek,
+            customerCompletedThisWeek
+          }));
+        }
 
         // Fetch weather only if page is visible initially
         if (!document.hidden) {
@@ -353,52 +382,109 @@ export default function DashboardPage() {
           This Week
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="border-purple-200 bg-purple-50">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-700">
-                Delivered
-              </CardTitle>
-              <Calendar className="h-5 w-5 text-purple-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-gray-900">
-                {isOutreach ? `${thisWeekStats.totalSqm.toLocaleString()}h` : thisWeekStats.totalSqm.toLocaleString()}
-              </div>
-              <p className="text-xs text-gray-600 mt-1">
-                {isOutreach ? 'Total hours scheduled and/or completed since Monday morning' : 'Total m² delivered this week'}
-              </p>
-            </CardContent>
-          </Card>
+          {isCustomer ? (
+            <>
+              <Card className="border-purple-200 bg-purple-50">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-700">
+                    Deliveries Requested
+                  </CardTitle>
+                  <TrendingUp className="h-5 w-5 text-purple-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-gray-900">
+                    {thisWeekStats.customerRequestedThisWeek || 0}
+                  </div>
+                  <p className="text-xs text-gray-600 mt-1">
+                    Requested this week
+                  </p>
+                </CardContent>
+              </Card>
 
-          <Card className="border-purple-200 bg-purple-50">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-700">
-                {isOutreach ? 'Total Hours' : 'Scheduled'}
-              </CardTitle>
-              <Package className="h-5 w-5 text-purple-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-gray-900">
-                {isOutreach ? `${weekAheadStats.totalSqm.toLocaleString()}h` : weekAheadStats.totalSqm.toLocaleString()}
-              </div>
-              <p className="text-xs text-gray-600 mt-1">
-                {isOutreach ? 'Booked machine hours' : 'Total m² still to deliver'}
-              </p>
-            </CardContent>
-          </Card>
+              <Card className="border-purple-200 bg-purple-50">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-700">
+                    Total m²
+                  </CardTitle>
+                  <Package className="h-5 w-5 text-purple-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-gray-900">
+                    {(thisWeekStats.customerTotalM2ThisWeek || 0).toLocaleString()}
+                  </div>
+                  <p className="text-xs text-gray-600 mt-1">
+                    Square meters this week
+                  </p>
+                </CardContent>
+              </Card>
 
-          <Card className="border-purple-200 bg-purple-50">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-700">
-                Difficult Deliveries
-              </CardTitle>
-              <AlertTriangle className="h-5 w-5 text-purple-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-gray-900">{weekAheadStats.difficultDeliveries}</div>
-              <p className="text-xs text-gray-600 mt-1">Special attention required</p>
-            </CardContent>
-          </Card>
+              <Card className="border-purple-200 bg-purple-50">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-700">
+                    Completed Deliveries
+                  </CardTitle>
+                  <Calendar className="h-5 w-5 text-purple-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-gray-900">
+                    {thisWeekStats.customerCompletedThisWeek || 0}
+                  </div>
+                  <p className="text-xs text-gray-600 mt-1">
+                    Completed this week
+                  </p>
+                </CardContent>
+              </Card>
+            </>
+          ) : (
+            <>
+              <Card className="border-purple-200 bg-purple-50">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-700">
+                    Delivered
+                  </CardTitle>
+                  <Calendar className="h-5 w-5 text-purple-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-gray-900">
+                    {isOutreach ? `${thisWeekStats.totalSqm.toLocaleString()}h` : thisWeekStats.totalSqm.toLocaleString()}
+                  </div>
+                  <p className="text-xs text-gray-600 mt-1">
+                    {isOutreach ? 'Total hours scheduled and/or completed since Monday morning' : 'Total m² delivered this week'}
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="border-purple-200 bg-purple-50">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-700">
+                    {isOutreach ? 'Total Hours' : 'Scheduled'}
+                  </CardTitle>
+                  <Package className="h-5 w-5 text-purple-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-gray-900">
+                    {isOutreach ? `${weekAheadStats.totalSqm.toLocaleString()}h` : weekAheadStats.totalSqm.toLocaleString()}
+                  </div>
+                  <p className="text-xs text-gray-600 mt-1">
+                    {isOutreach ? 'Booked machine hours' : 'Total m² still to deliver'}
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="border-purple-200 bg-purple-50">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-700">
+                    Difficult Deliveries
+                  </CardTitle>
+                  <AlertTriangle className="h-5 w-5 text-purple-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-gray-900">{weekAheadStats.difficultDeliveries}</div>
+                  <p className="text-xs text-gray-600 mt-1">Special attention required</p>
+                </CardContent>
+              </Card>
+            </>
+          )}
         </div>
       </div>
 
