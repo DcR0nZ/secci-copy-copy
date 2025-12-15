@@ -666,51 +666,48 @@ export default function SchedulerGrid({
               {unscheduledJobs.length} {unscheduledJobs.length === 1 ? 'job' : 'jobs'}
             </Badge>
           </div>
-          <DroppableUnscheduled onDrop={onDrop}>
-            <div className="flex flex-1 h-full">
-              {TIME_SLOTS.map((slot) => {
-                const jobsInWindow = unscheduledJobs.filter(job => {
-                  if (!job.deliveryWindow) return false;
-                  return job.deliveryWindow === slot.label;
-                });
-                
-                const jobsWithoutWindow = unscheduledJobs.filter(job => !job.deliveryWindow);
+          <div className="flex flex-1">
+            {TIME_SLOTS.map((slot) => {
+              const jobsInWindow = unscheduledJobs.filter(job => {
+                if (!job.deliveryWindow) return false;
+                return job.deliveryWindow === slot.label;
+              });
+              
+              const jobsWithoutWindow = unscheduledJobs.filter(job => !job.deliveryWindow);
 
-                return (
+              return (
+                <DroppableUnscheduled key={slot.id} onDrop={onDrop}>
                   <div
-                    key={slot.id}
-                    className={`${slot.color} border-r border-gray-200 flex-1 overflow-y-auto`}
+                    className={`${slot.color} border-r border-gray-200 flex-1 overflow-y-auto p-2 space-y-2`}
                     style={{ minWidth: '200px' }}>
-                    <div className="p-2 space-y-2">
-                      {jobsInWindow.map((job) => (
-                        <div key={job.id} style={{ width: '100%', minHeight: '120px' }}>
-                          <DraggableJobBlock
-                            job={job}
-                            onClick={() => (onJobClick ? onJobClick(job) : handleJobClick(job))}
-                            deliveryTypes={deliveryTypes}
-                            pickupLocations={pickupLocations}
-                          />
-                        </div>
-                      ))}
-                      {slot.id === 'first-am' && jobsWithoutWindow.map((job) => (
-                        <div key={job.id} style={{ width: '100%', minHeight: '120px' }}>
-                          <DraggableJobBlock
-                            job={job}
-                            onClick={() => (onJobClick ? onJobClick(job) : handleJobClick(job))}
-                            deliveryTypes={deliveryTypes}
-                            pickupLocations={pickupLocations}
-                          />
-                        </div>
-                      ))}
-                      {jobsInWindow.length === 0 && (slot.id !== 'first-am' || jobsWithoutWindow.length === 0) && (
-                        <div className="text-gray-400 text-xs text-center py-4">-</div>
-                      )}
-                    </div>
+                    {jobsInWindow.map((job) => (
+                      <div key={job.id} style={{ width: '100%', minHeight: '120px' }}>
+                        <DraggableJobBlock
+                          job={job}
+                          onClick={() => (onJobClick ? onJobClick(job) : handleJobClick(job))}
+                          deliveryTypes={deliveryTypes}
+                          pickupLocations={pickupLocations}
+                        />
+                      </div>
+                    ))}
+                    {slot.id === 'first-am' && jobsWithoutWindow.map((job) => (
+                      <div key={job.id} style={{ width: '100%', minHeight: '120px' }}>
+                        <DraggableJobBlock
+                          job={job}
+                          onClick={() => (onJobClick ? onJobClick(job) : handleJobClick(job))}
+                          deliveryTypes={deliveryTypes}
+                          pickupLocations={pickupLocations}
+                        />
+                      </div>
+                    ))}
+                    {jobsInWindow.length === 0 && (slot.id !== 'first-am' || jobsWithoutWindow.length === 0) && (
+                      <div className="text-gray-400 text-xs text-center py-4">-</div>
+                    )}
                   </div>
-                );
-              })}
-            </div>
-          </DroppableUnscheduled>
+                </DroppableUnscheduled>
+              );
+            })}
+          </div>
         </div>
       </div>
 
