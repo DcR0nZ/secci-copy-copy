@@ -72,25 +72,6 @@ const DraggableJobBlock = ({ job, onClick, deliveryTypes, pickupLocations }) => 
     }),
   }), [job.id]);
 
-  const cardRef = useRef(null);
-  const scale = useMotionValue(1);
-  const rotateZ = useMotionValue(0);
-  
-  const smoothScale = useSpring(scale, { stiffness: 300, damping: 20 });
-  const smoothRotate = useSpring(rotateZ, { stiffness: 200, damping: 15 });
-
-  useGesture(
-    {
-      onHover: ({ hovering }) => {
-        if (!isDragging) {
-          scale.set(hovering ? 1.05 : 1);
-          rotateZ.set(hovering ? Math.random() * 2 - 1 : 0);
-        }
-      }
-    },
-    { target: cardRef, eventOptions: { passive: false } }
-  );
-
   const isLargeJob = job.sqm > 2000;
   const deliveryType = deliveryTypes?.find((dt) => dt.id === job.deliveryTypeId);
   const cardStyles = getJobCardInlineStyles(deliveryType, job);
@@ -104,19 +85,11 @@ const DraggableJobBlock = ({ job, onClick, deliveryTypes, pickupLocations }) => 
   const pickupShortname = pickupLocation?.shortname;
 
   const jobCard = (
-    <motion.div
-      ref={(node) => {
-        drag(node);
-        cardRef.current = node;
-      }}
-      style={{
-        ...cardStyles,
-        scale: smoothScale,
-        rotateZ: smoothRotate,
-        willChange: 'transform'
-      }}
-      className={`w-full h-full border-2 rounded p-2 text-xs cursor-move transition-shadow overflow-hidden ${
-        isDragging ? 'opacity-50 shadow-2xl' : 'shadow-md hover:shadow-xl'
+    <div
+      ref={drag}
+      style={cardStyles}
+      className={`w-full h-full border-2 rounded p-2 text-xs cursor-move transition-all overflow-hidden ${
+        isDragging ? 'opacity-50 shadow-2xl scale-105' : 'shadow-md hover:shadow-xl hover:scale-102'
       }`}
       onClick={onClick}
       aria-label={`${textStyles.name} delivery for ${job.customerName}`}
@@ -211,25 +184,6 @@ const DraggableScheduledJobBlock = ({ job, onClick, deliveryTypes, pickupLocatio
     }),
   }), [job.id]);
 
-  const cardRef = useRef(null);
-  const scale = useMotionValue(1);
-  const y = useMotionValue(0);
-  
-  const smoothScale = useSpring(scale, { stiffness: 300, damping: 20 });
-  const smoothY = useSpring(y, { stiffness: 400, damping: 25 });
-
-  useGesture(
-    {
-      onHover: ({ hovering }) => {
-        if (!isDragging) {
-          scale.set(hovering ? 1.03 : 1);
-          y.set(hovering ? -4 : 0);
-        }
-      }
-    },
-    { target: cardRef, eventOptions: { passive: false } }
-  );
-
   const isLargeJob = job.sqm > 2000;
   const deliveryType = deliveryTypes?.find((dt) => dt.id === job.deliveryTypeId);
   const cardStyles = getJobCardInlineStyles(deliveryType, job);
@@ -243,19 +197,11 @@ const DraggableScheduledJobBlock = ({ job, onClick, deliveryTypes, pickupLocatio
   const pickupShortname = pickupLocation?.shortname;
 
   const jobCard = (
-    <motion.div
-      ref={(node) => {
-        drag(node);
-        cardRef.current = node;
-      }}
-      style={{
-        ...cardStyles,
-        scale: smoothScale,
-        y: smoothY,
-        willChange: 'transform'
-      }}
-      className={`w-full h-full border-2 rounded p-2 text-xs cursor-move transition-shadow overflow-hidden ${
-        isDragging ? 'opacity-50 shadow-2xl' : 'shadow-md hover:shadow-lg'
+    <div
+      ref={drag}
+      style={cardStyles}
+      className={`w-full h-full border-2 rounded p-2 text-xs cursor-move transition-all overflow-hidden ${
+        isDragging ? 'opacity-50 shadow-2xl scale-105' : 'shadow-md hover:shadow-lg hover:scale-102 hover:-translate-y-1'
       }`}
       onClick={onClick}
       aria-label={`${textStyles.name} delivery for ${job.customerName}`}
@@ -322,7 +268,7 @@ const DraggableScheduledJobBlock = ({ job, onClick, deliveryTypes, pickupLocatio
           <GripVertical className="h-2.5 w-2.5 text-gray-500" />
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 
   if (job.isDifficultDelivery && job.deliveryDifficulty) {
