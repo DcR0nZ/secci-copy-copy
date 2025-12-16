@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, Package, GripVertical, CheckCircle2, Plus } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { useDrag, useDrop } from 'react-dnd';
+import { useGesture } from '@use-gesture/react';
+import { useSpring, animated, config } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { getJobCardInlineStyles, getBadgeStyles, getJobCardStyles } from './DeliveryTypeColorUtils';
 
@@ -70,6 +72,41 @@ const DraggableJobBlock = ({ job, onClick, deliveryTypes, pickupLocations }) => 
     }),
   }), [job.id]);
 
+  const cardRef = useRef(null);
+  const [{ scale, rotateZ }, api] = useSpring(() => ({ 
+    scale: 1, 
+    rotateZ: 0,
+    config: config.wobbly
+  }));
+
+  useGesture(
+    {
+      onHover: ({ hovering }) => {
+        if (!isDragging) {
+          api.start({ 
+            scale: hovering ? 1.05 : 1,
+            rotateZ: hovering ? Math.random() * 2 - 1 : 0
+          });
+        }
+      },
+      onDrag: ({ down, movement: [mx, my], velocity: [vx, vy], direction: [dx, dy] }) => {
+        if (down) {
+          api.start({ 
+            scale: 1.1,
+            rotateZ: dx * 3,
+            immediate: true
+          });
+        } else {
+          api.start({ 
+            scale: 1, 
+            rotateZ: 0
+          });
+        }
+      }
+    },
+    { target: cardRef, eventOptions: { passive: false } }
+  );
+
   const isLargeJob = job.sqm > 2000;
   const deliveryType = deliveryTypes?.find((dt) => dt.id === job.deliveryTypeId);
   const cardStyles = getJobCardInlineStyles(deliveryType, job);
@@ -83,11 +120,19 @@ const DraggableJobBlock = ({ job, onClick, deliveryTypes, pickupLocations }) => 
   const pickupShortname = pickupLocation?.shortname;
 
   const jobCard = (
-    <div
-      ref={drag}
-      style={cardStyles}
-      className={`w-full h-full border-2 rounded p-2 text-xs cursor-move transition-all overflow-hidden ${
-        isDragging ? 'opacity-50' : ''
+    <animated.div
+      ref={(node) => {
+        drag(node);
+        cardRef.current = node;
+      }}
+      style={{
+        ...cardStyles,
+        scale,
+        rotateZ: rotateZ.to(r => `${r}deg`),
+        willChange: 'transform'
+      }}
+      className={`w-full h-full border-2 rounded p-2 text-xs cursor-move transition-shadow overflow-hidden ${
+        isDragging ? 'opacity-50 shadow-2xl' : 'shadow-md hover:shadow-xl'
       }`}
       onClick={onClick}
       aria-label={`${textStyles.name} delivery for ${job.customerName}`}
@@ -182,6 +227,27 @@ const DraggableScheduledJobBlock = ({ job, onClick, deliveryTypes, pickupLocatio
     }),
   }), [job.id]);
 
+  const cardRef = useRef(null);
+  const [{ scale, y }, api] = useSpring(() => ({ 
+    scale: 1, 
+    y: 0,
+    config: { tension: 300, friction: 20 }
+  }));
+
+  useGesture(
+    {
+      onHover: ({ hovering }) => {
+        if (!isDragging) {
+          api.start({ 
+            scale: hovering ? 1.03 : 1,
+            y: hovering ? -4 : 0
+          });
+        }
+      }
+    },
+    { target: cardRef, eventOptions: { passive: false } }
+  );
+
   const isLargeJob = job.sqm > 2000;
   const deliveryType = deliveryTypes?.find((dt) => dt.id === job.deliveryTypeId);
   const cardStyles = getJobCardInlineStyles(deliveryType, job);
@@ -195,11 +261,19 @@ const DraggableScheduledJobBlock = ({ job, onClick, deliveryTypes, pickupLocatio
   const pickupShortname = pickupLocation?.shortname;
 
   const jobCard = (
-    <div
-      ref={drag}
-      style={cardStyles}
-      className={`w-full h-full border-2 rounded p-2 text-xs cursor-move transition-all overflow-hidden ${
-        isDragging ? 'opacity-50' : ''
+    <animated.div
+      ref={(node) => {
+        drag(node);
+        cardRef.current = node;
+      }}
+      style={{
+        ...cardStyles,
+        scale,
+        y,
+        willChange: 'transform'
+      }}
+      className={`w-full h-full border-2 rounded p-2 text-xs cursor-move transition-shadow overflow-hidden ${
+        isDragging ? 'opacity-50 shadow-2xl' : 'shadow-md hover:shadow-lg'
       }`}
       onClick={onClick}
       aria-label={`${textStyles.name} delivery for ${job.customerName}`}
@@ -328,24 +402,42 @@ const DroppableCell = ({ id, children, onDrop }) => {
     }),
   }), [id, onDrop]);
 
+  const cellRef = useRef(null);
+  const [{ scale, backgroundColor }, api] = useSpring(() => ({ 
+    scale: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0)',
+    config: { tension: 250, friction: 25 }
+  }));
+
+  useEffect(() => {
+    api.start({ 
+      scale: isOver ? 1.02 : 1,
+      backgroundColor: isOver ? 'rgba(59, 130, 246, 0.1)' : 'rgba(255, 255, 255, 0)'
+    });
+  }, [isOver, api]);
+
   return (
-    <div
-      ref={drop}
-      className={`relative border-r border-gray-200 group overflow-visible flex-1 ${
-        isOver ? 'bg-blue-50' : ''
-      }`}
+    <animated.div
+      ref={(node) => {
+        drop(node);
+        cellRef.current = node;
+      }}
       style={{
+        scale,
+        backgroundColor,
         minWidth: '100px',
         minHeight: '100px',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        position: 'relative'
+        position: 'relative',
+        willChange: 'transform, background-color'
       }}
+      className="relative border-r border-gray-200 group overflow-visible flex-1 transition-colors"
     >
       {children}
-    </div>
+    </animated.div>
   );
 };
 
@@ -362,15 +454,56 @@ const DroppableUnscheduled = ({ children, onDrop }) => {
     }),
   }), [onDrop]);
 
+  const scrollRef = useRef(null);
+  const [{ backgroundColor }, api] = useSpring(() => ({ 
+    backgroundColor: 'rgba(254, 252, 232, 0)',
+    config: { tension: 200, friction: 25 }
+  }));
+
+  useGesture(
+    {
+      onDrag: ({ movement: [mx], velocity: [vx], direction: [dx], last }) => {
+        if (scrollRef.current) {
+          scrollRef.current.scrollLeft -= mx * 0.5;
+          
+          if (last && Math.abs(vx) > 0.5) {
+            const momentum = vx * 100;
+            let currentScroll = scrollRef.current.scrollLeft;
+            const animate = () => {
+              currentScroll -= momentum * 0.95;
+              scrollRef.current.scrollLeft = currentScroll;
+              if (Math.abs(momentum) > 1) {
+                requestAnimationFrame(animate);
+              }
+            };
+            animate();
+          }
+        }
+      }
+    },
+    { target: scrollRef, eventOptions: { passive: false } }
+  );
+
+  useEffect(() => {
+    api.start({ 
+      backgroundColor: isOver ? 'rgba(254, 240, 138, 0.3)' : 'rgba(254, 252, 232, 0)'
+    });
+  }, [isOver, api]);
+
   return (
-    <div
-      ref={drop}
-      className={`flex-1 flex gap-2 p-3 overflow-x-auto min-h-[160px] ${
-        isOver ? 'bg-yellow-100' : ''
-      }`}
+    <animated.div
+      ref={(node) => {
+        drop(node);
+        scrollRef.current = node;
+      }}
+      style={{
+        backgroundColor,
+        willChange: 'background-color'
+      }}
+      className="flex-1 flex gap-2 p-3 overflow-x-auto min-h-[160px] transition-colors cursor-grab active:cursor-grabbing"
     >
       {children}
-    </div>
+    </animated.div>
   );
 };
 
@@ -390,6 +523,23 @@ export default function SchedulerGrid({
   const [isJobDialogOpen, setJobDialogOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [pickupLocations, setPickupLocations] = useState([]);
+  const gridRef = useRef(null);
+
+  // Physics-based scroll gesture for the entire grid
+  useGesture(
+    {
+      onWheel: ({ event, delta: [, dy], velocity: [, vy] }) => {
+        if (gridRef.current) {
+          event.preventDefault();
+          gridRef.current.scrollTop += dy * (1 + Math.abs(vy) * 0.3);
+        }
+      }
+    },
+    { 
+      target: gridRef, 
+      eventOptions: { passive: false }
+    }
+  );
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -471,7 +621,7 @@ export default function SchedulerGrid({
 
   return (
     <>
-      <div className="w-full h-full flex flex-col overflow-hidden">
+      <div ref={gridRef} className="w-full h-full flex flex-col overflow-hidden">
         {/* Unscheduled Row */}
         <div className="flex border-2 border-gray-400 bg-yellow-50 mb-4 rounded-lg overflow-hidden shadow-sm flex-shrink-0">
           <div className="w-24 lg:w-32 flex-shrink-0 p-3 bg-yellow-100 border-r-2 border-gray-400 flex flex-col justify-center">
