@@ -394,7 +394,8 @@ const DroppableCell = ({ id, children, onDrop }) => {
       }}
       animate={{
         scale: isOver ? 1.02 : 1,
-        backgroundColor: isOver ? 'rgba(59, 130, 246, 0.1)' : 'rgba(255, 255, 255, 0)'
+        backgroundColor: isOver ? 'rgba(59, 130, 246, 0.1)' : 'rgba(255, 255, 255, 0)',
+        boxShadow: isOver ? '0 4px 12px 0 rgba(59, 130, 246, 0.3), inset 0 0 20px rgba(59, 130, 246, 0.15)' : '0 0 0 0 rgba(59, 130, 246, 0)'
       }}
       transition={{ type: 'spring', stiffness: 250, damping: 25 }}
       style={{
@@ -405,7 +406,7 @@ const DroppableCell = ({ id, children, onDrop }) => {
         alignItems: 'center',
         justifyContent: 'center',
         position: 'relative',
-        willChange: 'transform, background-color'
+        willChange: 'transform, background-color, box-shadow'
       }}
       className="relative border-r border-gray-200 group overflow-visible flex-1 transition-colors"
     >
