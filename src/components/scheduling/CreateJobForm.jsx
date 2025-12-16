@@ -375,6 +375,17 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
           );
           if (matchedCustomer) {
             updates.customerId = matchedCustomer.id;
+
+            // Special handling: Bayside Plasterboard should default to Morningside location
+            if (matchedCustomer.customerName?.toLowerCase().includes('bayside')) {
+              const morningsideLocation = pickupLocations.find(loc => 
+                loc.company?.toLowerCase().includes('bayside') && 
+                loc.name?.toLowerCase().includes('morningside')
+              );
+              if (morningsideLocation) {
+                updates.pickupLocationId = morningsideLocation.id;
+              }
+            }
           }
         }
         if (extracted.shipping_date) {
