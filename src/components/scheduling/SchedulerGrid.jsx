@@ -198,7 +198,7 @@ const DraggableJobBlock = ({ job, onClick, deliveryTypes, pickupLocations }) => 
           <GripVertical className="h-2.5 w-2.5 text-gray-500" />
         </div>
       </div>
-    </div>
+    </animated.div>
   );
 
   if (job.isDifficultDelivery && job.deliveryDifficulty) {
@@ -340,7 +340,7 @@ const DraggableScheduledJobBlock = ({ job, onClick, deliveryTypes, pickupLocatio
           <GripVertical className="h-2.5 w-2.5 text-gray-500" />
         </div>
       </div>
-    </div>
+    </animated.div>
   );
 
   if (job.isDifficultDelivery && job.deliveryDifficulty) {
