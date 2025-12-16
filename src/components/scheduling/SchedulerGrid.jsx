@@ -5,7 +5,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Button } from '@/components/ui/button';
 import { useDrag, useDrop } from 'react-dnd';
 import { useGesture } from '@use-gesture/react';
-import { useSpring, animated, config } from 'framer-motion';
+import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { getJobCardInlineStyles, getBadgeStyles, getJobCardStyles } from './DeliveryTypeColorUtils';
 
@@ -73,34 +73,18 @@ const DraggableJobBlock = ({ job, onClick, deliveryTypes, pickupLocations }) => 
   }), [job.id]);
 
   const cardRef = useRef(null);
-  const [{ scale, rotateZ }, api] = useSpring(() => ({ 
-    scale: 1, 
-    rotateZ: 0,
-    config: config.wobbly
-  }));
+  const scale = useMotionValue(1);
+  const rotateZ = useMotionValue(0);
+  
+  const smoothScale = useSpring(scale, { stiffness: 300, damping: 20 });
+  const smoothRotate = useSpring(rotateZ, { stiffness: 200, damping: 15 });
 
   useGesture(
     {
       onHover: ({ hovering }) => {
         if (!isDragging) {
-          api.start({ 
-            scale: hovering ? 1.05 : 1,
-            rotateZ: hovering ? Math.random() * 2 - 1 : 0
-          });
-        }
-      },
-      onDrag: ({ down, movement: [mx, my], velocity: [vx, vy], direction: [dx, dy] }) => {
-        if (down) {
-          api.start({ 
-            scale: 1.1,
-            rotateZ: dx * 3,
-            immediate: true
-          });
-        } else {
-          api.start({ 
-            scale: 1, 
-            rotateZ: 0
-          });
+          scale.set(hovering ? 1.05 : 1);
+          rotateZ.set(hovering ? Math.random() * 2 - 1 : 0);
         }
       }
     },
@@ -120,15 +104,15 @@ const DraggableJobBlock = ({ job, onClick, deliveryTypes, pickupLocations }) => 
   const pickupShortname = pickupLocation?.shortname;
 
   const jobCard = (
-    <animated.div
+    <motion.div
       ref={(node) => {
         drag(node);
         cardRef.current = node;
       }}
       style={{
         ...cardStyles,
-        scale,
-        rotateZ: rotateZ.to(r => `${r}deg`),
+        scale: smoothScale,
+        rotateZ: smoothRotate,
         willChange: 'transform'
       }}
       className={`w-full h-full border-2 rounded p-2 text-xs cursor-move transition-shadow overflow-hidden ${
@@ -228,20 +212,18 @@ const DraggableScheduledJobBlock = ({ job, onClick, deliveryTypes, pickupLocatio
   }), [job.id]);
 
   const cardRef = useRef(null);
-  const [{ scale, y }, api] = useSpring(() => ({ 
-    scale: 1, 
-    y: 0,
-    config: { tension: 300, friction: 20 }
-  }));
+  const scale = useMotionValue(1);
+  const y = useMotionValue(0);
+  
+  const smoothScale = useSpring(scale, { stiffness: 300, damping: 20 });
+  const smoothY = useSpring(y, { stiffness: 400, damping: 25 });
 
   useGesture(
     {
       onHover: ({ hovering }) => {
         if (!isDragging) {
-          api.start({ 
-            scale: hovering ? 1.03 : 1,
-            y: hovering ? -4 : 0
-          });
+          scale.set(hovering ? 1.03 : 1);
+          y.set(hovering ? -4 : 0);
         }
       }
     },
@@ -261,15 +243,15 @@ const DraggableScheduledJobBlock = ({ job, onClick, deliveryTypes, pickupLocatio
   const pickupShortname = pickupLocation?.shortname;
 
   const jobCard = (
-    <animated.div
+    <motion.div
       ref={(node) => {
         drag(node);
         cardRef.current = node;
       }}
       style={{
         ...cardStyles,
-        scale,
-        y,
+        scale: smoothScale,
+        y: smoothY,
         willChange: 'transform'
       }}
       className={`w-full h-full border-2 rounded p-2 text-xs cursor-move transition-shadow overflow-hidden ${
@@ -340,7 +322,7 @@ const DraggableScheduledJobBlock = ({ job, onClick, deliveryTypes, pickupLocatio
           <GripVertical className="h-2.5 w-2.5 text-gray-500" />
         </div>
       </div>
-    </animated.div>
+    </motion.div>
   );
 
   if (job.isDifficultDelivery && job.deliveryDifficulty) {
@@ -403,28 +385,19 @@ const DroppableCell = ({ id, children, onDrop }) => {
   }), [id, onDrop]);
 
   const cellRef = useRef(null);
-  const [{ scale, backgroundColor }, api] = useSpring(() => ({ 
-    scale: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0)',
-    config: { tension: 250, friction: 25 }
-  }));
-
-  useEffect(() => {
-    api.start({ 
-      scale: isOver ? 1.02 : 1,
-      backgroundColor: isOver ? 'rgba(59, 130, 246, 0.1)' : 'rgba(255, 255, 255, 0)'
-    });
-  }, [isOver, api]);
 
   return (
-    <animated.div
+    <motion.div
       ref={(node) => {
         drop(node);
         cellRef.current = node;
       }}
+      animate={{
+        scale: isOver ? 1.02 : 1,
+        backgroundColor: isOver ? 'rgba(59, 130, 246, 0.1)' : 'rgba(255, 255, 255, 0)'
+      }}
+      transition={{ type: 'spring', stiffness: 250, damping: 25 }}
       style={{
-        scale,
-        backgroundColor,
         minWidth: '100px',
         minHeight: '100px',
         display: 'flex',
@@ -437,7 +410,7 @@ const DroppableCell = ({ id, children, onDrop }) => {
       className="relative border-r border-gray-200 group overflow-visible flex-1 transition-colors"
     >
       {children}
-    </animated.div>
+    </motion.div>
   );
 };
 
@@ -455,14 +428,10 @@ const DroppableUnscheduled = ({ children, onDrop }) => {
   }), [onDrop]);
 
   const scrollRef = useRef(null);
-  const [{ backgroundColor }, api] = useSpring(() => ({ 
-    backgroundColor: 'rgba(254, 252, 232, 0)',
-    config: { tension: 200, friction: 25 }
-  }));
 
   useGesture(
     {
-      onDrag: ({ movement: [mx], velocity: [vx], direction: [dx], last }) => {
+      onDrag: ({ movement: [mx], velocity: [vx], last }) => {
         if (scrollRef.current) {
           scrollRef.current.scrollLeft -= mx * 0.5;
           
@@ -484,26 +453,23 @@ const DroppableUnscheduled = ({ children, onDrop }) => {
     { target: scrollRef, eventOptions: { passive: false } }
   );
 
-  useEffect(() => {
-    api.start({ 
-      backgroundColor: isOver ? 'rgba(254, 240, 138, 0.3)' : 'rgba(254, 252, 232, 0)'
-    });
-  }, [isOver, api]);
-
   return (
-    <animated.div
+    <motion.div
       ref={(node) => {
         drop(node);
         scrollRef.current = node;
       }}
+      animate={{
+        backgroundColor: isOver ? 'rgba(254, 240, 138, 0.3)' : 'rgba(254, 252, 232, 0)'
+      }}
+      transition={{ type: 'spring', stiffness: 200, damping: 25 }}
       style={{
-        backgroundColor,
         willChange: 'background-color'
       }}
       className="flex-1 flex gap-2 p-3 overflow-x-auto min-h-[160px] transition-colors cursor-grab active:cursor-grabbing"
     >
       {children}
-    </animated.div>
+    </motion.div>
   );
 };
 
