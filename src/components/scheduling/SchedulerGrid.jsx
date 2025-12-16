@@ -518,8 +518,7 @@ export default function SchedulerGrid({
       (job) =>
         !assignedJobIds.has(job.id) &&
         (job.status === 'APPROVED' ||
-          job.status === 'PENDING_APPROVAL') &&
-        job.requestedDate === selectedDate
+          job.status === 'PENDING_APPROVAL')
     );
     return unscheduled;
   };
