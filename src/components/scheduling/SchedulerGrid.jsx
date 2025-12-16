@@ -1,11 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, Package, GripVertical, CheckCircle2, Plus } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { useDrag, useDrop } from 'react-dnd';
-import { useGesture } from '@use-gesture/react';
-import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { getJobCardInlineStyles, getBadgeStyles, getJobCardStyles } from './DeliveryTypeColorUtils';
 
@@ -89,7 +87,7 @@ const DraggableJobBlock = ({ job, onClick, deliveryTypes, pickupLocations }) => 
       ref={drag}
       style={cardStyles}
       className={`w-full h-full border-2 rounded p-2 text-xs cursor-move transition-all overflow-hidden ${
-        isDragging ? 'opacity-50 shadow-2xl scale-105' : 'shadow-md hover:shadow-xl hover:scale-102'
+        isDragging ? 'opacity-50' : ''
       }`}
       onClick={onClick}
       aria-label={`${textStyles.name} delivery for ${job.customerName}`}
@@ -201,7 +199,7 @@ const DraggableScheduledJobBlock = ({ job, onClick, deliveryTypes, pickupLocatio
       ref={drag}
       style={cardStyles}
       className={`w-full h-full border-2 rounded p-2 text-xs cursor-move transition-all overflow-hidden ${
-        isDragging ? 'opacity-50 shadow-2xl scale-105' : 'shadow-md hover:shadow-lg hover:scale-102 hover:-translate-y-1'
+        isDragging ? 'opacity-50' : ''
       }`}
       onClick={onClick}
       aria-label={`${textStyles.name} delivery for ${job.customerName}`}
@@ -330,20 +328,12 @@ const DroppableCell = ({ id, children, onDrop }) => {
     }),
   }), [id, onDrop]);
 
-  const cellRef = useRef(null);
-
   return (
-    <motion.div
-      ref={(node) => {
-        drop(node);
-        cellRef.current = node;
-      }}
-      animate={{
-        scale: isOver ? 1.02 : 1,
-        backgroundColor: isOver ? 'rgba(59, 130, 246, 0.1)' : 'rgba(255, 255, 255, 0)',
-        boxShadow: isOver ? '0 4px 12px 0 rgba(59, 130, 246, 0.3), inset 0 0 20px rgba(59, 130, 246, 0.15)' : '0 0 0 0 rgba(59, 130, 246, 0)'
-      }}
-      transition={{ type: 'spring', stiffness: 250, damping: 25 }}
+    <div
+      ref={drop}
+      className={`relative border-r border-gray-200 group overflow-visible flex-1 ${
+        isOver ? 'bg-blue-50' : ''
+      }`}
       style={{
         minWidth: '100px',
         minHeight: '100px',
@@ -351,13 +341,11 @@ const DroppableCell = ({ id, children, onDrop }) => {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        position: 'relative',
-        willChange: 'transform, background-color, box-shadow'
+        position: 'relative'
       }}
-      className="relative border-r border-gray-200 group overflow-visible flex-1 transition-colors"
     >
       {children}
-    </motion.div>
+    </div>
   );
 };
 
@@ -374,49 +362,15 @@ const DroppableUnscheduled = ({ children, onDrop }) => {
     }),
   }), [onDrop]);
 
-  const scrollRef = useRef(null);
-
-  useGesture(
-    {
-      onDrag: ({ movement: [mx], velocity: [vx], last }) => {
-        if (scrollRef.current) {
-          scrollRef.current.scrollLeft -= mx * 0.5;
-          
-          if (last && Math.abs(vx) > 0.5) {
-            const momentum = vx * 100;
-            let currentScroll = scrollRef.current.scrollLeft;
-            const animate = () => {
-              currentScroll -= momentum * 0.95;
-              scrollRef.current.scrollLeft = currentScroll;
-              if (Math.abs(momentum) > 1) {
-                requestAnimationFrame(animate);
-              }
-            };
-            animate();
-          }
-        }
-      }
-    },
-    { target: scrollRef, eventOptions: { passive: false } }
-  );
-
   return (
-    <motion.div
-      ref={(node) => {
-        drop(node);
-        scrollRef.current = node;
-      }}
-      animate={{
-        backgroundColor: isOver ? 'rgba(254, 240, 138, 0.3)' : 'rgba(254, 252, 232, 0)'
-      }}
-      transition={{ type: 'spring', stiffness: 200, damping: 25 }}
-      style={{
-        willChange: 'background-color'
-      }}
-      className="flex-1 flex gap-2 p-3 overflow-x-auto min-h-[160px] transition-colors cursor-grab active:cursor-grabbing"
+    <div
+      ref={drop}
+      className={`flex-1 flex gap-2 p-3 overflow-x-auto min-h-[160px] ${
+        isOver ? 'bg-yellow-100' : ''
+      }`}
     >
       {children}
-    </motion.div>
+    </div>
   );
 };
 
@@ -436,23 +390,6 @@ export default function SchedulerGrid({
   const [isJobDialogOpen, setJobDialogOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [pickupLocations, setPickupLocations] = useState([]);
-  const gridRef = useRef(null);
-
-  // Physics-based scroll gesture for the entire grid
-  useGesture(
-    {
-      onWheel: ({ event, delta: [, dy], velocity: [, vy] }) => {
-        if (gridRef.current) {
-          event.preventDefault();
-          gridRef.current.scrollTop += dy * (1 + Math.abs(vy) * 0.3);
-        }
-      }
-    },
-    { 
-      target: gridRef, 
-      eventOptions: { passive: false }
-    }
-  );
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -518,7 +455,8 @@ export default function SchedulerGrid({
       (job) =>
         !assignedJobIds.has(job.id) &&
         (job.status === 'APPROVED' ||
-          job.status === 'PENDING_APPROVAL')
+          job.status === 'PENDING_APPROVAL') &&
+        job.requestedDate === selectedDate
     );
     return unscheduled;
   };
@@ -533,7 +471,7 @@ export default function SchedulerGrid({
 
   return (
     <>
-      <div ref={gridRef} className="w-full h-full flex flex-col overflow-hidden">
+      <div className="w-full h-full flex flex-col overflow-hidden">
         {/* Unscheduled Row */}
         <div className="flex border-2 border-gray-400 bg-yellow-50 mb-4 rounded-lg overflow-hidden shadow-sm flex-shrink-0">
           <div className="w-24 lg:w-32 flex-shrink-0 p-3 bg-yellow-100 border-r-2 border-gray-400 flex flex-col justify-center">
