@@ -85,7 +85,8 @@ const AdminNav = ({ collapsed, onNavigate }) => {
     createPageUrl('AdminUsers'),
     createPageUrl('AdminPickupLocations'),
     createPageUrl('AdminDeliveryTypes'),
-    createPageUrl('SheetSpecs')
+    createPageUrl('SheetSpecs'),
+    createPageUrl('DeliveryPartners')
   ];
   
   const isLibraryActive = libraryPages.includes(location.pathname);
@@ -150,6 +151,7 @@ const AdminNav = ({ collapsed, onNavigate }) => {
             <SubNavLink to={createPageUrl('AdminPickupLocations')} onClick={onNavigate}>Pickup Locations</SubNavLink>
             <SubNavLink to={createPageUrl('AdminDeliveryTypes')} onClick={onNavigate}>Delivery Types</SubNavLink>
             <SubNavLink to={createPageUrl('SheetSpecs')} onClick={onNavigate}>Sheet Specs</SubNavLink>
+            <SubNavLink to={createPageUrl('DeliveryPartners')} onClick={onNavigate}>Delivery Partners</SubNavLink>
           </CollapsibleContent>
         </Collapsible>
       ) : (
@@ -172,7 +174,8 @@ const DispatcherNav = ({ collapsed, onNavigate }) => {
     createPageUrl('AdminJobs'),
     createPageUrl('AdminCustomers'),
     createPageUrl('AdminPickupLocations'),
-    createPageUrl('AdminDeliveryTypes')
+    createPageUrl('AdminDeliveryTypes'),
+    createPageUrl('DeliveryPartners')
   ];
   
   const isLibraryActive = libraryPages.includes(location.pathname);
@@ -221,6 +224,7 @@ const DispatcherNav = ({ collapsed, onNavigate }) => {
             <SubNavLink to={createPageUrl('AdminCustomers')} onClick={onNavigate}>Customers</SubNavLink>
             <SubNavLink to={createPageUrl('AdminPickupLocations')} onClick={onNavigate}>Pickup Locations</SubNavLink>
             <SubNavLink to={createPageUrl('AdminDeliveryTypes')} onClick={onNavigate}>Delivery Types</SubNavLink>
+            <SubNavLink to={createPageUrl('DeliveryPartners')} onClick={onNavigate}>Delivery Partners</SubNavLink>
           </CollapsibleContent>
         </Collapsible>
       ) : (

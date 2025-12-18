@@ -19,6 +19,7 @@ import SheetSpecs from './pages/SheetSpecs';
 import ManageTenants from './pages/ManageTenants';
 import Phonebook from './pages/Phonebook';
 import Settings from './pages/Settings';
+import DeliveryPartners from './pages/DeliveryPartners';
 import __Layout from './Layout.jsx';
 
 
@@ -44,6 +45,7 @@ export const PAGES = {
     "ManageTenants": ManageTenants,
     "Phonebook": Phonebook,
     "Settings": Settings,
+    "DeliveryPartners": DeliveryPartners,
 }
 
 export const pagesConfig = {
