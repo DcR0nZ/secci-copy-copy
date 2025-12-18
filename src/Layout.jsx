@@ -85,8 +85,7 @@ const AdminNav = ({ collapsed, onNavigate }) => {
     createPageUrl('AdminUsers'),
     createPageUrl('AdminPickupLocations'),
     createPageUrl('AdminDeliveryTypes'),
-    createPageUrl('SheetSpecs'),
-    createPageUrl('DataExport')
+    createPageUrl('SheetSpecs')
   ];
   
   const isLibraryActive = libraryPages.includes(location.pathname);
@@ -151,7 +150,6 @@ const AdminNav = ({ collapsed, onNavigate }) => {
             <SubNavLink to={createPageUrl('AdminPickupLocations')} onClick={onNavigate}>Pickup Locations</SubNavLink>
             <SubNavLink to={createPageUrl('AdminDeliveryTypes')} onClick={onNavigate}>Delivery Types</SubNavLink>
             <SubNavLink to={createPageUrl('SheetSpecs')} onClick={onNavigate}>Sheet Specs</SubNavLink>
-            <SubNavLink to={createPageUrl('DataExport')} onClick={onNavigate}>Data Export</SubNavLink>
           </CollapsibleContent>
         </Collapsible>
       ) : (
