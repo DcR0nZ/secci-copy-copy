@@ -330,6 +330,7 @@ export default function Layout({ children, currentPageName }) {
         // Check for returned jobs that need alerts (for admin, dispatcher, manager, customer)
         const shouldCheckReturned = currentUser.role === 'admin' || 
           currentUser.appRole === 'dispatcher' || 
+          currentUser.appRole === 'tenantAdmin' ||
           currentUser.appRole === 'manager' ||
           currentUser.appRole === 'customer';
         
@@ -350,8 +351,8 @@ export default function Layout({ children, currentPageName }) {
               // But we want to show it on next login, so we actually DON'T filter these out
               
               // Check if user should see this job
-              if (currentUser.role === 'admin' || currentUser.appRole === 'dispatcher') {
-                return true; // Admin and dispatchers see all
+              if (currentUser.role === 'admin' || currentUser.appRole === 'dispatcher' || currentUser.appRole === 'tenantAdmin') {
+                return true; // Admin, dispatchers, and tenant admins see all
               }
               if (currentUser.appRole === 'manager' || currentUser.appRole === 'customer') {
                 // Customers and managers only see their own jobs
@@ -462,6 +463,8 @@ export default function Layout({ children, currentPageName }) {
 
     switch (appRole) {
       case 'globalAdmin':
+        return <AdminNav collapsed={sidebarCollapsed} onNavigate={onNavigate} />;
+      case 'tenantAdmin':
         return <AdminNav collapsed={sidebarCollapsed} onNavigate={onNavigate} />;
       case 'dispatcher':
         return <DispatcherNav collapsed={sidebarCollapsed} onNavigate={onNavigate} />;
