@@ -33,7 +33,7 @@ export default function AdminJobsPage() {
         setCurrentUser(user);
 
         const isCustomer = user.role !== 'admin' && user.appRole !== 'dispatcher';
-        const isOutreach = user.appRole === 'outreach';
+        const currentTenant = user.tenantId || 'sec';
 
         const [allJobs, allAssignments, fetchedCustomers, fetchedDeliveryTypes] = await Promise.all([
           base44.entities.Job.list(),
@@ -51,15 +51,13 @@ export default function AdminJobsPage() {
           ].filter(Boolean);
 
           finalJobs = finalJobs.filter(job => allowedCustomerIds.includes(job.customerId));
-        }
-
-        if (isOutreach) {
-          const manitouCodes = ['UPDWN', 'UNITUP', 'MANS'];
-          const manitouTypeIds = fetchedDeliveryTypes
-            .filter(dt => manitouCodes.includes(dt.code))
-            .map(dt => dt.id);
-          
-          finalJobs = finalJobs.filter(job => manitouTypeIds.includes(job.deliveryTypeId));
+        } else {
+          // Show jobs where current tenant is owner OR tagged
+          finalJobs = finalJobs.filter(job => {
+            const isOwner = job.tenantId === currentTenant || !job.tenantId;
+            const isTagged = job.taggedTenantIds?.includes(currentTenant);
+            return isOwner || isTagged;
+          });
         }
 
         finalJobs.sort((a, b) => new Date(b.created_date).getTime() - new Date(a.created_date).getTime());

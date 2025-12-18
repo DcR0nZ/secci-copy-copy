@@ -122,25 +122,15 @@ export default function DailyJobBoard() {
       return { jobsByTruck: {}, filteredJobs: [], dateFilteredPlaceholders: [] };
     }
 
-    const currentTenant = currentUser.tenantId || 'plasterboard_dispatch';
+    const currentTenant = currentUser.tenantId || 'sec';
     let visibleJobs = [...jobs];
 
-    if (currentTenant === 'outreach_hire') {
-      const manitouCodes = ['UPDWN', 'UNITUP', 'MANS'];
-      const manitouTypeIds = deliveryTypes
-        .filter((dt) => manitouCodes.includes(dt.code))
-        .map((dt) => dt.id);
-
-      visibleJobs = visibleJobs.filter((job) =>
-        job.requiresManitou || manitouTypeIds.includes(job.deliveryTypeId)
-      );
-    } else {
-      visibleJobs = visibleJobs.filter((job) =>
-        !job.tenantId ||
-        job.tenantId === 'plasterboard_dispatch' ||
-        job.category === 'Plasterboard'
-      );
-    }
+    // Show jobs where current tenant is owner OR tagged
+    visibleJobs = visibleJobs.filter((job) => {
+      const isOwner = job.tenantId === currentTenant || !job.tenantId;
+      const isTagged = job.taggedTenantIds?.includes(currentTenant);
+      return isOwner || isTagged;
+    });
 
     if (currentUser.role !== 'admin' && currentUser.appRole === 'customer' &&
         (currentUser.customerId || currentUser.additionalCustomerIds?.length > 0)) {
