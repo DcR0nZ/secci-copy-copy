@@ -18,6 +18,7 @@ import DataExport from './pages/DataExport';
 import SheetSpecs from './pages/SheetSpecs';
 import ManageTenants from './pages/ManageTenants';
 import Phonebook from './pages/Phonebook';
+import Settings from './pages/Settings';
 import __Layout from './Layout.jsx';
 
 
@@ -42,6 +43,7 @@ export const PAGES = {
     "SheetSpecs": SheetSpecs,
     "ManageTenants": ManageTenants,
     "Phonebook": Phonebook,
+    "Settings": Settings,
 }
 
 export const pagesConfig = {
