@@ -239,10 +239,22 @@ export default function DashboardPage() {
   const isOutreach = currentTenant === 'outreach_hire';
   const isCustomer = currentUser?.role !== 'admin' && (currentUser?.appRole === 'customer' || !currentUser?.appRole);
 
+  const getTenantName = (tenantId) => {
+    const tenantNames = {
+      'sec': 'South East Carters',
+      'bayside_plasterboard': 'Bayside Plasterboard',
+      'outreach_hire': 'Outreach Hire'
+    };
+    return tenantNames[tenantId] || 'South East Carters';
+  };
+
   return (
     <div className="space-y-6">
       {/* Header Section */}
       <div>
+        <div className="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-sm font-medium mb-3">
+          {getTenantName(currentTenant)}
+        </div>
         <h1 className="text-3xl font-bold text-gray-900">
           {getGreeting()}, {currentUser?.full_name?.split(' ')[0] || 'there'}
         </h1>
