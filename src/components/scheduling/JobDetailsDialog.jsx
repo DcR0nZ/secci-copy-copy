@@ -481,6 +481,15 @@ export default function JobDetailsDialog({ job, open, onOpenChange, onJobUpdated
                       <p className="text-sm text-gray-600">Delivery Type</p>
                       <p className="font-medium">{currentJob.deliveryTypeName}</p>
                     </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Created By</p>
+                      <p className="font-medium">
+                        {currentJob.tenantId === 'sec' && 'South East Carters'}
+                        {currentJob.tenantId === 'bayside_plasterboard' && 'Bayside Plasterboard'}
+                        {currentJob.tenantId === 'outreach_hire' && 'Outreach Hire'}
+                        {!['sec', 'bayside_plasterboard', 'outreach_hire'].includes(currentJob.tenantId) && currentJob.tenantId}
+                      </p>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
