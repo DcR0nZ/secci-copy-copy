@@ -123,14 +123,18 @@ export default function DailyJobBoard() {
     }
 
     const currentTenant = currentUser.tenantId || 'sec';
+    const isGlobalAdmin = currentUser.appRole === 'globalAdmin';
     let visibleJobs = [...jobs];
 
-    // Show jobs where current tenant is owner OR tagged
-    visibleJobs = visibleJobs.filter((job) => {
-      const isOwner = job.tenantId === currentTenant || !job.tenantId;
-      const isTagged = job.taggedTenantIds?.includes(currentTenant);
-      return isOwner || isTagged;
-    });
+    // Global admins see all jobs across all tenants
+    if (!isGlobalAdmin) {
+      // Show jobs where current tenant is owner OR tagged
+      visibleJobs = visibleJobs.filter((job) => {
+        const isOwner = job.tenantId === currentTenant || !job.tenantId;
+        const isTagged = job.taggedTenantIds?.includes(currentTenant);
+        return isOwner || isTagged;
+      });
+    }
 
     if (currentUser.role !== 'admin' && currentUser.appRole === 'customer' &&
         (currentUser.customerId || currentUser.additionalCustomerIds?.length > 0)) {

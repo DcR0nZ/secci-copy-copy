@@ -34,6 +34,7 @@ export default function AdminJobsPage() {
 
         const isCustomer = user.role !== 'admin' && user.appRole !== 'dispatcher';
         const currentTenant = user.tenantId || 'sec';
+        const isGlobalAdmin = user.appRole === 'globalAdmin';
 
         const [allJobs, allAssignments, fetchedCustomers, fetchedDeliveryTypes] = await Promise.all([
           base44.entities.Job.list(),
@@ -51,14 +52,15 @@ export default function AdminJobsPage() {
           ].filter(Boolean);
 
           finalJobs = finalJobs.filter(job => allowedCustomerIds.includes(job.customerId));
-        } else {
-          // Show jobs where current tenant is owner OR tagged
+        } else if (!isGlobalAdmin) {
+          // Show jobs where current tenant is owner OR tagged (skip for global admins)
           finalJobs = finalJobs.filter(job => {
             const isOwner = job.tenantId === currentTenant || !job.tenantId;
             const isTagged = job.taggedTenantIds?.includes(currentTenant);
             return isOwner || isTagged;
           });
         }
+        // Global admins see all jobs across all tenants
 
         finalJobs.sort((a, b) => new Date(b.created_date).getTime() - new Date(a.created_date).getTime());
 

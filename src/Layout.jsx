@@ -444,6 +444,8 @@ export default function Layout({ children, currentPageName }) {
     console.log('Rendering nav for appRole:', appRole);
 
     switch (appRole) {
+      case 'globalAdmin':
+        return <AdminNav collapsed={sidebarCollapsed} onNavigate={onNavigate} />;
       case 'dispatcher':
         return <DispatcherNav collapsed={sidebarCollapsed} onNavigate={onNavigate} />;
       case 'driver':
@@ -497,6 +499,9 @@ export default function Layout({ children, currentPageName }) {
   const isDriver = user.role !== 'admin' && user.appRole === 'driver';
 
   const getSidebarTitle = () => {
+    if (user?.appRole === 'globalAdmin') {
+      return 'Global Admin';
+    }
     if (isCustomer && user.customerName) {
       return user.customerName;
     }
@@ -576,7 +581,7 @@ export default function Layout({ children, currentPageName }) {
           {!sidebarCollapsed && user && (
             <div className="px-4 pb-2">
               <div className="inline-flex items-center px-2 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-medium">
-                {(() => {
+                {user.appRole === 'globalAdmin' ? 'All Tenants' : (() => {
                   const tenantId = user.tenantId || 'sec';
                   const tenantNames = {
                     'sec': 'South East Carters',
