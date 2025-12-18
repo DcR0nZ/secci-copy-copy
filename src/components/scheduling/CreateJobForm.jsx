@@ -553,6 +553,31 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
                          formData.nonStandardDelivery.zoneC || 
                          formData.nonStandardDelivery.other;
 
+      // Determine tenant and auto-tagging
+      const currentTenant = currentUser?.tenantId || 'sec';
+      const taggedTenants = [];
+      
+      // Auto-tag based on delivery requirements
+      if (selectedType.requiresManitou || formData.nonStandardDelivery.passUp || formData.nonStandardDelivery.passDown) {
+        if (!taggedTenants.includes('outreach_hire')) {
+          taggedTenants.push('outreach_hire');
+        }
+      }
+      
+      // If job owner is Bayside, auto-tag SEC
+      if (currentTenant === 'bayside_plasterboard') {
+        if (!taggedTenants.includes('sec')) {
+          taggedTenants.push('sec');
+        }
+      }
+      
+      // If job owner is SEC, check if it's a Bayside supplier pickup
+      if (currentTenant === 'sec' && selectedLocation.company?.toLowerCase().includes('bayside')) {
+        if (!taggedTenants.includes('bayside_plasterboard')) {
+          taggedTenants.push('bayside_plasterboard');
+        }
+      }
+
       const newJob = await base44.entities.Job.create({
         customerId: formData.customerId,
         deliveryTypeId: formData.deliveryTypeId,
@@ -577,6 +602,9 @@ export default function CreateJobForm({ open, onOpenChange, onJobCreated }) {
         deliveryTypeName: selectedType.name,
         pickupLocation: `${selectedLocation.company} - ${selectedLocation.name}`,
         status: jobStatus,
+        tenantId: currentTenant,
+        taggedTenantIds: taggedTenants.length > 0 ? taggedTenants : undefined,
+        requiresManitou: selectedType.requiresManitou || formData.nonStandardDelivery.passUp || formData.nonStandardDelivery.passDown || false,
         isDifficultDelivery: isDifficult,
         nonStandardDelivery: hasNonStandard ? {
           longWalk: formData.nonStandardDelivery.longWalk || false,
