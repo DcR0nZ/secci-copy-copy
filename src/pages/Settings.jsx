@@ -1,43 +1,41 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
-import { Loader2 } from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
-import MyProfileSection from '../components/settings/MyProfileSection';
-import PrivacyVisibilitySection from '../components/settings/PrivacyVisibilitySection';
-import NotificationsSection from '../components/settings/NotificationsSection';
-import TenantAdminSection from '../components/settings/TenantAdminSection';
-import DangerZoneSection from '../components/settings/DangerZoneSection';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { User, Shield, Bell, Building2, AlertTriangle, Loader2, Database } from 'lucide-react';
+import MyProfile from '../components/settings/MyProfile';
+import PrivacyVisibility from '../components/settings/PrivacyVisibility';
+import Notifications from '../components/settings/Notifications';
+import TenantAdministration from '../components/settings/TenantAdministration';
+import DataExport from '../components/settings/DataExport';
+import DangerZone from '../components/settings/DangerZone';
 
 export default function SettingsPage() {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState('profile');
 
   useEffect(() => {
-    const init = async () => {
+    const loadUser = async () => {
       try {
         const user = await base44.auth.me();
         setCurrentUser(user);
       } catch (error) {
-        console.error('Error loading user:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to load user settings',
-          variant: 'destructive'
-        });
+        console.error('Failed to load user:', error);
       } finally {
         setLoading(false);
       }
     };
+    loadUser();
+  }, []);
 
-    init();
-  }, [toast]);
+  const isAdmin = currentUser?.role === 'admin' || 
+                  currentUser?.appRole === 'globalAdmin' || 
+                  currentUser?.appRole === 'tenantAdmin';
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
       </div>
     );
@@ -45,56 +43,145 @@ export default function SettingsPage() {
 
   if (!currentUser) {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="flex items-center justify-center min-h-screen p-4">
         <Card className="max-w-md p-8 text-center">
-          <p className="text-gray-600">Please log in to access settings</p>
+          <h2 className="text-xl font-semibold mb-2">Authentication Required</h2>
+          <p className="text-gray-600">Please log in to access settings.</p>
         </Card>
       </div>
     );
   }
 
-  const isTenantAdmin = currentUser.appRole === 'tenantAdmin' || currentUser.appRole === 'globalAdmin' || currentUser.role === 'admin';
-
   return (
-    <div className="h-full flex flex-col">
-      <div className="flex-shrink-0 pb-6">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Settings</h1>
-        <p className="text-sm sm:text-base text-gray-600 mt-1">Manage your account and preferences</p>
-      </div>
+    <div className="min-h-screen bg-gray-50 p-4 md:p-6">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="mb-6">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Settings</h1>
+          <p className="text-gray-600 mt-1">Manage your account and preferences</p>
+        </div>
 
-      <Tabs defaultValue="profile" className="flex-1 flex flex-col overflow-hidden">
-        <TabsList className="flex-shrink-0 grid w-full grid-cols-3 lg:grid-cols-5 gap-1">
-          <TabsTrigger value="profile">My Profile</TabsTrigger>
-          <TabsTrigger value="privacy">Privacy</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
-          {isTenantAdmin && <TabsTrigger value="admin">Tenant Admin</TabsTrigger>}
-          <TabsTrigger value="danger" className="text-red-600">Danger Zone</TabsTrigger>
-        </TabsList>
+        {/* Tabs for desktop, accordion for mobile */}
+        <div className="hidden md:block">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid w-full grid-cols-6 lg:w-auto">
+              <TabsTrigger value="profile" className="gap-2">
+                <User className="h-4 w-4" />
+                <span className="hidden lg:inline">My Profile</span>
+              </TabsTrigger>
+              <TabsTrigger value="privacy" className="gap-2">
+                <Shield className="h-4 w-4" />
+                <span className="hidden lg:inline">Privacy</span>
+              </TabsTrigger>
+              <TabsTrigger value="notifications" className="gap-2">
+                <Bell className="h-4 w-4" />
+                <span className="hidden lg:inline">Notifications</span>
+              </TabsTrigger>
+              {isAdmin && (
+                <TabsTrigger value="admin" className="gap-2">
+                  <Building2 className="h-4 w-4" />
+                  <span className="hidden lg:inline">Administration</span>
+                </TabsTrigger>
+              )}
+              {isAdmin && (
+                <TabsTrigger value="export" className="gap-2">
+                  <Database className="h-4 w-4" />
+                  <span className="hidden lg:inline">Data Export</span>
+                </TabsTrigger>
+              )}
+              <TabsTrigger value="danger" className="gap-2">
+                <AlertTriangle className="h-4 w-4" />
+                <span className="hidden lg:inline">Leave Company</span>
+              </TabsTrigger>
+            </TabsList>
 
-        <div className="flex-1 overflow-y-auto mt-6">
-          <TabsContent value="profile">
-            <MyProfileSection user={currentUser} />
-          </TabsContent>
+            <div className="mt-6">
+              <TabsContent value="profile">
+                <MyProfile user={currentUser} />
+              </TabsContent>
 
-          <TabsContent value="privacy">
-            <PrivacyVisibilitySection user={currentUser} />
-          </TabsContent>
+              <TabsContent value="privacy">
+                <PrivacyVisibility user={currentUser} />
+              </TabsContent>
 
-          <TabsContent value="notifications">
-            <NotificationsSection user={currentUser} />
-          </TabsContent>
+              <TabsContent value="notifications">
+                <Notifications user={currentUser} />
+              </TabsContent>
 
-          {isTenantAdmin && (
-            <TabsContent value="admin">
-              <TenantAdminSection user={currentUser} />
-            </TabsContent>
+              {isAdmin && (
+                <TabsContent value="admin">
+                  <TenantAdministration user={currentUser} />
+                </TabsContent>
+              )}
+
+              {isAdmin && (
+                <TabsContent value="export">
+                  <DataExport />
+                </TabsContent>
+              )}
+
+              <TabsContent value="danger">
+                <DangerZone user={currentUser} />
+              </TabsContent>
+            </div>
+          </Tabs>
+        </div>
+
+        {/* Mobile: Stacked cards */}
+        <div className="md:hidden space-y-4">
+          <Card className="p-4">
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <User className="h-5 w-5" />
+              My Profile
+            </h2>
+            <MyProfile user={currentUser} />
+          </Card>
+
+          <Card className="p-4">
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <Shield className="h-5 w-5" />
+              Privacy & Visibility
+            </h2>
+            <PrivacyVisibility user={currentUser} />
+          </Card>
+
+          <Card className="p-4">
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <Bell className="h-5 w-5" />
+              Notifications
+            </h2>
+            <Notifications user={currentUser} />
+          </Card>
+
+          {isAdmin && (
+            <Card className="p-4">
+              <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <Building2 className="h-5 w-5" />
+                Tenant Administration
+              </h2>
+              <TenantAdministration user={currentUser} />
+            </Card>
           )}
 
-          <TabsContent value="danger">
-            <DangerZoneSection user={currentUser} />
-          </TabsContent>
+          {isAdmin && (
+            <Card className="p-4">
+              <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <Database className="h-5 w-5" />
+                Data Export
+              </h2>
+              <DataExport />
+            </Card>
+          )}
+
+          <Card className="p-4">
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5" />
+              Leave Company
+            </h2>
+            <DangerZone user={currentUser} />
+          </Card>
         </div>
-      </Tabs>
+      </div>
     </div>
   );
 }
