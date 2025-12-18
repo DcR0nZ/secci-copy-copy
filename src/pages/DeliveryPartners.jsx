@@ -24,10 +24,9 @@ export default function DeliveryPartnersPage() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
-  const [inputTenantId, setInputTenantId] = useState('');
+  const [selectedTenantId, setSelectedTenantId] = useState('');
   const [inviteMessage, setInviteMessage] = useState('');
   const [sending, setSending] = useState(false);
-  const [tenantIdError, setTenantIdError] = useState('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -82,46 +81,25 @@ export default function DeliveryPartnersPage() {
   );
 
   const handleSendInvite = async () => {
-    setTenantIdError('');
-    
-    if (!inputTenantId.trim()) {
-      setTenantIdError("Please enter a tenant ID.");
-      return;
-    }
-
-    // Check if trying to invite self
-    if (inputTenantId.trim() === myTenantId) {
-      setTenantIdError("You cannot invite your own tenant.");
-      return;
-    }
-
-    // Check if tenant exists
-    const targetTenant = tenants.find(t => t.tenantId === inputTenantId.trim());
-    if (!targetTenant) {
-      setTenantIdError("Tenant ID not found. Please check and try again.");
-      return;
-    }
-
-    // Check if already has a relationship with this tenant
-    const existingInvite = invites.find(
-      i => (i.fromTenantId === myTenantId && i.toTenantId === inputTenantId.trim()) ||
-           (i.toTenantId === myTenantId && i.fromTenantId === inputTenantId.trim())
-    );
-    
-    if (existingInvite) {
-      setTenantIdError(`You already have a ${existingInvite.status} invite with this tenant.`);
+    if (!selectedTenantId) {
+      toast({
+        title: "Error",
+        description: "Please select a tenant to invite.",
+        variant: "destructive",
+      });
       return;
     }
 
     setSending(true);
     try {
+      const selectedTenant = tenants.find(t => t.tenantId === selectedTenantId);
       const myTenant = tenants.find(t => t.tenantId === myTenantId);
 
       await base44.entities.DeliveryPartnerInvite.create({
         fromTenantId: myTenantId,
         fromTenantName: myTenant?.name || myTenantId,
-        toTenantId: targetTenant.tenantId,
-        toTenantName: targetTenant.name,
+        toTenantId: selectedTenantId,
+        toTenantName: selectedTenant?.name || selectedTenantId,
         status: 'pending',
         invitedBy: user.email,
         invitedByName: user.full_name,
@@ -132,13 +110,12 @@ export default function DeliveryPartnersPage() {
 
       toast({
         title: "Invite Sent",
-        description: `Partnership invite sent to ${targetTenant.name}.`,
+        description: `Partnership invite sent to ${selectedTenant?.name}.`,
       });
 
       setInviteDialogOpen(false);
-      setInputTenantId('');
+      setSelectedTenantId('');
       setInviteMessage('');
-      setTenantIdError('');
     } catch (error) {
       console.error('Failed to send invite:', error);
       toast({
@@ -240,6 +217,7 @@ export default function DeliveryPartnersPage() {
         <Button
           onClick={() => setInviteDialogOpen(true)}
           className="bg-blue-600 hover:bg-blue-700"
+          disabled={availableTenantsToInvite.length === 0}
         >
           <UserPlus className="h-4 w-4 mr-2" />
           Invite Partner
@@ -268,7 +246,10 @@ export default function DeliveryPartnersPage() {
                 <p className="text-gray-600 mb-4">
                   You don't have any active delivery partners yet. Invite other tenants to collaborate.
                 </p>
-                <Button onClick={() => setInviteDialogOpen(true)}>
+                <Button
+                  onClick={() => setInviteDialogOpen(true)}
+                  disabled={availableTenantsToInvite.length === 0}
+                >
                   <UserPlus className="h-4 w-4 mr-2" />
                   Invite Partner
                 </Button>
@@ -402,7 +383,10 @@ export default function DeliveryPartnersPage() {
                 <p className="text-gray-600 mb-4">
                   You haven't sent any partnership invites yet.
                 </p>
-                <Button onClick={() => setInviteDialogOpen(true)}>
+                <Button
+                  onClick={() => setInviteDialogOpen(true)}
+                  disabled={availableTenantsToInvite.length === 0}
+                >
                   <UserPlus className="h-4 w-4 mr-2" />
                   Invite Partner
                 </Button>
@@ -468,22 +452,24 @@ export default function DeliveryPartnersPage() {
 
           <div className="space-y-4 py-4">
             <div>
-              <label className="text-sm font-medium mb-2 block">Tenant ID</label>
-              <Input
-                value={inputTenantId}
-                onChange={(e) => {
-                  setInputTenantId(e.target.value);
-                  setTenantIdError('');
-                }}
-                placeholder="Enter tenant ID (e.g., bayside_plasterboard)"
-                className={tenantIdError ? 'border-red-500' : ''}
-              />
-              {tenantIdError && (
-                <p className="text-sm text-red-600 mt-1">{tenantIdError}</p>
+              <label className="text-sm font-medium mb-2 block">Select Tenant</label>
+              <select
+                value={selectedTenantId}
+                onChange={(e) => setSelectedTenantId(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Choose a tenant...</option>
+                {availableTenantsToInvite.map((tenant) => (
+                  <option key={tenant.id} value={tenant.tenantId}>
+                    {tenant.name} ({tenant.tenantId})
+                  </option>
+                ))}
+              </select>
+              {availableTenantsToInvite.length === 0 && (
+                <p className="text-sm text-gray-500 mt-2">
+                  No more tenants available to invite.
+                </p>
               )}
-              <p className="text-xs text-gray-500 mt-2">
-                Enter the exact tenant ID of the organization you want to partner with.
-              </p>
             </div>
 
             <div>
@@ -502,16 +488,15 @@ export default function DeliveryPartnersPage() {
               variant="outline"
               onClick={() => {
                 setInviteDialogOpen(false);
-                setInputTenantId('');
+                setSelectedTenantId('');
                 setInviteMessage('');
-                setTenantIdError('');
               }}
             >
               Cancel
             </Button>
             <Button
               onClick={handleSendInvite}
-              disabled={sending}
+              disabled={!selectedTenantId || sending}
               className="bg-blue-600 hover:bg-blue-700"
             >
               {sending ? (
