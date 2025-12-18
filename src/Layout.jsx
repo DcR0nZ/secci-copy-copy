@@ -223,7 +223,6 @@ const DriverNav = ({ collapsed, onNavigate }) =>
 
 const CustomerNav = ({ collapsed, onNavigate }) =>
   <>
-    <NavLink to={createPageUrl('Dashboard')} icon={Home} collapsed={collapsed} onClick={onNavigate}>Dashboard</NavLink>
     <NavLink to={createPageUrl('AdminJobs')} icon={Briefcase} collapsed={collapsed} onClick={onNavigate}>My Jobs</NavLink>
     <NavLink to={createPageUrl('DailyJobBoard')} icon={Calendar} collapsed={collapsed} onClick={onNavigate}>Daily Schedule</NavLink>
     <NavLink to={createPageUrl('CustomerRequestDelivery')} icon={Plus} collapsed={collapsed} onClick={onNavigate}>Request Delivery</NavLink>
@@ -573,6 +572,22 @@ export default function Layout({ children, currentPageName }) {
             )}
             {sidebarCollapsed && <Truck className="h-8 w-8 text-blue-600" />}
           </div>
+
+          {!sidebarCollapsed && user && (
+            <div className="px-4 pb-2">
+              <div className="inline-flex items-center px-2 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-medium">
+                {(() => {
+                  const tenantId = user.tenantId || 'sec';
+                  const tenantNames = {
+                    'sec': 'South East Carters',
+                    'bayside_plasterboard': 'Bayside Plasterboard',
+                    'outreach_hire': 'Outreach Hire'
+                  };
+                  return tenantNames[tenantId] || 'South East Carters';
+                })()}
+              </div>
+            </div>
+          )}
           
           {/* Toggle Button */}
           <div className={`px-2 pb-2 flex ${sidebarCollapsed ? 'justify-center' : 'justify-end'}`}>
