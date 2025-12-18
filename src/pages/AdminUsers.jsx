@@ -10,6 +10,7 @@ import UserCard from '../components/users/UserCard';
 import UserDetailsModal from '../components/users/UserDetailsModal';
 
 const ROLE_GROUPS = [
+  { id: 'globalAdmin', label: 'Global Admins', color: 'bg-red-100' },
   { id: 'dispatcher', label: 'Dispatchers', color: 'bg-purple-100' },
   { id: 'driver', label: 'Drivers', color: 'bg-green-100' },
   { id: 'customer', label: 'Customers', color: 'bg-blue-100' },

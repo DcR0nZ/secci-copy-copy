@@ -101,6 +101,7 @@ export default function UserDetailsModal({
   const getRoleColor = (role) => {
     const colors = {
       admin: 'bg-red-100 text-red-800',
+      globalAdmin: 'bg-red-100 text-red-800',
       customer: 'bg-blue-100 text-blue-800',
       dispatcher: 'bg-purple-100 text-purple-800',
       driver: 'bg-green-100 text-green-800',
@@ -241,6 +242,7 @@ export default function UserDetailsModal({
                     <SelectItem value="outreach">Outreach</SelectItem>
                     <SelectItem value="outreachOperator">Outreach Operator</SelectItem>
                     <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="globalAdmin">Global Admin</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
