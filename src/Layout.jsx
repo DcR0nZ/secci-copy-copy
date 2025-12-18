@@ -156,6 +156,9 @@ const AdminNav = ({ collapsed, onNavigate }) => {
         <NavLink to={createPageUrl('AdminJobs')} icon={Library} collapsed={collapsed} onClick={onNavigate}>Library</NavLink>
       )}
       
+      {isGlobalAdmin && (
+        <NavLink to={createPageUrl('ManageTenants')} icon={Settings} collapsed={collapsed} onClick={onNavigate}>Manage Tenants</NavLink>
+      )}
       <NavLink to={createPageUrl('WeatherToday')} icon={CloudRain} collapsed={collapsed} onClick={onNavigate}>Weather Today</NavLink>
     </>
   );
