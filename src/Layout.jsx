@@ -35,6 +35,7 @@ import {
 import ChatWidget from './components/chat/ChatWidget';
 import { OfflineProvider } from './components/offline/OfflineManager';
 import ReturnedJobAlert from './components/scheduling/ReturnedJobAlert';
+import UserAvatarDropdown from './components/layout/UserAvatarDropdown';
 
 const NavLink = ({ to, icon: Icon, children, collapsed, onClick }) => {
   const location = useLocation();
@@ -717,9 +718,9 @@ export default function Layout({ children, currentPageName }) {
             </div>
           </div>
 
-          {/* Desktop header with notification bell */}
+          {/* Desktop header with user avatar dropdown */}
           <div className="hidden md:flex items-center justify-end px-6 py-3 bg-white border-b">
-            {/* NotificationBell was here */}
+            <UserAvatarDropdown user={user} />
           </div>
 
           <main className="flex-1 overflow-y-auto p-6">
