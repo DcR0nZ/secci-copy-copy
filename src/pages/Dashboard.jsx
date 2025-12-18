@@ -73,7 +73,7 @@ export default function DashboardPage() {
           base44.entities.DeliveryType.list()
         ]);
 
-        const isOutreach = user.appRole === 'outreach';
+        const currentTenant = user.tenantId || 'sec';
         const isCustomer = user.role !== 'admin' && (user.appRole === 'customer' || !user.appRole);
         
         // Helper function to check if date is this week
@@ -91,15 +91,14 @@ export default function DashboardPage() {
             ...(user.additionalCustomerIds || [])
           ].filter(Boolean);
           filteredJobs = filteredJobs.filter(job => allowedCustomerIds.includes(job.customerId));
-        } else if (isOutreach) {
-          // Outreach: filter by Manitou delivery types
-          const manitouCodes = ['UPDWN', 'UNITUP', 'MANS'];
-          const manitouTypeIds = deliveryTypes
-            .filter(dt => manitouCodes.includes(dt.code))
-            .map(dt => dt.id);
-          filteredJobs = filteredJobs.filter(job => manitouTypeIds.includes(job.deliveryTypeId));
+        } else {
+          // Filter jobs where current tenant is owner OR tagged
+          filteredJobs = filteredJobs.filter(job => {
+            const isOwner = job.tenantId === currentTenant || !job.tenantId;
+            const isTagged = job.taggedTenantIds?.includes(currentTenant);
+            return isOwner || isTagged;
+          });
         }
-        // Admin, dispatcher, manager: see all jobs (no additional filtering)
 
         // Today's stats (jobs scheduled for today)
         const jobIds = todayAssignments.map(a => a.jobId);
@@ -236,7 +235,8 @@ export default function DashboardPage() {
     );
   }
 
-  const isOutreach = currentUser?.appRole === 'outreach';
+  const currentTenant = currentUser?.tenantId || 'sec';
+  const isOutreach = currentTenant === 'outreach_hire';
   const isCustomer = currentUser?.role !== 'admin' && (currentUser?.appRole === 'customer' || !currentUser?.appRole);
 
   return (
