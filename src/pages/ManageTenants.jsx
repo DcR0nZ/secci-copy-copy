@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Badge } from '@/components/ui/badge';
 import { Building2, Plus, Edit, Trash2, Users, Briefcase, TrendingUp, BarChart3 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import TenantDetailsDialog from '../components/tenants/TenantDetailsDialog';
 
 export default function ManageTenantsPage() {
   const [tenants, setTenants] = useState([]);
@@ -18,6 +19,7 @@ export default function ManageTenantsPage() {
   const [currentUser, setCurrentUser] = useState(null);
   const [isFormOpen, setFormOpen] = useState(false);
   const [editingTenant, setEditingTenant] = useState(null);
+  const [selectedTenant, setSelectedTenant] = useState(null);
   const [formData, setFormData] = useState({
     tenantId: '',
     name: '',
@@ -196,6 +198,11 @@ export default function ManageTenantsPage() {
     }
   };
 
+  const refreshTenants = async () => {
+    const updatedTenants = await base44.entities.Tenant.list();
+    setTenants(updatedTenants);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -231,7 +238,11 @@ export default function ManageTenantsPage() {
             const stats = getTenantStats(tenant.tenantId);
             
             return (
-              <Card key={tenant.id} className="hover:shadow-lg transition-shadow">
+              <Card 
+                key={tenant.id} 
+                className="hover:shadow-lg transition-shadow cursor-pointer"
+                onClick={() => setSelectedTenant(tenant)}
+              >
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
@@ -302,16 +313,22 @@ export default function ManageTenantsPage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleOpenForm(tenant)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenForm(tenant);
+                      }}
                       className="flex-1"
                     >
                       <Edit className="h-4 w-4 mr-1" />
-                      Edit
+                      Quick Edit
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleDelete(tenant)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(tenant);
+                      }}
                       className="flex-1 text-red-600 hover:text-red-700 hover:bg-red-50"
                     >
                       <Trash2 className="h-4 w-4 mr-1" />
@@ -515,6 +532,16 @@ export default function ManageTenantsPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Tenant Details Dialog */}
+      {selectedTenant && (
+        <TenantDetailsDialog
+          tenant={selectedTenant}
+          stats={getTenantStats(selectedTenant.tenantId)}
+          onClose={() => setSelectedTenant(null)}
+          onUpdate={refreshTenants}
+        />
+      )}
     </>
   );
 }
