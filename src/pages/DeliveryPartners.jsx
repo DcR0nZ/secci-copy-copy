@@ -268,10 +268,7 @@ export default function DeliveryPartnersPage() {
                 <p className="text-gray-600 mb-4">
                   You don't have any active delivery partners yet. Invite other tenants to collaborate.
                 </p>
-                <Button
-                  onClick={() => setInviteDialogOpen(true)}
-                  disabled={availableTenantsToInvite.length === 0}
-                >
+                <Button onClick={() => setInviteDialogOpen(true)}>
                   <UserPlus className="h-4 w-4 mr-2" />
                   Invite Partner
                 </Button>
@@ -405,10 +402,7 @@ export default function DeliveryPartnersPage() {
                 <p className="text-gray-600 mb-4">
                   You haven't sent any partnership invites yet.
                 </p>
-                <Button
-                  onClick={() => setInviteDialogOpen(true)}
-                  disabled={availableTenantsToInvite.length === 0}
-                >
+                <Button onClick={() => setInviteDialogOpen(true)}>
                   <UserPlus className="h-4 w-4 mr-2" />
                   Invite Partner
                 </Button>
