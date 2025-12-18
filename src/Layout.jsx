@@ -29,7 +29,9 @@ import {
   PanelLeftClose,
   PanelLeft,
   Home,
-  BarChart3
+  BarChart3,
+  Book,
+  Settings as SettingsIcon
 } from 'lucide-react';
 
 import ChatWidget from './components/chat/ChatWidget';
@@ -160,6 +162,8 @@ const AdminNav = ({ collapsed, onNavigate }) => {
         <NavLink to={createPageUrl('ManageTenants')} icon={Settings} collapsed={collapsed} onClick={onNavigate}>Manage Tenants</NavLink>
       )}
       <NavLink to={createPageUrl('WeatherToday')} icon={CloudRain} collapsed={collapsed} onClick={onNavigate}>Weather Today</NavLink>
+      <NavLink to={createPageUrl('Phonebook')} icon={Book} collapsed={collapsed} onClick={onNavigate}>Phonebook</NavLink>
+      <NavLink to={createPageUrl('Settings')} icon={SettingsIcon} collapsed={collapsed} onClick={onNavigate}>Settings</NavLink>
     </>
   );
 };
@@ -224,31 +228,33 @@ const DispatcherNav = ({ collapsed, onNavigate }) => {
       ) : (
         <NavLink to={createPageUrl('AdminJobs')} icon={Library} collapsed={collapsed} onClick={onNavigate}>Library</NavLink>
       )}
-      
-      <NavLink to={createPageUrl('WeatherToday')} icon={CloudRain} collapsed={collapsed} onClick={onNavigate}>Weather Today</NavLink>
-    </>
-  );
-};
 
-const DriverNav = ({ collapsed, onNavigate }) =>
-  <>
-    <NavLink to={createPageUrl('Dashboard')} icon={Home} collapsed={collapsed} onClick={onNavigate}>Dashboard</NavLink>
-    <NavLink to={createPageUrl('DriverMyRuns')} icon={Calendar} collapsed={collapsed} onClick={onNavigate}>My Runs</NavLink>
-    <NavLink to={createPageUrl('DailyJobBoard')} icon={LayoutGrid} collapsed={collapsed} onClick={onNavigate}>Daily Job Board</NavLink>
-    <NavLink to={createPageUrl('Phonebook')} icon={Users} collapsed={collapsed} onClick={onNavigate}>Phonebook</NavLink>
-    <NavLink to={createPageUrl('Settings')} icon={Settings} collapsed={collapsed} onClick={onNavigate}>Settings</NavLink>
-    <NavLink to={createPageUrl('WeatherToday')} icon={CloudRain} collapsed={collapsed} onClick={onNavigate}>Weather Today</NavLink>
-  </>;
+      <NavLink to={createPageUrl('WeatherToday')} icon={CloudRain} collapsed={collapsed} onClick={onNavigate}>Weather Today</NavLink>
+      <NavLink to={createPageUrl('Phonebook')} icon={Book} collapsed={collapsed} onClick={onNavigate}>Phonebook</NavLink>
+      <NavLink to={createPageUrl('Settings')} icon={SettingsIcon} collapsed={collapsed} onClick={onNavigate}>Settings</NavLink>
+      </>
+      );
+      };
+
+      const DriverNav = ({ collapsed, onNavigate }) =>
+              <>
+                <NavLink to={createPageUrl('Dashboard')} icon={Home} collapsed={collapsed} onClick={onNavigate}>Dashboard</NavLink>
+                <NavLink to={createPageUrl('DriverMyRuns')} icon={Calendar} collapsed={collapsed} onClick={onNavigate}>My Runs</NavLink>
+                <NavLink to={createPageUrl('DailyJobBoard')} icon={LayoutGrid} collapsed={collapsed} onClick={onNavigate}>Daily Job Board</NavLink>
+                <NavLink to={createPageUrl('WeatherToday')} icon={CloudRain} collapsed={collapsed} onClick={onNavigate}>Weather Today</NavLink>
+                <NavLink to={createPageUrl('Phonebook')} icon={Book} collapsed={collapsed} onClick={onNavigate}>Phonebook</NavLink>
+                <NavLink to={createPageUrl('Settings')} icon={SettingsIcon} collapsed={collapsed} onClick={onNavigate}>Settings</NavLink>
+              </>;
 
 const CustomerNav = ({ collapsed, onNavigate }) =>
-  <>
-    <NavLink to={createPageUrl('AdminJobs')} icon={Briefcase} collapsed={collapsed} onClick={onNavigate}>My Jobs</NavLink>
-    <NavLink to={createPageUrl('DailyJobBoard')} icon={Calendar} collapsed={collapsed} onClick={onNavigate}>Daily Schedule</NavLink>
-    <NavLink to={createPageUrl('CustomerRequestDelivery')} icon={Plus} collapsed={collapsed} onClick={onNavigate}>Request Delivery</NavLink>
-    <NavLink to={createPageUrl('Phonebook')} icon={Users} collapsed={collapsed} onClick={onNavigate}>Phonebook</NavLink>
-    <NavLink to={createPageUrl('Settings')} icon={Settings} collapsed={collapsed} onClick={onNavigate}>Settings</NavLink>
-    <NavLink to={createPageUrl('WeatherToday')} icon={CloudRain} collapsed={collapsed} onClick={onNavigate}>Weather Today</NavLink>
-  </>;
+        <>
+          <NavLink to={createPageUrl('AdminJobs')} icon={Briefcase} collapsed={collapsed} onClick={onNavigate}>My Jobs</NavLink>
+          <NavLink to={createPageUrl('DailyJobBoard')} icon={Calendar} collapsed={collapsed} onClick={onNavigate}>Daily Schedule</NavLink>
+          <NavLink to={createPageUrl('CustomerRequestDelivery')} icon={Plus} collapsed={collapsed} onClick={onNavigate}>Request Delivery</NavLink>
+          <NavLink to={createPageUrl('WeatherToday')} icon={CloudRain} collapsed={collapsed} onClick={onNavigate}>Weather Today</NavLink>
+          <NavLink to={createPageUrl('Phonebook')} icon={Book} collapsed={collapsed} onClick={onNavigate}>Phonebook</NavLink>
+          <NavLink to={createPageUrl('Settings')} icon={SettingsIcon} collapsed={collapsed} onClick={onNavigate}>Settings</NavLink>
+        </>;
 
 const ManagerNav = ({ collapsed, onNavigate }) => {
   const [libraryOpen, setLibraryOpen] = useState(false);
@@ -304,13 +310,15 @@ const ManagerNav = ({ collapsed, onNavigate }) => {
       ) : (
         <NavLink to={createPageUrl('AdminJobs')} icon={Library} collapsed={collapsed} onClick={onNavigate}>Library</NavLink>
       )}
-      
-      <NavLink to={createPageUrl('WeatherToday')} icon={CloudRain} collapsed={collapsed} onClick={onNavigate}>Weather Today</NavLink>
-    </>
-  );
-};
 
-export default function Layout({ children, currentPageName }) {
+      <NavLink to={createPageUrl('WeatherToday')} icon={CloudRain} collapsed={collapsed} onClick={onNavigate}>Weather Today</NavLink>
+      <NavLink to={createPageUrl('Phonebook')} icon={Book} collapsed={collapsed} onClick={onNavigate}>Phonebook</NavLink>
+      <NavLink to={createPageUrl('Settings')} icon={SettingsIcon} collapsed={collapsed} onClick={onNavigate}>Settings</NavLink>
+      </>
+      );
+      };
+
+      export default function Layout({ children, currentPageName }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
