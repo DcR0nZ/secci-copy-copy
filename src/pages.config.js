@@ -16,6 +16,7 @@ import Reports from './pages/Reports';
 import LiveTracking from './pages/LiveTracking';
 import DataExport from './pages/DataExport';
 import SheetSpecs from './pages/SheetSpecs';
+import ManageTenants from './pages/ManageTenants';
 import __Layout from './Layout.jsx';
 
 
@@ -38,6 +39,7 @@ export const PAGES = {
     "LiveTracking": LiveTracking,
     "DataExport": DataExport,
     "SheetSpecs": SheetSpecs,
+    "ManageTenants": ManageTenants,
 }
 
 export const pagesConfig = {

@@ -90,6 +90,20 @@ const AdminNav = ({ collapsed, onNavigate }) => {
   ];
   
   const isLibraryActive = libraryPages.includes(location.pathname);
+  
+  // Check if current user is global admin
+  const [isGlobalAdmin, setIsGlobalAdmin] = useState(false);
+  useEffect(() => {
+    const checkUser = async () => {
+      try {
+        const user = await base44.auth.me();
+        setIsGlobalAdmin(user?.appRole === 'globalAdmin');
+      } catch (e) {
+        setIsGlobalAdmin(false);
+      }
+    };
+    checkUser();
+  }, []);
 
   useEffect(() => {
     if (isLibraryActive && !libraryOpen && !collapsed) {
