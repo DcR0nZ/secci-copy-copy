@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar, Package, Truck, TrendingUp, Cloud, Droplets, Clock as ClockIcon, AlertTriangle, CalendarRange } from 'lucide-react';
 import { format, startOfDay, startOfWeek, addDays } from 'date-fns';
 import { createPageUrl } from '@/utils';
+import ActivityFeed from '../components/dashboard/ActivityFeed';
 
 export default function DashboardPage() {
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -508,40 +509,48 @@ export default function DashboardPage() {
 
 
 
-      {/* Quick Actions */}
-      <div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <button
-            onClick={() => window.location.href = createPageUrl(currentUser?.appRole === 'driver' ? 'DriverMyRuns' : 'SchedulingBoard')}
-            className="p-6 bg-blue-50 hover:bg-blue-100 rounded-lg text-left transition-colors"
-          >
-            <Calendar className="h-6 w-6 text-blue-600 mb-3" />
-            <p className="font-semibold text-gray-900 mb-1">
-              {currentUser?.appRole === 'driver' ? 'My Runs' : 'Open Scheduler'}
-            </p>
-            <p className="text-sm text-gray-600">
-              {currentUser?.appRole === 'driver' ? 'View your delivery schedule' : 'Manage delivery schedule'}
-            </p>
-          </button>
+      {/* Activity Feed and Quick Actions */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Activity Feed */}
+        <div className="lg:col-span-2">
+          <ActivityFeed />
+        </div>
 
-          <button
-            onClick={() => window.location.href = createPageUrl('DailyJobBoard')}
-            className="p-6 bg-green-50 hover:bg-green-100 rounded-lg text-left transition-colors"
-          >
-            <Truck className="h-6 w-6 text-green-600 mb-3" />
-            <p className="font-semibold text-gray-900 mb-1">Daily Job Board</p>
-            <p className="text-sm text-gray-600">View today's deliveries</p>
-          </button>
+        {/* Quick Actions */}
+        <div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
+          <div className="space-y-4">
+            <button
+              onClick={() => window.location.href = createPageUrl(currentUser?.appRole === 'driver' ? 'DriverMyRuns' : 'SchedulingBoard')}
+              className="w-full p-6 bg-blue-50 hover:bg-blue-100 rounded-lg text-left transition-colors"
+            >
+              <Calendar className="h-6 w-6 text-blue-600 mb-3" />
+              <p className="font-semibold text-gray-900 mb-1">
+                {currentUser?.appRole === 'driver' ? 'My Runs' : 'Open Scheduler'}
+              </p>
+              <p className="text-sm text-gray-600">
+                {currentUser?.appRole === 'driver' ? 'View your delivery schedule' : 'Manage delivery schedule'}
+              </p>
+            </button>
 
-          <button
-            onClick={() => window.location.href = createPageUrl('AdminJobs')}
-            className="p-6 bg-purple-50 hover:bg-purple-100 rounded-lg text-left transition-colors"
-          >
-            <Package className="h-6 w-6 text-purple-600 mb-3" />
-            <p className="font-semibold text-gray-900 mb-1">All Jobs</p>
-            <p className="text-sm text-gray-600">Browse complete job list</p>
-          </button>
+            <button
+              onClick={() => window.location.href = createPageUrl('DailyJobBoard')}
+              className="w-full p-6 bg-green-50 hover:bg-green-100 rounded-lg text-left transition-colors"
+            >
+              <Truck className="h-6 w-6 text-green-600 mb-3" />
+              <p className="font-semibold text-gray-900 mb-1">Daily Job Board</p>
+              <p className="text-sm text-gray-600">View today's deliveries</p>
+            </button>
+
+            <button
+              onClick={() => window.location.href = createPageUrl('AdminJobs')}
+              className="w-full p-6 bg-purple-50 hover:bg-purple-100 rounded-lg text-left transition-colors"
+            >
+              <Package className="h-6 w-6 text-purple-600 mb-3" />
+              <p className="font-semibold text-gray-900 mb-1">All Jobs</p>
+              <p className="text-sm text-gray-600">Browse complete job list</p>
+            </button>
+          </div>
         </div>
       </div>
     </div>
