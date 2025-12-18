@@ -107,7 +107,7 @@ export default function SchedulingBoard() {
   }, []);
 
   const fetchData = useCallback(async () => {
-    if (!currentUser || (currentUser.role !== 'admin' && currentUser.appRole !== 'dispatcher')) {
+    if (!currentUser || (currentUser.role !== 'admin' && currentUser.appRole !== 'dispatcher' && currentUser.appRole !== 'globalAdmin')) {
       setLoading(false);
       return;
     }
@@ -127,25 +127,18 @@ export default function SchedulingBoard() {
         base44.entities.PickupLocation.list()
       ]);
 
-      const currentTenant = currentUser.tenantId || 'plasterboard_dispatch';
+      const currentTenant = currentUser.tenantId || 'sec';
+      const isGlobalAdmin = currentUser.appRole === 'globalAdmin';
       let visibleJobs = [...allAvailableJobs];
 
-      if (currentTenant === 'outreach_hire') {
-        const manitouCodes = ['UPDWN', 'UNITUP', 'MANS'];
-        const manitouTypeIds = allDeliveryTypes
-          .filter(dt => manitouCodes.includes(dt.code))
-          .map(dt => dt.id);
-        
-        visibleJobs = visibleJobs.filter(job => 
-          job.requiresManitou || 
-          manitouTypeIds.includes(job.deliveryTypeId)
-        );
-      } else {
-        visibleJobs = visibleJobs.filter(job => 
-          !job.tenantId ||
-          job.tenantId === 'plasterboard_dispatch' || 
-          job.category === 'Plasterboard'
-        );
+      // Global admins see all jobs across all tenants
+      if (!isGlobalAdmin) {
+        // Show jobs where current tenant is owner OR tagged
+        visibleJobs = visibleJobs.filter(job => {
+          const isOwner = job.tenantId === currentTenant || !job.tenantId;
+          const isTagged = job.taggedTenantIds?.includes(currentTenant);
+          return isOwner || isTagged;
+        });
       }
 
       setJobs(visibleJobs);
@@ -182,7 +175,7 @@ export default function SchedulingBoard() {
   }, [selectedDate, currentUser]);
 
   useEffect(() => {
-    if (currentUser && (currentUser.role === 'admin' || currentUser.appRole === 'dispatcher')) {
+    if (currentUser && (currentUser.role === 'admin' || currentUser.appRole === 'dispatcher' || currentUser.appRole === 'globalAdmin')) {
       fetchData();
     }
   }, [fetchData, currentUser]);
@@ -473,8 +466,8 @@ export default function SchedulingBoard() {
     );
   }
 
-  // Check if user can see notifications (admin or dispatcher only)
-  const canSeeNotifications = currentUser.role === 'admin' || currentUser.appRole === 'dispatcher';
+  // Check if user can see notifications (admin, dispatcher, or global admin)
+  const canSeeNotifications = currentUser.role === 'admin' || currentUser.appRole === 'dispatcher' || currentUser.appRole === 'globalAdmin';
 
   // MOBILE VIEW
   if (isMobile) {
