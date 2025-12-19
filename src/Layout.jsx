@@ -128,6 +128,7 @@ const AdminNav = ({ collapsed, onNavigate }) => {
       <NavLink to={createPageUrl('LiveTracking')} icon={MapPin} collapsed={collapsed} onClick={onNavigate}>Live Tracking</NavLink>
       <NavLink to={createPageUrl('Reports')} icon={BarChart3} collapsed={collapsed} onClick={onNavigate}>Reports</NavLink>
       <NavLink to={createPageUrl('Phonebook')} icon={Users} collapsed={collapsed} onClick={onNavigate}>Phonebook</NavLink>
+      <NavLink to={createPageUrl('Notifications')} icon={Bell} collapsed={collapsed} onClick={onNavigate}>Notifications</NavLink>
       <NavLink to={createPageUrl('Settings')} icon={Settings} collapsed={collapsed} onClick={onNavigate}>Settings</NavLink>
       
       {!collapsed ? (
@@ -203,6 +204,7 @@ const DispatcherNav = ({ collapsed, onNavigate }) => {
       <NavLink to={createPageUrl('LiveTracking')} icon={MapPin} collapsed={collapsed} onClick={onNavigate}>Live Tracking</NavLink>
       <NavLink to={createPageUrl('Reports')} icon={BarChart3} collapsed={collapsed} onClick={onNavigate}>Reports</NavLink>
       <NavLink to={createPageUrl('Phonebook')} icon={Users} collapsed={collapsed} onClick={onNavigate}>Phonebook</NavLink>
+      <NavLink to={createPageUrl('Notifications')} icon={Bell} collapsed={collapsed} onClick={onNavigate}>Notifications</NavLink>
       <NavLink to={createPageUrl('Settings')} icon={Settings} collapsed={collapsed} onClick={onNavigate}>Settings</NavLink>
       
       {!collapsed ? (
