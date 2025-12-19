@@ -47,6 +47,7 @@ export default function UserDetailsModal({
   });
   const [customers, setCustomers] = useState([]);
   const [additionalCustomers, setAdditionalCustomers] = useState([]);
+  const [tenants, setTenants] = useState([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDataLoading, setIsDataLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -65,11 +66,16 @@ export default function UserDetailsModal({
         tenantId: user.tenantId || 'plasterboard_dispatch'
       });
 
-      const fetchAllCustomers = async () => {
+      const fetchData = async () => {
         setIsDataLoading(true);
         try {
-          const allCustomers = await base44.entities.Customer.list();
+          const [allCustomers, allTenants] = await Promise.all([
+            base44.entities.Customer.list(),
+            base44.entities.Tenant.list()
+          ]);
+          
           setCustomers(allCustomers);
+          setTenants(allTenants);
 
           if (user.additionalCustomerIds && user.additionalCustomerIds.length > 0) {
             const additional = allCustomers.filter(c => user.additionalCustomerIds.includes(c.id));
@@ -78,12 +84,12 @@ export default function UserDetailsModal({
             setAdditionalCustomers([]);
           }
         } catch (error) {
-          console.error("Failed to fetch customers:", error);
+          console.error("Failed to fetch data:", error);
         } finally {
           setIsDataLoading(false);
         }
       };
-      fetchAllCustomers();
+      fetchData();
     } else if (!open) {
       setEditedUser({
         full_name: '', email: '', role: 'user', appRole: 'customer', customerId: null,
@@ -91,6 +97,7 @@ export default function UserDetailsModal({
       });
       setCustomers([]);
       setAdditionalCustomers([]);
+      setTenants([]);
       setIsDataLoading(false);
       setIsSaving(false);
     }
@@ -358,14 +365,23 @@ export default function UserDetailsModal({
               )}
 
               <div className="grid gap-2 pb-4">
-                <Label htmlFor="tenantId">Tenant ID</Label>
-                <Input
-                  id="tenantId"
+                <Label htmlFor="tenantId">Tenant</Label>
+                <Select
                   value={editedUser.tenantId}
-                  onChange={(e) => setEditedUser(prev => ({ ...prev, tenantId: e.target.value }))}
+                  onValueChange={(value) => setEditedUser(prev => ({ ...prev, tenantId: value }))}
                   disabled={isDisabled}
-                  placeholder="e.g., plasterboard_dispatch"
-                />
+                >
+                  <SelectTrigger id="tenantId" className="w-full">
+                    <SelectValue placeholder="Select tenant..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {tenants.map(tenant => (
+                      <SelectItem key={tenant.id} value={tenant.tenantId}>
+                        {tenant.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>
