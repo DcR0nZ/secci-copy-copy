@@ -19,12 +19,19 @@ import {
 import { format } from 'date-fns';
 import MobilePODCapture from '../components/driver/MobilePODCapture';
 import MobileJobDetails from '../components/driver/MobileJobDetails';
+import TurnByTurnNavigation from '../components/driver/TurnByTurnNavigation';
+import OfflineSyncManager, { OfflineUtils } from '../components/driver/OfflineSyncManager';
+import GeofenceTracker from '../components/driver/GeofenceTracker';
+import DriverChat from '../components/driver/DriverChat';
 
 export default function DriverMobilePage() {
   const [user, setUser] = useState(null);
   const [selectedJob, setSelectedJob] = useState(null);
   const [showPOD, setShowPOD] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
+  const [showNavigation, setShowNavigation] = useState(false);
+  const [showChat, setShowChat] = useState(false);
+  const [currentLocation, setCurrentLocation] = useState(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -34,15 +41,44 @@ export default function DriverMobilePage() {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
       
-      const response = await base44.functions.invoke('mobileDriverJobsList', {
-        userId: currentUser.id,
-        truck: currentUser.truck
-      });
-      
-      return response.data.jobs || [];
+      try {
+        const response = await base44.functions.invoke('mobileDriverJobsList', {
+          userId: currentUser.id,
+          truck: currentUser.truck
+        });
+        
+        const fetchedJobs = response.data.jobs || [];
+        
+        // Cache jobs for offline use
+        OfflineUtils.cacheJobs(fetchedJobs);
+        
+        return fetchedJobs;
+      } catch (error) {
+        // If offline, return cached jobs
+        console.log('Using cached jobs - offline mode');
+        return OfflineUtils.getCachedJobs();
+      }
     },
     refetchInterval: 30000,
   });
+
+  // Get current location
+  useEffect(() => {
+    if (navigator.geolocation) {
+      const watchId = navigator.geolocation.watchPosition(
+        (position) => {
+          setCurrentLocation({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+          });
+        },
+        (error) => console.error('Location error:', error),
+        { enableHighAccuracy: true }
+      );
+
+      return () => navigator.geolocation.clearWatch(watchId);
+    }
+  }, []);
 
   const todayJobs = jobs.filter(job => {
     const today = new Date().toDateString();
@@ -91,30 +127,46 @@ export default function DriverMobilePage() {
         });
       }
     } catch (error) {
+      // Queue for offline sync
+      OfflineUtils.queueStatusUpdate({
+        jobId: job.id,
+        status: newStatus,
+        driverStatus: newStatus,
+        userId: user.id,
+        userName: user.full_name
+      });
+      
       toast({
-        title: "Error",
-        description: "Failed to update status. Please try again.",
-        variant: "destructive",
+        title: "Queued for Sync",
+        description: "Status will update when online.",
       });
     }
   };
 
   const handleNavigate = (job) => {
-    const address = encodeURIComponent(job.deliveryLocation);
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    const isAndroid = /android/i.test(navigator.userAgent);
-
-    let url;
-    if (isIOS) {
-      url = `maps://maps.apple.com/?daddr=${address}`;
-    } else if (isAndroid) {
-      url = `google.navigation:q=${address}`;
+    // Use in-app navigation if coordinates available
+    if (job.deliveryLatitude && job.deliveryLongitude && currentLocation) {
+      setSelectedJob(job);
+      setShowNavigation(true);
+      handleStatusUpdate(job, 'EN_ROUTE');
     } else {
-      url = `https://www.google.com/maps/dir/?api=1&destination=${address}`;
-    }
+      // Fallback to external navigation
+      const address = encodeURIComponent(job.deliveryLocation);
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      const isAndroid = /android/i.test(navigator.userAgent);
 
-    window.location.href = url;
-    handleStatusUpdate(job, 'EN_ROUTE');
+      let url;
+      if (isIOS) {
+        url = `maps://maps.apple.com/?daddr=${address}`;
+      } else if (isAndroid) {
+        url = `google.navigation:q=${address}`;
+      } else {
+        url = `https://www.google.com/maps/dir/?api=1&destination=${address}`;
+      }
+
+      window.location.href = url;
+      handleStatusUpdate(job, 'EN_ROUTE');
+    }
   };
 
   const handleCallContact = (phone) => {
@@ -126,6 +178,19 @@ export default function DriverMobilePage() {
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
+    );
+  }
+
+  if (showNavigation && selectedJob && currentLocation) {
+    return (
+      <TurnByTurnNavigation
+        job={selectedJob}
+        currentLocation={currentLocation}
+        onClose={() => {
+          setShowNavigation(false);
+          setSelectedJob(null);
+        }}
+      />
     );
   }
 
@@ -165,6 +230,33 @@ export default function DriverMobilePage() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
+      {/* Offline Sync Manager */}
+      {user && (
+        <OfflineSyncManager
+          userId={user.id}
+          truck={user.truck}
+          onJobsUpdate={() => queryClient.invalidateQueries({ queryKey: ['mobileDriverJobs'] })}
+        />
+      )}
+
+      {/* Geofence Tracker */}
+      {user && jobs.length > 0 && (
+        <GeofenceTracker
+          jobs={todayJobs}
+          user={user}
+          onStatusChange={handleStatusUpdate}
+        />
+      )}
+
+      {/* Driver Chat */}
+      {user && (
+        <DriverChat
+          user={user}
+          isOpen={showChat}
+          onToggle={() => setShowChat(!showChat)}
+        />
+      )}
+
       {/* Header */}
       <div className="bg-blue-600 text-white p-4 sticky top-0 z-10 shadow-md">
         <h1 className="text-xl font-bold">Today's Deliveries</h1>
