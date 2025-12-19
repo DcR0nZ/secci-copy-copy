@@ -84,6 +84,7 @@ const AdminNav = ({ collapsed, onNavigate }) => {
   
   const libraryPages = [
     createPageUrl('AdminJobs'),
+    createPageUrl('JobsKanban'),
     createPageUrl('AdminCustomers'),
     createPageUrl('AdminUsers'),
     createPageUrl('AdminPickupLocations'),
@@ -176,6 +177,7 @@ const DispatcherNav = ({ collapsed, onNavigate }) => {
   
   const libraryPages = [
     createPageUrl('AdminJobs'),
+    createPageUrl('JobsKanban'),
     createPageUrl('AdminCustomers'),
     createPageUrl('AdminPickupLocations'),
     createPageUrl('AdminDeliveryTypes'),
