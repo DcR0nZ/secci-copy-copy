@@ -29,7 +29,8 @@ import {
   PanelLeftClose,
   PanelLeft,
   Home,
-  BarChart3
+  BarChart3,
+  Bell
 } from 'lucide-react';
 
 import ChatWidget from './components/chat/ChatWidget';

@@ -84,7 +84,7 @@ export default function DeliveryPartnersPage() {
     if (!selectedTenantId) {
       toast({
         title: "Error",
-        description: "Please select a tenant to invite.",
+        description: "Please enter a tenant ID to invite.",
         variant: "destructive",
       });
       return;
@@ -106,11 +106,30 @@ export default function DeliveryPartnersPage() {
         message: inviteMessage || undefined,
       });
 
+      // Send notification to tenant admins of the invited tenant
+      const allUsers = await base44.asServiceRole.entities.User.list();
+      const targetAdmins = allUsers.filter(
+        u => u.tenantId === selectedTenantId && 
+        (u.appRole === 'tenantAdmin' || u.role === 'admin')
+      );
+
+      await Promise.all(
+        targetAdmins.map(admin =>
+          base44.asServiceRole.entities.Notification.create({
+            userId: admin.id,
+            title: 'New Delivery Partner Invite',
+            message: `${myTenant?.name || myTenantId} has invited you to become delivery partners.`,
+            type: 'delivery_partner_invite',
+            isRead: false,
+          })
+        )
+      );
+
       queryClient.invalidateQueries({ queryKey: ['deliveryPartnerInvites'] });
 
       toast({
         title: "Invite Sent",
-        description: `Partnership invite sent to ${selectedTenant?.name}.`,
+        description: `Partnership invite sent to ${selectedTenant?.name || selectedTenantId}.`,
       });
 
       setInviteDialogOpen(false);
@@ -138,6 +157,25 @@ export default function DeliveryPartnersPage() {
         respondedByName: user.full_name,
         respondedDate: new Date().toISOString(),
       });
+
+      // Send notification to the inviting tenant admins
+      const allUsers = await base44.asServiceRole.entities.User.list();
+      const targetAdmins = allUsers.filter(
+        u => u.tenantId === invite.fromTenantId && 
+        (u.appRole === 'tenantAdmin' || u.role === 'admin')
+      );
+
+      await Promise.all(
+        targetAdmins.map(admin =>
+          base44.asServiceRole.entities.Notification.create({
+            userId: admin.id,
+            title: `Delivery Partner Invite ${status === 'accepted' ? 'Accepted' : 'Declined'}`,
+            message: `${invite.toTenantName} has ${status === 'accepted' ? 'accepted' : 'declined'} your delivery partner invite.`,
+            type: 'delivery_partner_invite',
+            isRead: false,
+          })
+        )
+      );
 
       queryClient.invalidateQueries({ queryKey: ['deliveryPartnerInvites'] });
 
@@ -217,7 +255,6 @@ export default function DeliveryPartnersPage() {
         <Button
           onClick={() => setInviteDialogOpen(true)}
           className="bg-blue-600 hover:bg-blue-700"
-          disabled={availableTenantsToInvite.length === 0}
         >
           <UserPlus className="h-4 w-4 mr-2" />
           Invite Partner
@@ -452,24 +489,15 @@ export default function DeliveryPartnersPage() {
 
           <div className="space-y-4 py-4">
             <div>
-              <label className="text-sm font-medium mb-2 block">Select Tenant</label>
-              <select
+              <label className="text-sm font-medium mb-2 block">Tenant ID</label>
+              <Input
                 value={selectedTenantId}
                 onChange={(e) => setSelectedTenantId(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Choose a tenant...</option>
-                {availableTenantsToInvite.map((tenant) => (
-                  <option key={tenant.id} value={tenant.tenantId}>
-                    {tenant.name} ({tenant.tenantId})
-                  </option>
-                ))}
-              </select>
-              {availableTenantsToInvite.length === 0 && (
-                <p className="text-sm text-gray-500 mt-2">
-                  No more tenants available to invite.
-                </p>
-              )}
+                placeholder="Enter tenant ID (e.g., sec, bayside_plasterboard)"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Enter the exact tenant ID you want to invite
+              </p>
             </div>
 
             <div>

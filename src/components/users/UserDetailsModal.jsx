@@ -134,7 +134,23 @@ export default function UserDetailsModal({
         truck: editedUser.truck,
         tenantId: editedUser.tenantId,
       };
+      
+      const oldRole = user.appRole;
+      const newRole = editedUser.appRole;
+      
       await onUpdate(user.id, payload);
+      
+      // Send notification if role changed
+      if (oldRole !== newRole) {
+        await base44.asServiceRole.entities.Notification.create({
+          userId: user.id,
+          title: 'Your Role Has Been Updated',
+          message: `Your role has been changed from ${oldRole || 'user'} to ${newRole}.`,
+          type: 'role_change',
+          isRead: false,
+        });
+      }
+      
       onOpenChange(false);
     } catch (error) {
       console.error("Failed to update user:", error);

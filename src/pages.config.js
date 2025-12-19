@@ -20,6 +20,7 @@ import ManageTenants from './pages/ManageTenants';
 import Phonebook from './pages/Phonebook';
 import Settings from './pages/Settings';
 import DeliveryPartners from './pages/DeliveryPartners';
+import Notifications from './pages/Notifications';
 import __Layout from './Layout.jsx';
 
 
@@ -46,6 +47,7 @@ export const PAGES = {
     "Phonebook": Phonebook,
     "Settings": Settings,
     "DeliveryPartners": DeliveryPartners,
+    "Notifications": Notifications,
 }
 
 export const pagesConfig = {
