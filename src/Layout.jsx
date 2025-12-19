@@ -36,6 +36,8 @@ import {
 import ChatWidget from './components/chat/ChatWidget';
 import { OfflineProvider } from './components/offline/OfflineManager';
 import ReturnedJobAlert from './components/scheduling/ReturnedJobAlert';
+import UserAvatarDropdown from './components/layout/UserAvatarDropdown';
+import NotificationBell from './components/notifications/NotificationBell';
 
 const NavLink = ({ to, icon: Icon, children, collapsed, onClick }) => {
   const location = useLocation();
@@ -243,6 +245,7 @@ const DriverNav = ({ collapsed, onNavigate }) =>
     <NavLink to={createPageUrl('DriverMyRuns')} icon={Calendar} collapsed={collapsed} onClick={onNavigate}>My Runs</NavLink>
     <NavLink to={createPageUrl('DailyJobBoard')} icon={LayoutGrid} collapsed={collapsed} onClick={onNavigate}>Daily Job Board</NavLink>
     <NavLink to={createPageUrl('Phonebook')} icon={Users} collapsed={collapsed} onClick={onNavigate}>Phonebook</NavLink>
+    <NavLink to={createPageUrl('Notifications')} icon={Bell} collapsed={collapsed} onClick={onNavigate}>Notifications</NavLink>
     <NavLink to={createPageUrl('Settings')} icon={Settings} collapsed={collapsed} onClick={onNavigate}>Settings</NavLink>
     <NavLink to={createPageUrl('WeatherToday')} icon={CloudRain} collapsed={collapsed} onClick={onNavigate}>Weather Today</NavLink>
   </>;
@@ -253,6 +256,7 @@ const CustomerNav = ({ collapsed, onNavigate }) =>
     <NavLink to={createPageUrl('DailyJobBoard')} icon={Calendar} collapsed={collapsed} onClick={onNavigate}>Daily Schedule</NavLink>
     <NavLink to={createPageUrl('CustomerRequestDelivery')} icon={Plus} collapsed={collapsed} onClick={onNavigate}>Request Delivery</NavLink>
     <NavLink to={createPageUrl('Phonebook')} icon={Users} collapsed={collapsed} onClick={onNavigate}>Phonebook</NavLink>
+    <NavLink to={createPageUrl('Notifications')} icon={Bell} collapsed={collapsed} onClick={onNavigate}>Notifications</NavLink>
     <NavLink to={createPageUrl('Settings')} icon={Settings} collapsed={collapsed} onClick={onNavigate}>Settings</NavLink>
     <NavLink to={createPageUrl('WeatherToday')} icon={CloudRain} collapsed={collapsed} onClick={onNavigate}>Weather Today</NavLink>
   </>;
@@ -286,6 +290,7 @@ const ManagerNav = ({ collapsed, onNavigate }) => {
       <NavLink to={createPageUrl('DailyJobBoard')} icon={Calendar} collapsed={collapsed} onClick={onNavigate}>Daily Job Board</NavLink>
       <NavLink to={createPageUrl('Reports')} icon={BarChart3} collapsed={collapsed} onClick={onNavigate}>Reports</NavLink>
       <NavLink to={createPageUrl('Phonebook')} icon={Users} collapsed={collapsed} onClick={onNavigate}>Phonebook</NavLink>
+      <NavLink to={createPageUrl('Notifications')} icon={Bell} collapsed={collapsed} onClick={onNavigate}>Notifications</NavLink>
       <NavLink to={createPageUrl('Settings')} icon={Settings} collapsed={collapsed} onClick={onNavigate}>Settings</NavLink>
       
       {!collapsed ? (
@@ -718,9 +723,10 @@ export default function Layout({ children, currentPageName }) {
             </div>
           </div>
 
-          {/* Desktop header with notification bell */}
-          <div className="hidden md:flex items-center justify-end px-6 py-3 bg-white border-b">
-            {/* NotificationBell was here */}
+          {/* Desktop header with notifications and user avatar dropdown */}
+          <div className="hidden md:flex items-center justify-end gap-2 px-6 py-3 bg-white border-b">
+            <NotificationBell user={user} />
+            <UserAvatarDropdown user={user} />
           </div>
 
           <main className="flex-1 overflow-y-auto p-6">
