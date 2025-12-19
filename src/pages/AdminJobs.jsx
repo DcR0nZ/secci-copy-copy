@@ -5,17 +5,23 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format } from 'date-fns';
-import { Search, Filter, X, AlertTriangle, Paperclip } from 'lucide-react';
+import { Search, Filter, X, AlertTriangle, Paperclip, List, LayoutGrid } from 'lucide-react';
 import JobDetailsDialog from '../components/scheduling/JobDetailsDialog';
+import BulkActionsBar from '../components/jobs/BulkActionsBar';
 import { base44 } from '@/api/base44Client';
+import { createPageUrl } from '@/utils';
+import { useNavigate } from 'react-router-dom';
 
 export default function AdminJobsPage() {
+  const navigate = useNavigate();
   const [jobs, setJobs] = useState([]);
   const [filteredJobs, setFilteredJobs] = useState([]);
   const [assignments, setAssignments] = useState([]);
   const [customers, setCustomers] = useState([]);
-  const [deliveryTypes, setDeliveryTypes] = useState([]); // State to store delivery types
+  const [deliveryTypes, setDeliveryTypes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
   const [selectedJob, setSelectedJob] = useState(null);
@@ -24,6 +30,12 @@ export default function AdminJobsPage() {
   const [filterBy, setFilterBy] = useState('all');
   const [sortOrder, setSortOrder] = useState('desc');
   const [showOnlyWithAttachments, setShowOnlyWithAttachments] = useState(false);
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [customerFilter, setCustomerFilter] = useState('all');
+  const [deliveryTypeFilter, setDeliveryTypeFilter] = useState('all');
+  const [dateRangeFilter, setDateRangeFilter] = useState('all');
+  const [selectedJobs, setSelectedJobs] = useState([]);
+  const [viewMode, setViewMode] = useState('table');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -82,6 +94,46 @@ export default function AdminJobsPage() {
   useEffect(() => {
     let result = [...jobs];
 
+    // Status filter
+    if (statusFilter !== 'all') {
+      result = result.filter(job => job.status === statusFilter);
+    }
+
+    // Customer filter
+    if (customerFilter !== 'all') {
+      result = result.filter(job => job.customerId === customerFilter);
+    }
+
+    // Delivery type filter
+    if (deliveryTypeFilter !== 'all') {
+      result = result.filter(job => job.deliveryTypeId === deliveryTypeFilter);
+    }
+
+    // Date range filter
+    if (dateRangeFilter !== 'all') {
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      
+      result = result.filter(job => {
+        const jobDate = new Date(job.requestedDate);
+        const jobDateOnly = new Date(jobDate.getFullYear(), jobDate.getMonth(), jobDate.getDate());
+        
+        switch (dateRangeFilter) {
+          case 'today':
+            return jobDateOnly.getTime() === today.getTime();
+          case 'this_week':
+            const weekAgo = new Date(today);
+            weekAgo.setDate(weekAgo.getDate() - 7);
+            return jobDateOnly >= weekAgo;
+          case 'this_month':
+            return jobDate.getMonth() === now.getMonth() && jobDate.getFullYear() === now.getFullYear();
+          default:
+            return true;
+        }
+      });
+    }
+
+    // Search query
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       result = result.filter(job => {
@@ -104,6 +156,7 @@ export default function AdminJobsPage() {
       });
     }
 
+    // Attachments filter
     if (showOnlyWithAttachments) {
       result = result.filter(job => job.attachments && job.attachments.length > 0);
     }
@@ -167,13 +220,33 @@ export default function AdminJobsPage() {
     }
 
     setFilteredJobs(result);
-  }, [searchQuery, filterBy, sortOrder, showOnlyWithAttachments, jobs, assignments]);
+  }, [searchQuery, filterBy, sortOrder, showOnlyWithAttachments, statusFilter, customerFilter, deliveryTypeFilter, dateRangeFilter, jobs, assignments]);
 
   const handleClearFilters = () => {
     setSearchQuery('');
     setFilterBy('all');
     setSortOrder('desc');
     setShowOnlyWithAttachments(false);
+    setStatusFilter('all');
+    setCustomerFilter('all');
+    setDeliveryTypeFilter('all');
+    setDateRangeFilter('all');
+  };
+
+  const handleSelectAll = () => {
+    if (selectedJobs.length === filteredJobs.length) {
+      setSelectedJobs([]);
+    } else {
+      setSelectedJobs(filteredJobs.map(j => j));
+    }
+  };
+
+  const handleSelectJob = (job) => {
+    if (selectedJobs.find(j => j.id === job.id)) {
+      setSelectedJobs(selectedJobs.filter(j => j.id !== job.id));
+    } else {
+      setSelectedJobs([...selectedJobs, job]);
+    }
   };
 
   const getAssignmentForJob = (jobId) => {
@@ -223,7 +296,8 @@ export default function AdminJobsPage() {
     ? 'View all your delivery requests and their current status' 
     : 'A complete history of all delivery jobs';
 
-  const hasActiveFilters = searchQuery.trim() || filterBy !== 'all' || showOnlyWithAttachments;
+  const hasActiveFilters = searchQuery.trim() || filterBy !== 'all' || showOnlyWithAttachments || 
+    statusFilter !== 'all' || customerFilter !== 'all' || deliveryTypeFilter !== 'all' || dateRangeFilter !== 'all';
 
   // Helper function to get colors and icon for delivery type
   const getDeliveryTypeStyles = (deliveryType, isDifficult) => {
@@ -280,17 +354,37 @@ export default function AdminJobsPage() {
   return (
     <>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">{pageTitle}</h1>
-          <p className="text-gray-600 mt-1">{pageDescription}</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">{pageTitle}</h1>
+            <p className="text-gray-600 mt-1">{pageDescription}</p>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant={viewMode === 'table' ? 'default' : 'outline'}
+              onClick={() => setViewMode('table')}
+              size="sm"
+            >
+              <List className="h-4 w-4 mr-2" />
+              Table
+            </Button>
+            <Button
+              variant={viewMode === 'kanban' ? 'default' : 'outline'}
+              onClick={() => navigate(createPageUrl('JobsKanban'))}
+              size="sm"
+            >
+              <LayoutGrid className="h-4 w-4 mr-2" />
+              Kanban
+            </Button>
+          </div>
         </div>
 
-        {/* Search and Filter Bar */}
+        {/* Enhanced Filter Bar */}
         <Card>
           <CardContent className="p-4">
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="space-y-4">
               {/* Search Bar */}
-              <div className="flex-1 relative">
+              <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   placeholder="Search jobs by customer, location, contact, docket, or notes..."
@@ -300,78 +394,116 @@ export default function AdminJobsPage() {
                 />
               </div>
 
-              {/* Filter By Dropdown */}
-              <div className="flex gap-2">
-                {(currentUser?.role === 'admin' || currentUser?.appRole === 'dispatcher') && (
-                  <Button
-                    variant={showOnlyWithAttachments ? 'default' : 'outline'}
-                    onClick={() => setShowOnlyWithAttachments(!showOnlyWithAttachments)}
-                    className="gap-2"
-                  >
-                    <Paperclip className="h-4 w-4" />
-                    With Attachments
-                  </Button>
-                )}
-                <div className="w-48">
-                  <Select value={filterBy} onValueChange={setFilterBy}>
-                    <SelectTrigger>
-                      <div className="flex items-center gap-2">
-                        <Filter className="h-4 w-4" />
-                        <SelectValue placeholder="Filter by..." />
-                      </div>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All (No Filter)</SelectItem>
-                      <SelectItem value="customer">Customer</SelectItem>
-                      <SelectItem value="deliveryLocation">Delivery Location</SelectItem>
-                      <SelectItem value="requestedDate">Requested Date</SelectItem>
-                      <SelectItem value="scheduledDate">Scheduled Date</SelectItem>
-                      <SelectItem value="deliveryWindow">Delivery Window</SelectItem>
-                      <SelectItem value="assignedTruck">Assigned Truck</SelectItem>
-                      <SelectItem value="status">Status</SelectItem>
-                    </SelectContent>
-                  </Select>
+              {/* Filter Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    <SelectItem value="PENDING_APPROVAL">Pending Approval</SelectItem>
+                    <SelectItem value="APPROVED">Approved</SelectItem>
+                    <SelectItem value="SCHEDULED">Scheduled</SelectItem>
+                    <SelectItem value="IN_TRANSIT">In Transit</SelectItem>
+                    <SelectItem value="DELIVERED">Delivered</SelectItem>
+                    <SelectItem value="RETURNED">Returned</SelectItem>
+                    <SelectItem value="CANCELLED">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select value={customerFilter} onValueChange={setCustomerFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Customer" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Customers</SelectItem>
+                    {customers.map(customer => (
+                      <SelectItem key={customer.id} value={customer.id}>
+                        {customer.customerName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select value={deliveryTypeFilter} onValueChange={setDeliveryTypeFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Delivery Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Types</SelectItem>
+                    {deliveryTypes.map(type => (
+                      <SelectItem key={type.id} value={type.id}>
+                        {type.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select value={dateRangeFilter} onValueChange={setDateRangeFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Date Range" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Time</SelectItem>
+                    <SelectItem value="today">Today</SelectItem>
+                    <SelectItem value="this_week">This Week</SelectItem>
+                    <SelectItem value="this_month">This Month</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <div className="flex gap-2">
+                  {(currentUser?.role === 'admin' || currentUser?.appRole === 'dispatcher') && (
+                    <Button
+                      variant={showOnlyWithAttachments ? 'default' : 'outline'}
+                      onClick={() => setShowOnlyWithAttachments(!showOnlyWithAttachments)}
+                      className="gap-2 flex-1"
+                    >
+                      <Paperclip className="h-4 w-4" />
+                      Attachments
+                    </Button>
+                  )}
+                  {hasActiveFilters && (
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={handleClearFilters}
+                      title="Clear all filters"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
-
-                {/* Sort Order Toggle */}
-                {filterBy !== 'all' && (
-                  <Select value={sortOrder} onValueChange={setSortOrder}>
-                    <SelectTrigger className="w-32">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="asc">A → Z / Old → New</SelectItem>
-                      <SelectItem value="desc">Z → A / New → Old</SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
-
-                {/* Clear Filters Button */}
-                {hasActiveFilters && (
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={handleClearFilters}
-                    title="Clear all filters"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                )}
               </div>
             </div>
 
             {/* Active Filter Indicator */}
             {hasActiveFilters && (
-              <div className="mt-3 flex items-center gap-2 text-sm text-gray-600">
+              <div className="mt-3 flex items-center gap-2 text-sm text-gray-600 flex-wrap">
                 <span className="font-medium">Active filters:</span>
                 {searchQuery && (
                   <Badge variant="outline" className="gap-1">
                     Search: "{searchQuery}"
                   </Badge>
                 )}
-                {filterBy !== 'all' && (
+                {statusFilter !== 'all' && (
                   <Badge variant="outline" className="gap-1">
-                    Sort by: {filterBy.replace(/([A-Z])/g, ' $1').trim()}
+                    Status: {statusFilter}
+                  </Badge>
+                )}
+                {customerFilter !== 'all' && (
+                  <Badge variant="outline" className="gap-1">
+                    Customer: {customers.find(c => c.id === customerFilter)?.customerName}
+                  </Badge>
+                )}
+                {deliveryTypeFilter !== 'all' && (
+                  <Badge variant="outline" className="gap-1">
+                    Type: {deliveryTypes.find(t => t.id === deliveryTypeFilter)?.name}
+                  </Badge>
+                )}
+                {dateRangeFilter !== 'all' && (
+                  <Badge variant="outline" className="gap-1">
+                    Date: {dateRangeFilter.replace('_', ' ')}
                   </Badge>
                 )}
                 {showOnlyWithAttachments && (
@@ -386,11 +518,30 @@ export default function AdminJobsPage() {
           </CardContent>
         </Card>
 
+        {/* Bulk Actions for Admin/Dispatcher */}
+        {(currentUser?.role === 'admin' || currentUser?.appRole === 'dispatcher') && (
+          <BulkActionsBar
+            selectedJobs={selectedJobs}
+            onClearSelection={() => setSelectedJobs([])}
+            onActionComplete={() => {
+              window.location.reload();
+            }}
+          />
+        )}
+
         <Card>
           <CardContent className="p-0">
             <Table>
               <TableHeader>
                 <TableRow>
+                  {(currentUser?.role === 'admin' || currentUser?.appRole === 'dispatcher') && (
+                    <TableHead className="w-12">
+                      <Checkbox
+                        checked={selectedJobs.length === filteredJobs.length && filteredJobs.length > 0}
+                        onCheckedChange={handleSelectAll}
+                      />
+                    </TableHead>
+                  )}
                   {!isCustomer && <TableHead>Customer</TableHead>}
                   <TableHead>Delivery Location</TableHead>
                   <TableHead>Requested Date</TableHead>
@@ -403,7 +554,7 @@ export default function AdminJobsPage() {
               <TableBody>
                 {filteredJobs.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={isCustomer ? 6 : 7} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={isCustomer ? 6 : (currentUser?.role === 'admin' || currentUser?.appRole === 'dispatcher' ? 8 : 7)} className="text-center py-8 text-gray-500">
                       {hasActiveFilters ? 'No jobs found matching your search criteria' : 'No jobs found'}
                     </TableCell>
                   </TableRow>
@@ -413,18 +564,43 @@ export default function AdminJobsPage() {
                     const assignment = getAssignmentForJob(job.id);
                     const deliveryType = deliveryTypes.find(dt => dt.id === job.deliveryTypeId);
                     const styles = getDeliveryTypeStyles(deliveryType, job.isDifficultDelivery);
+                    const isSelected = selectedJobs.find(j => j.id === job.id);
 
                     return (
                       <TableRow 
                         key={job.id}
-                        className={`cursor-pointer ${styles.bgColor ? styles.bgColor : ''} hover:opacity-80 transition-opacity`}
+                        className={`${styles.bgColor ? styles.bgColor : ''} ${isSelected ? 'ring-2 ring-blue-500' : ''} hover:opacity-80 transition-opacity`}
+                      >
+                        {(currentUser?.role === 'admin' || currentUser?.appRole === 'dispatcher') && (
+                          <TableCell onClick={(e) => e.stopPropagation()}>
+                            <Checkbox
+                              checked={isSelected}
+                              onCheckedChange={() => handleSelectJob(job)}
+                            />
+                          </TableCell>
+                        )}
+                        <TableCell
+                          className="cursor-pointer"
+                          onClick={() => {
+                            setSelectedJob(job);
+                            setDialogOpen(true);
+                          }}
+                          colSpan={isCustomer ? 0 : 1}
+                        className="cursor-pointer"
                         onClick={() => {
                           setSelectedJob(job);
                           setDialogOpen(true);
                         }}
-                      >
-                        {!isCustomer && <TableCell>{job.customerName}</TableCell>}
-                        <TableCell>
+                        >
+                        {!isCustomer && job.customerName}
+                        </TableCell>
+                        <TableCell
+                          className="cursor-pointer"
+                          onClick={() => {
+                            setSelectedJob(job);
+                            setDialogOpen(true);
+                          }}
+                        >
                           <div className="flex flex-col gap-1">
                             <div className="flex items-center gap-2 flex-wrap">
                               {deliveryType?.code && (
@@ -441,10 +617,29 @@ export default function AdminJobsPage() {
                               )}
                             </div>
                             <div>{job.deliveryLocation}</div>
+                            {job.estimatedArrivalTime && (
+                              <div className="text-xs text-gray-600">
+                                ETA: {job.estimatedArrivalTime}
+                              </div>
+                            )}
                           </div>
                         </TableCell>
-                        <TableCell>{format(new Date(job.requestedDate), 'dd MMM yyyy')}</TableCell>
-                        <TableCell>
+                        <TableCell
+                          className="cursor-pointer"
+                          onClick={() => {
+                            setSelectedJob(job);
+                            setDialogOpen(true);
+                          }}
+                        >
+                          {format(new Date(job.requestedDate), 'dd MMM yyyy')}
+                        </TableCell>
+                        <TableCell
+                          className="cursor-pointer"
+                          onClick={() => {
+                            setSelectedJob(job);
+                            setDialogOpen(true);
+                          }}
+                        >
                           {assignment ? (
                             <div>
                               <div className="font-medium text-gray-900">
@@ -458,14 +653,26 @@ export default function AdminJobsPage() {
                             <span className="text-sm text-gray-400">Not scheduled</span>
                           )}
                         </TableCell>
-                        <TableCell>
+                        <TableCell
+                          className="cursor-pointer"
+                          onClick={() => {
+                            setSelectedJob(job);
+                            setDialogOpen(true);
+                          }}
+                        >
                           {job.deliveryWindow ? (
                             <span className="text-sm text-gray-600">{job.deliveryWindow}</span>
                           ) : (
                             <span className="text-sm text-gray-400">Not specified</span>
                           )}
                         </TableCell>
-                        <TableCell>
+                        <TableCell
+                          className="cursor-pointer"
+                          onClick={() => {
+                            setSelectedJob(job);
+                            setDialogOpen(true);
+                          }}
+                        >
                           {assignedTruck ? (
                             <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
                               {assignedTruck}
@@ -474,15 +681,21 @@ export default function AdminJobsPage() {
                             <span className="text-sm text-gray-400">Unassigned</span>
                           )}
                         </TableCell>
-                        <TableCell>
+                        <TableCell
+                          className="cursor-pointer"
+                          onClick={() => {
+                            setSelectedJob(job);
+                            setDialogOpen(true);
+                          }}
+                        >
                           <Badge className={getStatusColor(job.status)}>{job.status.replace(/_/g, ' ')}</Badge>
                         </TableCell>
-                      </TableRow>
-                    );
-                  })
-                )}
-              </TableBody>
-            </Table>
+                        </TableRow>
+                        );
+                        })
+                        )}
+                        </TableBody>
+                        </Table>
           </CardContent>
         </Card>
       </div>

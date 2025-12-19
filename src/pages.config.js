@@ -21,6 +21,7 @@ import Phonebook from './pages/Phonebook';
 import Settings from './pages/Settings';
 import DeliveryPartners from './pages/DeliveryPartners';
 import Notifications from './pages/Notifications';
+import JobsKanban from './pages/JobsKanban';
 import __Layout from './Layout.jsx';
 
 
@@ -48,6 +49,7 @@ export const PAGES = {
     "Settings": Settings,
     "DeliveryPartners": DeliveryPartners,
     "Notifications": Notifications,
+    "JobsKanban": JobsKanban,
 }
 
 export const pagesConfig = {

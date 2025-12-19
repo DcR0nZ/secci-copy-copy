@@ -226,6 +226,7 @@ const DispatcherNav = ({ collapsed, onNavigate }) => {
           </CollapsibleTrigger>
           <CollapsibleContent className="space-y-1 mt-1">
             <SubNavLink to={createPageUrl('AdminJobs')} onClick={onNavigate}>All Jobs</SubNavLink>
+            <SubNavLink to={createPageUrl('JobsKanban')} onClick={onNavigate}>Jobs Kanban</SubNavLink>
             <SubNavLink to={createPageUrl('AdminCustomers')} onClick={onNavigate}>Customers</SubNavLink>
             <SubNavLink to={createPageUrl('AdminPickupLocations')} onClick={onNavigate}>Pickup Locations</SubNavLink>
             <SubNavLink to={createPageUrl('AdminDeliveryTypes')} onClick={onNavigate}>Delivery Types</SubNavLink>
