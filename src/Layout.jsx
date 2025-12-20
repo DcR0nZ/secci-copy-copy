@@ -350,6 +350,10 @@ export default function Layout({ children, currentPageName }) {
         const theme = themes[0];
         
         if (theme) {
+          // Apply background color
+          document.body.style.backgroundColor = theme.backgroundColor;
+          
+          // Apply CSS variables for other components to use
           const root = document.documentElement;
           root.style.setProperty('--theme-background', theme.backgroundColor);
           root.style.setProperty('--theme-quick-tile', theme.quickTileColor);

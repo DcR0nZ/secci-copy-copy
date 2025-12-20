@@ -74,6 +74,15 @@ export default function ThemeCustomization({ user }) {
 
       queryClient.invalidateQueries({ queryKey: ['tenantTheme'] });
       
+      // Apply theme immediately
+      document.body.style.backgroundColor = colors.backgroundColor;
+      const root = document.documentElement;
+      root.style.setProperty('--theme-background', colors.backgroundColor);
+      root.style.setProperty('--theme-quick-tile', colors.quickTileColor);
+      root.style.setProperty('--theme-primary', colors.primaryColor);
+      root.style.setProperty('--theme-secondary', colors.secondaryColor);
+      root.style.setProperty('--theme-accent', colors.accentColor);
+      
       toast({
         title: "Theme Updated",
         description: "Your theme settings have been saved successfully.",
