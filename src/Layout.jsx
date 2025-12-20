@@ -352,7 +352,7 @@ export default function Layout({ children, currentPageName }) {
   const [themeColors, setThemeColors] = useState(null);
   const location = useLocation();
 
-  const THEME_PRESETS = {
+  const THEME_PRESETS = useMemo(() => ({
     default: {
       background: '#f9fafb',
       quickTile: '#3b82f6',
@@ -388,7 +388,7 @@ export default function Layout({ children, currentPageName }) {
       secondary: '#38bdf8',
       accent: '#7dd3fc'
     }
-  };
+  }), []);
 
   const tenantId = user?.tenantId || 'sec';
 
@@ -399,10 +399,11 @@ export default function Layout({ children, currentPageName }) {
       return themes[0];
     },
     enabled: !!user,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    cacheTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
     refetchOnWindowFocus: false,
-    refetchOnMount: false
+    refetchOnMount: false,
+    refetchOnReconnect: false
   });
 
   useEffect(() => {
@@ -410,10 +411,10 @@ export default function Layout({ children, currentPageName }) {
       const themeName = themeData.themeName || 'default';
       const colors = THEME_PRESETS[themeName] || THEME_PRESETS.default;
       setThemeColors(colors);
-    } else if (user) {
+    } else if (user && !themeData) {
       setThemeColors(THEME_PRESETS.default);
     }
-  }, [themeData, user]);
+  }, [themeData, user, THEME_PRESETS]);
 
   useEffect(() => {
     let mounted = true;
