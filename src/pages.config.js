@@ -23,6 +23,7 @@ import DeliveryPartners from './pages/DeliveryPartners';
 import Notifications from './pages/Notifications';
 import JobsKanban from './pages/JobsKanban';
 import DriverMobile from './pages/DriverMobile';
+import CustomerPortal from './pages/CustomerPortal';
 import __Layout from './Layout.jsx';
 
 
@@ -52,6 +53,7 @@ export const PAGES = {
     "Notifications": Notifications,
     "JobsKanban": JobsKanban,
     "DriverMobile": DriverMobile,
+    "CustomerPortal": CustomerPortal,
 }
 
 export const pagesConfig = {
