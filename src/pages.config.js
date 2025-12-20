@@ -24,6 +24,8 @@ import Notifications from './pages/Notifications';
 import JobsKanban from './pages/JobsKanban';
 import DriverMobile from './pages/DriverMobile';
 import CustomerPortal from './pages/CustomerPortal';
+import FleetManagement from './pages/FleetManagement';
+import DriverVehicle from './pages/DriverVehicle';
 import __Layout from './Layout.jsx';
 
 
@@ -54,6 +56,8 @@ export const PAGES = {
     "JobsKanban": JobsKanban,
     "DriverMobile": DriverMobile,
     "CustomerPortal": CustomerPortal,
+    "FleetManagement": FleetManagement,
+    "DriverVehicle": DriverVehicle,
 }
 
 export const pagesConfig = {
