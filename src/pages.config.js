@@ -26,6 +26,8 @@ import DriverMobile from './pages/DriverMobile';
 import CustomerPortal from './pages/CustomerPortal';
 import FleetManagement from './pages/FleetManagement';
 import DriverVehicle from './pages/DriverVehicle';
+import MyTimesheet from './pages/MyTimesheet';
+import TimesheetsAndRosters from './pages/TimesheetsAndRosters';
 import __Layout from './Layout.jsx';
 
 
@@ -58,6 +60,8 @@ export const PAGES = {
     "CustomerPortal": CustomerPortal,
     "FleetManagement": FleetManagement,
     "DriverVehicle": DriverVehicle,
+    "MyTimesheet": MyTimesheet,
+    "TimesheetsAndRosters": TimesheetsAndRosters,
 }
 
 export const pagesConfig = {
