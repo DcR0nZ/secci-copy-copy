@@ -127,14 +127,15 @@ const AdminNav = ({ collapsed, onNavigate, themeColor }) => {
   
   return (
     <>
-      <NavLink to={createPageUrl('Dashboard')} icon={Home} collapsed={collapsed} onClick={onNavigate}>Dashboard</NavLink>
-      <NavLink to={createPageUrl('SchedulingBoard')} icon={LayoutGrid} collapsed={collapsed} onClick={onNavigate}>Scheduling</NavLink>
-      <NavLink to={createPageUrl('DailyJobBoard')} icon={Calendar} collapsed={collapsed} onClick={onNavigate}>Daily Job Board</NavLink>
-      <NavLink to={createPageUrl('LiveTracking')} icon={MapPin} collapsed={collapsed} onClick={onNavigate}>Live Tracking</NavLink>
-      <NavLink to={createPageUrl('Reports')} icon={BarChart3} collapsed={collapsed} onClick={onNavigate}>Reports</NavLink>
-      <NavLink to={createPageUrl('Phonebook')} icon={Users} collapsed={collapsed} onClick={onNavigate}>Phonebook</NavLink>
-      <NavLink to={createPageUrl('Notifications')} icon={Bell} collapsed={collapsed} onClick={onNavigate}>Notifications</NavLink>
-      <NavLink to={createPageUrl('Settings')} icon={Settings} collapsed={collapsed} onClick={onNavigate}>Settings</NavLink>
+      <NavLink to={createPageUrl('Dashboard')} icon={Home} collapsed={collapsed} onClick={onNavigate} themeColor={themeColor}>Dashboard</NavLink>
+      <NavLink to={createPageUrl('SchedulingBoard')} icon={LayoutGrid} collapsed={collapsed} onClick={onNavigate} themeColor={themeColor}>Scheduling</NavLink>
+      <NavLink to={createPageUrl('DailyJobBoard')} icon={Calendar} collapsed={collapsed} onClick={onNavigate} themeColor={themeColor}>Daily Job Board</NavLink>
+      <NavLink to={createPageUrl('LiveTracking')} icon={MapPin} collapsed={collapsed} onClick={onNavigate} themeColor={themeColor}>Live Tracking</NavLink>
+      <NavLink to={createPageUrl('FleetManagement')} icon={Truck} collapsed={collapsed} onClick={onNavigate} themeColor={themeColor}>Fleet Management</NavLink>
+      <NavLink to={createPageUrl('Reports')} icon={BarChart3} collapsed={collapsed} onClick={onNavigate} themeColor={themeColor}>Reports</NavLink>
+      <NavLink to={createPageUrl('Phonebook')} icon={Users} collapsed={collapsed} onClick={onNavigate} themeColor={themeColor}>Phonebook</NavLink>
+      <NavLink to={createPageUrl('Notifications')} icon={Bell} collapsed={collapsed} onClick={onNavigate} themeColor={themeColor}>Notifications</NavLink>
+      <NavLink to={createPageUrl('Settings')} icon={Settings} collapsed={collapsed} onClick={onNavigate} themeColor={themeColor}>Settings</NavLink>
       
       {!collapsed ? (
         <Collapsible open={libraryOpen} onOpenChange={setLibraryOpen}>
@@ -142,9 +143,10 @@ const AdminNav = ({ collapsed, onNavigate, themeColor }) => {
             <button
               className={`w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ${
                 isLibraryActive ?
-                  'bg-blue-600 text-white' :
+                  'text-white' :
                   'text-gray-600 hover:bg-gray-100'
               }`}
+              style={isLibraryActive ? { backgroundColor: themeColor || '#2563eb' } : {}}
             >
               <div className="flex items-center">
                 <Library className="h-5 w-5 mr-3" />
@@ -164,7 +166,7 @@ const AdminNav = ({ collapsed, onNavigate, themeColor }) => {
           </CollapsibleContent>
         </Collapsible>
       ) : (
-        <NavLink to={createPageUrl('AdminJobs')} icon={Library} collapsed={collapsed} onClick={onNavigate}>Library</NavLink>
+        <NavLink to={createPageUrl('AdminJobs')} icon={Library} collapsed={collapsed} onClick={onNavigate} themeColor={themeColor}>Library</NavLink>
       )}
       
       {isGlobalAdmin && (
@@ -204,14 +206,15 @@ const DispatcherNav = ({ collapsed, onNavigate, themeColor }) => {
   
   return (
     <>
-      <NavLink to={createPageUrl('Dashboard')} icon={Home} collapsed={collapsed} onClick={onNavigate}>Dashboard</NavLink>
-      <NavLink to={createPageUrl('SchedulingBoard')} icon={LayoutGrid} collapsed={collapsed} onClick={onNavigate}>Scheduling</NavLink>
-      <NavLink to={createPageUrl('DailyJobBoard')} icon={Calendar} collapsed={collapsed} onClick={onNavigate}>Daily Job Board</NavLink>
-      <NavLink to={createPageUrl('LiveTracking')} icon={MapPin} collapsed={collapsed} onClick={onNavigate}>Live Tracking</NavLink>
-      <NavLink to={createPageUrl('Reports')} icon={BarChart3} collapsed={collapsed} onClick={onNavigate}>Reports</NavLink>
-      <NavLink to={createPageUrl('Phonebook')} icon={Users} collapsed={collapsed} onClick={onNavigate}>Phonebook</NavLink>
-      <NavLink to={createPageUrl('Notifications')} icon={Bell} collapsed={collapsed} onClick={onNavigate}>Notifications</NavLink>
-      <NavLink to={createPageUrl('Settings')} icon={Settings} collapsed={collapsed} onClick={onNavigate}>Settings</NavLink>
+      <NavLink to={createPageUrl('Dashboard')} icon={Home} collapsed={collapsed} onClick={onNavigate} themeColor={themeColor}>Dashboard</NavLink>
+      <NavLink to={createPageUrl('SchedulingBoard')} icon={LayoutGrid} collapsed={collapsed} onClick={onNavigate} themeColor={themeColor}>Scheduling</NavLink>
+      <NavLink to={createPageUrl('DailyJobBoard')} icon={Calendar} collapsed={collapsed} onClick={onNavigate} themeColor={themeColor}>Daily Job Board</NavLink>
+      <NavLink to={createPageUrl('LiveTracking')} icon={MapPin} collapsed={collapsed} onClick={onNavigate} themeColor={themeColor}>Live Tracking</NavLink>
+      <NavLink to={createPageUrl('FleetManagement')} icon={Truck} collapsed={collapsed} onClick={onNavigate} themeColor={themeColor}>Fleet Management</NavLink>
+      <NavLink to={createPageUrl('Reports')} icon={BarChart3} collapsed={collapsed} onClick={onNavigate} themeColor={themeColor}>Reports</NavLink>
+      <NavLink to={createPageUrl('Phonebook')} icon={Users} collapsed={collapsed} onClick={onNavigate} themeColor={themeColor}>Phonebook</NavLink>
+      <NavLink to={createPageUrl('Notifications')} icon={Bell} collapsed={collapsed} onClick={onNavigate} themeColor={themeColor}>Notifications</NavLink>
+      <NavLink to={createPageUrl('Settings')} icon={Settings} collapsed={collapsed} onClick={onNavigate} themeColor={themeColor}>Settings</NavLink>
       
       {!collapsed ? (
         <Collapsible open={libraryOpen} onOpenChange={setLibraryOpen}>
@@ -219,9 +222,10 @@ const DispatcherNav = ({ collapsed, onNavigate, themeColor }) => {
             <button
               className={`w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ${
                 isLibraryActive ?
-                  'bg-blue-600 text-white' :
+                  'text-white' :
                   'text-gray-600 hover:bg-gray-100'
               }`}
+              style={isLibraryActive ? { backgroundColor: themeColor || '#2563eb' } : {}}
             >
               <div className="flex items-center">
                 <Library className="h-5 w-5 mr-3" />
