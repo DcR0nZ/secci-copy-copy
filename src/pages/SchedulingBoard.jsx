@@ -35,18 +35,11 @@ const TRUCKS = [
 ];
 
 const TIME_SLOTS = [
-  { id: 'slot-5-6', label: '5-6am' },
-  { id: 'slot-6-7', label: '6-7am' },
-  { id: 'slot-7-8', label: '7-8am' },
-  { id: 'slot-8-9', label: '8-9am' },
-  { id: 'slot-9-10', label: '9-10am' },
-  { id: 'slot-10-11', label: '10-11am' },
-  { id: 'slot-11-12', label: '11am-12pm' },
-  { id: 'slot-12-1', label: '12-1pm' },
-  { id: 'slot-1-2', label: '1-2pm' },
-  { id: 'slot-2-3', label: '2-3pm' },
-  { id: 'slot-3-4', label: '3-4pm' },
-  { id: 'slot-4-5', label: '4-5pm' },
+  { id: 'first-am', label: '6-8am (1st AM)' },
+  { id: 'second-am', label: '8-10am (2nd AM)' },
+  { id: 'lunch', label: '10am-12pm (LUNCH)' },
+  { id: 'first-pm', label: '12-2pm (1st PM)' },
+  { id: 'second-pm', label: '2-4pm (2nd PM)' },
 ];
 
 export default function SchedulingBoard() {
