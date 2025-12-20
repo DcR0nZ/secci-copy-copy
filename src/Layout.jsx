@@ -339,6 +339,32 @@ export default function Layout({ children, currentPageName }) {
   const [showReturnedAlert, setShowReturnedAlert] = useState(false);
   const location = useLocation();
 
+  // Apply tenant theme
+  useEffect(() => {
+    const applyTheme = async () => {
+      if (!user) return;
+      
+      const tenantId = user.tenantId || 'sec';
+      try {
+        const themes = await base44.entities.TenantTheme.filter({ tenantId });
+        const theme = themes[0];
+        
+        if (theme) {
+          const root = document.documentElement;
+          root.style.setProperty('--theme-background', theme.backgroundColor);
+          root.style.setProperty('--theme-quick-tile', theme.quickTileColor);
+          root.style.setProperty('--theme-primary', theme.deliveryTypeColorScheme?.primary || '#2563eb');
+          root.style.setProperty('--theme-secondary', theme.deliveryTypeColorScheme?.secondary || '#7c3aed');
+          root.style.setProperty('--theme-accent', theme.deliveryTypeColorScheme?.accent || '#059669');
+        }
+      } catch (error) {
+        console.error('Failed to load theme:', error);
+      }
+    };
+    
+    applyTheme();
+  }, [user]);
+
   useEffect(() => {
     let mounted = true;
     
