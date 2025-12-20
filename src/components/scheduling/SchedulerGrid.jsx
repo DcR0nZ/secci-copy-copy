@@ -11,11 +11,18 @@ import JobDetailsDialog from './JobDetailsDialog';
 import PlaceholderBlock from './PlaceholderBlock';
 
 const TIME_SLOTS = [
-  { id: 'first-am', label: '6-8am (1st AM)', color: 'bg-blue-100' },
-  { id: 'second-am', label: '8-10am (2nd AM)', color: 'bg-green-100' },
-  { id: 'lunch', label: '10am-12pm (LUNCH)', color: 'bg-yellow-100' },
-  { id: 'first-pm', label: '12-2pm (1st PM)', color: 'bg-orange-100' },
-  { id: 'second-pm', label: '2-4pm (2nd PM)', color: 'bg-purple-100' }
+  { id: 'slot-5-6', label: '5-6am', color: 'bg-indigo-50' },
+  { id: 'slot-6-7', label: '6-7am', color: 'bg-blue-50' },
+  { id: 'slot-7-8', label: '7-8am', color: 'bg-cyan-50' },
+  { id: 'slot-8-9', label: '8-9am', color: 'bg-teal-50' },
+  { id: 'slot-9-10', label: '9-10am', color: 'bg-green-50' },
+  { id: 'slot-10-11', label: '10-11am', color: 'bg-lime-50' },
+  { id: 'slot-11-12', label: '11am-12pm', color: 'bg-yellow-50' },
+  { id: 'slot-12-1', label: '12-1pm', color: 'bg-amber-50' },
+  { id: 'slot-1-2', label: '1-2pm', color: 'bg-orange-50' },
+  { id: 'slot-2-3', label: '2-3pm', color: 'bg-red-50' },
+  { id: 'slot-3-4', label: '3-4pm', color: 'bg-pink-50' },
+  { id: 'slot-4-5', label: '4-5pm', color: 'bg-purple-50' }
 ];
 
 // Helper function to parse and format address
