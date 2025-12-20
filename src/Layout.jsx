@@ -165,13 +165,13 @@ const AdminNav = ({ onNavigate }) => {
           </TooltipContent>
         </Tooltip>
         <DropdownMenuContent align="start">
-          <DropdownMenuItem onClick={() => { onNavigate(); window.location.href = createPageUrl('AdminJobs'); }}>All Jobs</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => { onNavigate(); window.location.href = createPageUrl('AdminCustomers'); }}>Customers</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => { onNavigate(); window.location.href = createPageUrl('AdminUsers'); }}>System Users</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => { onNavigate(); window.location.href = createPageUrl('AdminPickupLocations'); }}>Pickup Locations</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => { onNavigate(); window.location.href = createPageUrl('AdminDeliveryTypes'); }}>Delivery Types</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => { onNavigate(); window.location.href = createPageUrl('SheetSpecs'); }}>Sheet Specs</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => { onNavigate(); window.location.href = createPageUrl('DeliveryPartners'); }}>Delivery Partners</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => { onNavigate?.(); window.location.href = createPageUrl('AdminJobs'); }}>All Jobs</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => { onNavigate?.(); window.location.href = createPageUrl('AdminCustomers'); }}>Customers</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => { onNavigate?.(); window.location.href = createPageUrl('AdminUsers'); }}>System Users</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => { onNavigate?.(); window.location.href = createPageUrl('AdminPickupLocations'); }}>Pickup Locations</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => { onNavigate?.(); window.location.href = createPageUrl('AdminDeliveryTypes'); }}>Delivery Types</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => { onNavigate?.(); window.location.href = createPageUrl('SheetSpecs'); }}>Sheet Specs</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => { onNavigate?.(); window.location.href = createPageUrl('DeliveryPartners'); }}>Delivery Partners</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
       
@@ -221,12 +221,12 @@ const AdminNav = ({ onNavigate }) => {
           </TooltipContent>
         </Tooltip>
         <DropdownMenuContent align="start">
-          <DropdownMenuItem onClick={() => { onNavigate(); window.location.href = createPageUrl('AdminJobs'); }}>All Jobs</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => { onNavigate(); window.location.href = createPageUrl('JobsKanban'); }}>Jobs Kanban</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => { onNavigate(); window.location.href = createPageUrl('AdminCustomers'); }}>Customers</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => { onNavigate(); window.location.href = createPageUrl('AdminPickupLocations'); }}>Pickup Locations</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => { onNavigate(); window.location.href = createPageUrl('AdminDeliveryTypes'); }}>Delivery Types</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => { onNavigate(); window.location.href = createPageUrl('DeliveryPartners'); }}>Delivery Partners</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => { onNavigate?.(); window.location.href = createPageUrl('AdminJobs'); }}>All Jobs</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => { onNavigate?.(); window.location.href = createPageUrl('JobsKanban'); }}>Jobs Kanban</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => { onNavigate?.(); window.location.href = createPageUrl('AdminCustomers'); }}>Customers</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => { onNavigate?.(); window.location.href = createPageUrl('AdminPickupLocations'); }}>Pickup Locations</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => { onNavigate?.(); window.location.href = createPageUrl('AdminDeliveryTypes'); }}>Delivery Types</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => { onNavigate?.(); window.location.href = createPageUrl('DeliveryPartners'); }}>Delivery Partners</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
@@ -294,8 +294,8 @@ const ManagerNav = ({ onNavigate }) => {
           </TooltipContent>
         </Tooltip>
         <DropdownMenuContent align="start">
-          <DropdownMenuItem onClick={() => { onNavigate(); window.location.href = createPageUrl('AdminJobs'); }}>All Jobs</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => { onNavigate(); window.location.href = createPageUrl('AdminCustomers'); }}>Customers</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => { onNavigate?.(); window.location.href = createPageUrl('AdminJobs'); }}>All Jobs</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => { onNavigate?.(); window.location.href = createPageUrl('AdminCustomers'); }}>Customers</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
       
@@ -691,7 +691,7 @@ export default function Layout({ children, currentPageName }) {
             </div>
 
             <nav className="flex items-center gap-2">
-              {renderNavLinks()}
+              {renderNavLinks(() => {})}
             </nav>
 
             <div className="flex items-center gap-2">
