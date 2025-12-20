@@ -579,21 +579,17 @@ export default function AdminJobsPage() {
                             />
                           </TableCell>
                         )}
-                        <TableCell
-                          className="cursor-pointer"
-                          onClick={() => {
-                            setSelectedJob(job);
-                            setDialogOpen(true);
-                          }}
-                          colSpan={isCustomer ? 0 : 1}
-                        className="cursor-pointer"
-                        onClick={() => {
-                          setSelectedJob(job);
-                          setDialogOpen(true);
-                        }}
-                        >
-                        {!isCustomer && job.customerName}
-                        </TableCell>
+                        {!isCustomer && (
+                          <TableCell
+                            className="cursor-pointer"
+                            onClick={() => {
+                              setSelectedJob(job);
+                              setDialogOpen(true);
+                            }}
+                          >
+                            {job.customerName}
+                          </TableCell>
+                        )}
                         <TableCell
                           className="cursor-pointer"
                           onClick={() => {
