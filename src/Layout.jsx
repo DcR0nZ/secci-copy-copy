@@ -354,6 +354,44 @@ export default function Layout({ children, currentPageName }) {
 
   // Apply tenant theme
   useEffect(() => {
+    const THEME_PRESETS = {
+      default: {
+        background: '#f9fafb',
+        quickTile: '#3b82f6',
+        primary: '#2563eb',
+        secondary: '#7c3aed',
+        accent: '#059669'
+      },
+      dark: {
+        background: '#1f2937',
+        quickTile: '#3b82f6',
+        primary: '#60a5fa',
+        secondary: '#a78bfa',
+        accent: '#34d399'
+      },
+      slate: {
+        background: '#f8fafc',
+        quickTile: '#64748b',
+        primary: '#475569',
+        secondary: '#64748b',
+        accent: '#94a3b8'
+      },
+      sage: {
+        background: '#f0fdf4',
+        quickTile: '#16a34a',
+        primary: '#22c55e',
+        secondary: '#4ade80',
+        accent: '#86efac'
+      },
+      ocean: {
+        background: '#f0f9ff',
+        quickTile: '#0284c7',
+        primary: '#0ea5e9',
+        secondary: '#38bdf8',
+        accent: '#7dd3fc'
+      }
+    };
+
     const applyTheme = async () => {
       if (!user) return;
       
@@ -362,17 +400,13 @@ export default function Layout({ children, currentPageName }) {
         const themes = await base44.entities.TenantTheme.filter({ tenantId });
         const theme = themes[0];
         
-        if (theme) {
-          setThemeColors({
-            background: theme.backgroundColor || '#f9fafb',
-            quickTile: theme.quickTileColor || '#3b82f6',
-            primary: theme.deliveryTypeColorScheme?.primary || '#2563eb',
-            secondary: theme.deliveryTypeColorScheme?.secondary || '#7c3aed',
-            accent: theme.deliveryTypeColorScheme?.accent || '#059669'
-          });
-        }
+        const themeName = theme?.themeName || 'default';
+        const colors = THEME_PRESETS[themeName] || THEME_PRESETS.default;
+        
+        setThemeColors(colors);
       } catch (error) {
         console.error('Failed to load theme:', error);
+        setThemeColors(THEME_PRESETS.default);
       }
     };
     
