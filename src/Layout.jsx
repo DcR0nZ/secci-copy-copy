@@ -39,18 +39,22 @@ import ReturnedJobAlert from './components/scheduling/ReturnedJobAlert';
 import UserAvatarDropdown from './components/layout/UserAvatarDropdown';
 import NotificationBell from './components/notifications/NotificationBell';
 
-const NavLink = ({ to, icon: Icon, children, collapsed, onClick }) => {
+const NavLink = ({ to, icon: Icon, children, collapsed, onClick, themeColor }) => {
   const location = useLocation();
   const isActive = location.pathname === to;
+  
+  const activeStyle = themeColor ? { backgroundColor: themeColor } : {};
+  
   return (
     <Link
       to={to}
       onClick={onClick}
       className={`flex items-center ${collapsed ? 'justify-center px-2' : 'px-4'} py-2.5 text-sm font-medium rounded-lg transition-colors ${
         isActive ?
-          'bg-blue-600 text-white' :
+          'text-white' :
           'text-gray-600 hover:bg-gray-100'}`
       }
+      style={isActive ? activeStyle : {}}
       title={collapsed ? children : ''}
     >
       <Icon className={`h-5 w-5 ${collapsed ? '' : 'mr-3'}`} />
@@ -78,7 +82,7 @@ const SubNavLink = ({ to, children, collapsed, onClick }) => {
   );
 };
 
-const AdminNav = ({ collapsed, onNavigate }) => {
+const AdminNav = ({ collapsed, onNavigate, themeColor }) => {
   const [libraryOpen, setLibraryOpen] = useState(false);
   const location = useLocation();
   
@@ -164,14 +168,14 @@ const AdminNav = ({ collapsed, onNavigate }) => {
       )}
       
       {isGlobalAdmin && (
-        <NavLink to={createPageUrl('ManageTenants')} icon={Settings} collapsed={collapsed} onClick={onNavigate}>Manage Tenants</NavLink>
+        <NavLink to={createPageUrl('ManageTenants')} icon={Settings} collapsed={collapsed} onClick={onNavigate} themeColor={themeColor}>Manage Tenants</NavLink>
       )}
-      <NavLink to={createPageUrl('WeatherToday')} icon={CloudRain} collapsed={collapsed} onClick={onNavigate}>Weather Today</NavLink>
+      <NavLink to={createPageUrl('WeatherToday')} icon={CloudRain} collapsed={collapsed} onClick={onNavigate} themeColor={themeColor}>Weather Today</NavLink>
     </>
   );
 };
 
-const DispatcherNav = ({ collapsed, onNavigate }) => {
+const DispatcherNav = ({ collapsed, onNavigate, themeColor }) => {
   const [libraryOpen, setLibraryOpen] = useState(false);
   const location = useLocation();
   
@@ -236,37 +240,40 @@ const DispatcherNav = ({ collapsed, onNavigate }) => {
           </CollapsibleContent>
         </Collapsible>
       ) : (
-        <NavLink to={createPageUrl('AdminJobs')} icon={Library} collapsed={collapsed} onClick={onNavigate}>Library</NavLink>
+        <NavLink to={createPageUrl('AdminJobs')} icon={Library} collapsed={collapsed} onClick={onNavigate} themeColor={themeColor}>Library</NavLink>
       )}
       
-      <NavLink to={createPageUrl('WeatherToday')} icon={CloudRain} collapsed={collapsed} onClick={onNavigate}>Weather Today</NavLink>
+      <NavLink to={createPageUrl('WeatherToday')} icon={CloudRain} collapsed={collapsed} onClick={onNavigate} themeColor={themeColor}>Weather Today</NavLink>
     </>
   );
 };
 
-const DriverNav = ({ collapsed, onNavigate }) =>
+const DriverNav = ({ collapsed, onNavigate, themeColor }) =>
   <>
-    <NavLink to={createPageUrl('Dashboard')} icon={Home} collapsed={collapsed} onClick={onNavigate}>Dashboard</NavLink>
-    <NavLink to={createPageUrl('DriverMyRuns')} icon={Calendar} collapsed={collapsed} onClick={onNavigate}>My Runs</NavLink>
-    <NavLink to={createPageUrl('DailyJobBoard')} icon={LayoutGrid} collapsed={collapsed} onClick={onNavigate}>Daily Job Board</NavLink>
-    <NavLink to={createPageUrl('Phonebook')} icon={Users} collapsed={collapsed} onClick={onNavigate}>Phonebook</NavLink>
-    <NavLink to={createPageUrl('Notifications')} icon={Bell} collapsed={collapsed} onClick={onNavigate}>Notifications</NavLink>
-    <NavLink to={createPageUrl('Settings')} icon={Settings} collapsed={collapsed} onClick={onNavigate}>Settings</NavLink>
-    <NavLink to={createPageUrl('WeatherToday')} icon={CloudRain} collapsed={collapsed} onClick={onNavigate}>Weather Today</NavLink>
+    <NavLink to={createPageUrl('Dashboard')} icon={Home} collapsed={collapsed} onClick={onNavigate} themeColor={themeColor}>Dashboard</NavLink>
+    <NavLink to={createPageUrl('DriverMyRuns')} icon={Calendar} collapsed={collapsed} onClick={onNavigate} themeColor={themeColor}>My Runs</NavLink>
+    <NavLink to={createPageUrl('DriverMobile')} icon={Truck} collapsed={collapsed} onClick={onNavigate} themeColor={themeColor}>Driver Mobile</NavLink>
+    <NavLink to={createPageUrl('DriverVehicle')} icon={Truck} collapsed={collapsed} onClick={onNavigate} themeColor={themeColor}>My Vehicle</NavLink>
+    <NavLink to={createPageUrl('DailyJobBoard')} icon={LayoutGrid} collapsed={collapsed} onClick={onNavigate} themeColor={themeColor}>Daily Job Board</NavLink>
+    <NavLink to={createPageUrl('Phonebook')} icon={Users} collapsed={collapsed} onClick={onNavigate} themeColor={themeColor}>Phonebook</NavLink>
+    <NavLink to={createPageUrl('Notifications')} icon={Bell} collapsed={collapsed} onClick={onNavigate} themeColor={themeColor}>Notifications</NavLink>
+    <NavLink to={createPageUrl('Settings')} icon={Settings} collapsed={collapsed} onClick={onNavigate} themeColor={themeColor}>Settings</NavLink>
+    <NavLink to={createPageUrl('WeatherToday')} icon={CloudRain} collapsed={collapsed} onClick={onNavigate} themeColor={themeColor}>Weather Today</NavLink>
   </>;
 
-const CustomerNav = ({ collapsed, onNavigate }) =>
+const CustomerNav = ({ collapsed, onNavigate, themeColor }) =>
   <>
-    <NavLink to={createPageUrl('AdminJobs')} icon={Briefcase} collapsed={collapsed} onClick={onNavigate}>My Jobs</NavLink>
-    <NavLink to={createPageUrl('DailyJobBoard')} icon={Calendar} collapsed={collapsed} onClick={onNavigate}>Daily Schedule</NavLink>
-    <NavLink to={createPageUrl('CustomerRequestDelivery')} icon={Plus} collapsed={collapsed} onClick={onNavigate}>Request Delivery</NavLink>
-    <NavLink to={createPageUrl('Phonebook')} icon={Users} collapsed={collapsed} onClick={onNavigate}>Phonebook</NavLink>
-    <NavLink to={createPageUrl('Notifications')} icon={Bell} collapsed={collapsed} onClick={onNavigate}>Notifications</NavLink>
-    <NavLink to={createPageUrl('Settings')} icon={Settings} collapsed={collapsed} onClick={onNavigate}>Settings</NavLink>
-    <NavLink to={createPageUrl('WeatherToday')} icon={CloudRain} collapsed={collapsed} onClick={onNavigate}>Weather Today</NavLink>
+    <NavLink to={createPageUrl('CustomerPortal')} icon={Home} collapsed={collapsed} onClick={onNavigate} themeColor={themeColor}>Customer Portal</NavLink>
+    <NavLink to={createPageUrl('AdminJobs')} icon={Briefcase} collapsed={collapsed} onClick={onNavigate} themeColor={themeColor}>My Jobs</NavLink>
+    <NavLink to={createPageUrl('DailyJobBoard')} icon={Calendar} collapsed={collapsed} onClick={onNavigate} themeColor={themeColor}>Daily Schedule</NavLink>
+    <NavLink to={createPageUrl('CustomerRequestDelivery')} icon={Plus} collapsed={collapsed} onClick={onNavigate} themeColor={themeColor}>Request Delivery</NavLink>
+    <NavLink to={createPageUrl('Phonebook')} icon={Users} collapsed={collapsed} onClick={onNavigate} themeColor={themeColor}>Phonebook</NavLink>
+    <NavLink to={createPageUrl('Notifications')} icon={Bell} collapsed={collapsed} onClick={onNavigate} themeColor={themeColor}>Notifications</NavLink>
+    <NavLink to={createPageUrl('Settings')} icon={Settings} collapsed={collapsed} onClick={onNavigate} themeColor={themeColor}>Settings</NavLink>
+    <NavLink to={createPageUrl('WeatherToday')} icon={CloudRain} collapsed={collapsed} onClick={onNavigate} themeColor={themeColor}>Weather Today</NavLink>
   </>;
 
-const ManagerNav = ({ collapsed, onNavigate }) => {
+const ManagerNav = ({ collapsed, onNavigate, themeColor }) => {
   const [libraryOpen, setLibraryOpen] = useState(false);
   const location = useLocation();
   
@@ -291,12 +298,12 @@ const ManagerNav = ({ collapsed, onNavigate }) => {
   
   return (
     <>
-      <NavLink to={createPageUrl('Dashboard')} icon={Home} collapsed={collapsed} onClick={onNavigate}>Dashboard</NavLink>
-      <NavLink to={createPageUrl('DailyJobBoard')} icon={Calendar} collapsed={collapsed} onClick={onNavigate}>Daily Job Board</NavLink>
-      <NavLink to={createPageUrl('Reports')} icon={BarChart3} collapsed={collapsed} onClick={onNavigate}>Reports</NavLink>
-      <NavLink to={createPageUrl('Phonebook')} icon={Users} collapsed={collapsed} onClick={onNavigate}>Phonebook</NavLink>
-      <NavLink to={createPageUrl('Notifications')} icon={Bell} collapsed={collapsed} onClick={onNavigate}>Notifications</NavLink>
-      <NavLink to={createPageUrl('Settings')} icon={Settings} collapsed={collapsed} onClick={onNavigate}>Settings</NavLink>
+      <NavLink to={createPageUrl('Dashboard')} icon={Home} collapsed={collapsed} onClick={onNavigate} themeColor={themeColor}>Dashboard</NavLink>
+      <NavLink to={createPageUrl('DailyJobBoard')} icon={Calendar} collapsed={collapsed} onClick={onNavigate} themeColor={themeColor}>Daily Job Board</NavLink>
+      <NavLink to={createPageUrl('Reports')} icon={BarChart3} collapsed={collapsed} onClick={onNavigate} themeColor={themeColor}>Reports</NavLink>
+      <NavLink to={createPageUrl('Phonebook')} icon={Users} collapsed={collapsed} onClick={onNavigate} themeColor={themeColor}>Phonebook</NavLink>
+      <NavLink to={createPageUrl('Notifications')} icon={Bell} collapsed={collapsed} onClick={onNavigate} themeColor={themeColor}>Notifications</NavLink>
+      <NavLink to={createPageUrl('Settings')} icon={Settings} collapsed={collapsed} onClick={onNavigate} themeColor={themeColor}>Settings</NavLink>
       
       {!collapsed ? (
         <Collapsible open={libraryOpen} onOpenChange={setLibraryOpen}>
@@ -304,9 +311,10 @@ const ManagerNav = ({ collapsed, onNavigate }) => {
             <button
               className={`w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ${
                 isLibraryActive ?
-                  'bg-blue-600 text-white' :
+                  'text-white' :
                   'text-gray-600 hover:bg-gray-100'
               }`}
+              style={isLibraryActive ? { backgroundColor: themeColor || '#2563eb' } : {}}
             >
               <div className="flex items-center">
                 <Library className="h-5 w-5 mr-3" />
@@ -321,10 +329,10 @@ const ManagerNav = ({ collapsed, onNavigate }) => {
           </CollapsibleContent>
         </Collapsible>
       ) : (
-        <NavLink to={createPageUrl('AdminJobs')} icon={Library} collapsed={collapsed} onClick={onNavigate}>Library</NavLink>
+        <NavLink to={createPageUrl('AdminJobs')} icon={Library} collapsed={collapsed} onClick={onNavigate} themeColor={themeColor}>Library</NavLink>
       )}
       
-      <NavLink to={createPageUrl('WeatherToday')} icon={CloudRain} collapsed={collapsed} onClick={onNavigate}>Weather Today</NavLink>
+      <NavLink to={createPageUrl('WeatherToday')} icon={CloudRain} collapsed={collapsed} onClick={onNavigate} themeColor={themeColor}>Weather Today</NavLink>
     </>
   );
 };
@@ -337,6 +345,7 @@ export default function Layout({ children, currentPageName }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [returnedJobs, setReturnedJobs] = useState([]);
   const [showReturnedAlert, setShowReturnedAlert] = useState(false);
+  const [themeColors, setThemeColors] = useState(null);
   const location = useLocation();
 
   // Apply tenant theme
@@ -350,16 +359,13 @@ export default function Layout({ children, currentPageName }) {
         const theme = themes[0];
         
         if (theme) {
-          // Apply background color
-          document.body.style.backgroundColor = theme.backgroundColor;
-          
-          // Apply CSS variables for other components to use
-          const root = document.documentElement;
-          root.style.setProperty('--theme-background', theme.backgroundColor);
-          root.style.setProperty('--theme-quick-tile', theme.quickTileColor);
-          root.style.setProperty('--theme-primary', theme.deliveryTypeColorScheme?.primary || '#2563eb');
-          root.style.setProperty('--theme-secondary', theme.deliveryTypeColorScheme?.secondary || '#7c3aed');
-          root.style.setProperty('--theme-accent', theme.deliveryTypeColorScheme?.accent || '#059669');
+          setThemeColors({
+            background: theme.backgroundColor || '#f9fafb',
+            quickTile: theme.quickTileColor || '#3b82f6',
+            primary: theme.deliveryTypeColorScheme?.primary || '#2563eb',
+            secondary: theme.deliveryTypeColorScheme?.secondary || '#7c3aed',
+            accent: theme.deliveryTypeColorScheme?.accent || '#059669'
+          });
         }
       } catch (error) {
         console.error('Failed to load theme:', error);
@@ -506,8 +512,10 @@ export default function Layout({ children, currentPageName }) {
 
     if (isPending) return null;
 
+    const primaryColor = themeColors?.primary || '#2563eb';
+
     if (user.role === 'admin') {
-      return <AdminNav collapsed={sidebarCollapsed} onNavigate={onNavigate} />;
+      return <AdminNav collapsed={sidebarCollapsed} onNavigate={onNavigate} themeColor={primaryColor} />;
     }
 
     const appRole = user.appRole;
@@ -516,18 +524,18 @@ export default function Layout({ children, currentPageName }) {
 
     switch (appRole) {
       case 'globalAdmin':
-        return <AdminNav collapsed={sidebarCollapsed} onNavigate={onNavigate} />;
+        return <AdminNav collapsed={sidebarCollapsed} onNavigate={onNavigate} themeColor={primaryColor} />;
       case 'tenantAdmin':
-        return <AdminNav collapsed={sidebarCollapsed} onNavigate={onNavigate} />;
+        return <AdminNav collapsed={sidebarCollapsed} onNavigate={onNavigate} themeColor={primaryColor} />;
       case 'dispatcher':
-        return <DispatcherNav collapsed={sidebarCollapsed} onNavigate={onNavigate} />;
+        return <DispatcherNav collapsed={sidebarCollapsed} onNavigate={onNavigate} themeColor={primaryColor} />;
       case 'driver':
-        return <DriverNav collapsed={sidebarCollapsed} onNavigate={onNavigate} />;
+        return <DriverNav collapsed={sidebarCollapsed} onNavigate={onNavigate} themeColor={primaryColor} />;
       case 'manager':
-        return <ManagerNav collapsed={sidebarCollapsed} onNavigate={onNavigate} />;
+        return <ManagerNav collapsed={sidebarCollapsed} onNavigate={onNavigate} themeColor={primaryColor} />;
       case 'customer':
       default:
-        return <CustomerNav collapsed={sidebarCollapsed} onNavigate={onNavigate} />;
+        return <CustomerNav collapsed={sidebarCollapsed} onNavigate={onNavigate} themeColor={primaryColor} />;
     }
   };
 
@@ -636,7 +644,10 @@ export default function Layout({ children, currentPageName }) {
         }
       `}</style>
       
-      <div className="h-screen w-screen flex bg-gray-50 overflow-hidden">
+      <div 
+        className="h-screen w-screen flex overflow-hidden"
+        style={{ backgroundColor: themeColors?.background || '#f9fafb' }}
+      >
         {/* Desktop Sidebar */}
         <div className={`hidden md:flex flex-col ${sidebarWidth} border-r bg-white h-full fixed left-0 top-0 z-20 transition-all duration-300`}>
           <div className={`flex items-center flex-shrink-0 px-4 pt-5 pb-4 ${sidebarCollapsed ? 'justify-center' : ''}`}>
@@ -673,7 +684,12 @@ export default function Layout({ children, currentPageName }) {
               variant="outline"
               size="icon"
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className="bg-blue-50 border-2 border-blue-300 text-blue-700 hover:bg-blue-100 hover:border-blue-400 shadow-sm"
+              style={{ 
+                backgroundColor: themeColors?.quickTile ? `${themeColors.quickTile}20` : undefined,
+                borderColor: themeColors?.quickTile || undefined,
+                color: themeColors?.quickTile || undefined
+              }}
+              className="border-2 shadow-sm hover:opacity-80"
               title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             >
               {sidebarCollapsed ? <PanelLeft className="h-5 w-5" /> : <PanelLeftClose className="h-5 w-5" />}
