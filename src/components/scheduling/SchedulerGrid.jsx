@@ -506,63 +506,64 @@ export default function SchedulerGrid({
           </DroppableUnscheduled>
         </div>
 
-        {/* Time Header */}
+        {/* Truck Header */}
         <div className="flex sticky top-0 z-20 bg-white border-b-2 border-gray-300 shadow-sm flex-shrink-0">
           <div className="w-24 lg:w-32 flex-shrink-0 p-2 bg-gray-100 border-r-2 border-gray-300 sticky left-0 z-30">
-            <span className="font-semibold text-xs">Truck</span>
+            <span className="font-semibold text-xs">Time Slot</span>
           </div>
           <div className="flex flex-1">
-            {TIME_SLOTS.map((slot) => {
+            {trucks.map((truck) => {
+              const totalSqm = assignments
+                .filter((a) => a.truckId === truck.id)
+                .reduce((sum, a) => {
+                  const job = jobs.find((j) => j.id === a.jobId);
+                  return sum + (job?.sqm || 0);
+                }, 0);
+
+              let barColor = 'bg-red-500';
+              if (totalSqm >= 1500) {
+                barColor = 'bg-green-500';
+              } else if (totalSqm >= 1000) {
+                barColor = 'bg-orange-500';
+              }
+
+              const maxSqmForBar = 2500;
+              const utilizationPercent = Math.min((totalSqm / maxSqmForBar) * 100, 100);
+
               return (
                 <div
-                  key={slot.id}
-                  className={`${slot.color} border-r border-gray-200 flex items-center justify-center flex-1`}
+                  key={truck.id}
+                  className="border-r border-gray-200 flex flex-col items-center justify-center flex-1 p-2 bg-gray-50"
                   style={{ minWidth: '200px' }}>
-                  <span className="text-[10px] lg:text-xs font-semibold text-gray-700 text-center px-1">{slot.label}</span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Truck Rows */}
-        <div className="flex-1 overflow-auto pb-4">
-          {trucks.map((truck, truckIndex) => {
-            const totalSqm = assignments
-              .filter((a) => a.truckId === truck.id)
-              .reduce((sum, a) => {
-                const job = jobs.find((j) => j.id === a.jobId);
-                return sum + (job?.sqm || 0);
-              }, 0);
-
-            let barColor = 'bg-red-500';
-            if (totalSqm >= 1500) {
-              barColor = 'bg-green-500';
-            } else if (totalSqm >= 1000) {
-              barColor = 'bg-orange-500';
-            }
-
-            const maxSqmForBar = 2500;
-            const utilizationPercent = Math.min((totalSqm / maxSqmForBar) * 100, 100);
-            const isLastTruck = truckIndex === trucks.length - 1;
-
-            return (
-              <div
-                key={truck.id}
-                className={`flex ${
-                  isLastTruck ? 'border-b-2 border-gray-400' : 'border-b-2 border-gray-300'
-                } min-h-[100px] mb-4`}>
-                {/* Sticky Truck Column */}
-                <div className="w-24 lg:w-32 flex-shrink-0 p-2 bg-gray-50 border-r-2 border-gray-300 sticky left-0 z-10">
                   <div className="font-semibold text-xs text-gray-900">{truck.name}</div>
                   <div className="text-[10px] mt-0.5 text-gray-600">{totalSqm.toLocaleString()}m²</div>
                   <div className="w-full bg-gray-200 rounded-full h-1 mt-1">
                     <div className={`h-1 rounded-full ${barColor}`} style={{ width: `${utilizationPercent}%` }} />
                   </div>
                 </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Time Slot Rows */}
+        <div className="flex-1 overflow-auto pb-4">
+          {TIME_SLOTS.map((slot, slotIndex) => {
+            const isLastSlot = slotIndex === TIME_SLOTS.length - 1;
+
+            return (
+              <div
+                key={slot.id}
+                className={`flex ${
+                  isLastSlot ? 'border-b-2 border-gray-400' : 'border-b-2 border-gray-300'
+                } min-h-[100px] mb-4`}>
+                {/* Sticky Time Slot Column */}
+                <div className={`w-24 lg:w-32 flex-shrink-0 p-2 ${slot.color} border-r-2 border-gray-300 sticky left-0 z-10 flex items-center justify-center`}>
+                  <span className="text-[10px] lg:text-xs font-semibold text-gray-700 text-center">{slot.label}</span>
+                </div>
 
                 <div className="flex flex-1 relative">
-                  {TIME_SLOTS.map((slot) => {
+                  {trucks.map((truck) => {
                     const allJobsInSlot = [1, 3].flatMap((blockStart) => 
                       getJobsForCell(truck.id, slot.id, blockStart)
                     );
@@ -575,8 +576,8 @@ export default function SchedulerGrid({
 
                     return (
                       <div
-                        key={slot.id}
-                        className={`${slot.color} border-r border-gray-200 flex flex-1`}
+                        key={truck.id}
+                        className="border-r border-gray-200 flex flex-1"
                         style={{ minWidth: '200px' }}>
                         {blocksToShow.map((blockStart) => {
                           const slotJobs = getJobsForCell(truck.id, slot.id, blockStart);
