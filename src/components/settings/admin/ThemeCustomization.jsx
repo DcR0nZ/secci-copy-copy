@@ -2,58 +2,11 @@ import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Palette, Save, Check } from 'lucide-react';
-
-const THEMES = {
-  default: {
-    name: 'Default',
-    description: 'Clean and professional light theme',
-    backgroundColor: '#f9fafb',
-    quickTileColor: '#3b82f6',
-    primary: '#2563eb',
-    secondary: '#7c3aed',
-    accent: '#059669'
-  },
-  dark: {
-    name: 'Dark',
-    description: 'Easy on the eyes dark mode',
-    backgroundColor: '#1f2937',
-    quickTileColor: '#3b82f6',
-    primary: '#60a5fa',
-    secondary: '#a78bfa',
-    accent: '#34d399'
-  },
-  slate: {
-    name: 'Slate',
-    description: 'Professional gray monochrome',
-    backgroundColor: '#f8fafc',
-    quickTileColor: '#64748b',
-    primary: '#475569',
-    secondary: '#64748b',
-    accent: '#94a3b8'
-  },
-  sage: {
-    name: 'Sage',
-    description: 'Calming green monochrome',
-    backgroundColor: '#f0fdf4',
-    quickTileColor: '#16a34a',
-    primary: '#22c55e',
-    secondary: '#4ade80',
-    accent: '#86efac'
-  },
-  ocean: {
-    name: 'Ocean',
-    description: 'Cool blue monochrome',
-    backgroundColor: '#f0f9ff',
-    quickTileColor: '#0284c7',
-    primary: '#0ea5e9',
-    secondary: '#38bdf8',
-    accent: '#7dd3fc'
-  }
-};
+import { Palette, Save } from 'lucide-react';
 
 export default function ThemeCustomization({ user }) {
   const { toast } = useToast();
@@ -68,16 +21,34 @@ export default function ThemeCustomization({ user }) {
       const themes = await base44.entities.TenantTheme.filter({ tenantId });
       return themes[0] || {
         tenantId,
-        themeName: 'default'
+        backgroundColor: '#f9fafb',
+        quickTileColor: '#3b82f6',
+        deliveryTypeColorScheme: {
+          primary: '#2563eb',
+          secondary: '#7c3aed',
+          accent: '#059669'
+        }
       };
     },
   });
 
-  const [selectedTheme, setSelectedTheme] = useState('default');
+  const [colors, setColors] = useState({
+    backgroundColor: '#f9fafb',
+    quickTileColor: '#3b82f6',
+    primaryColor: '#2563eb',
+    secondaryColor: '#7c3aed',
+    accentColor: '#059669'
+  });
 
   React.useEffect(() => {
     if (theme) {
-      setSelectedTheme(theme.themeName || 'default');
+      setColors({
+        backgroundColor: theme.backgroundColor || '#f9fafb',
+        quickTileColor: theme.quickTileColor || '#3b82f6',
+        primaryColor: theme.deliveryTypeColorScheme?.primary || '#2563eb',
+        secondaryColor: theme.deliveryTypeColorScheme?.secondary || '#7c3aed',
+        accentColor: theme.deliveryTypeColorScheme?.accent || '#059669'
+      });
     }
   }, [theme]);
 
@@ -86,7 +57,13 @@ export default function ThemeCustomization({ user }) {
     try {
       const themeData = {
         tenantId,
-        themeName: selectedTheme
+        backgroundColor: colors.backgroundColor,
+        quickTileColor: colors.quickTileColor,
+        deliveryTypeColorScheme: {
+          primary: colors.primaryColor,
+          secondary: colors.secondaryColor,
+          accent: colors.accentColor
+        }
       };
 
       if (theme?.id) {
@@ -97,12 +74,9 @@ export default function ThemeCustomization({ user }) {
 
       queryClient.invalidateQueries({ queryKey: ['tenantTheme'] });
       
-      // Reload the page to apply theme changes
-      window.location.reload();
-      
       toast({
         title: "Theme Updated",
-        description: "Your theme settings have been saved. The page will reload to apply changes.",
+        description: "Your theme settings have been saved successfully.",
       });
     } catch (error) {
       toast({
@@ -125,76 +99,119 @@ export default function ThemeCustomization({ user }) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Palette className="h-5 w-5" />
-            Choose Your Theme
+            Brand Colors
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <p className="text-sm text-gray-600 mb-6">
-            Select a theme to personalize your workspace appearance.
-          </p>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Object.entries(THEMES).map(([key, themeData]) => {
-              const isSelected = selectedTheme === key;
-              const isDark = key === 'dark';
-              
-              return (
-                <button
-                  key={key}
-                  onClick={() => setSelectedTheme(key)}
-                  className={`relative p-4 rounded-lg border-2 transition-all text-left ${
-                    isSelected 
-                      ? 'border-blue-600 shadow-lg' 
-                      : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
-                  }`}
-                >
-                  {isSelected && (
-                    <div className="absolute top-2 right-2 bg-blue-600 rounded-full p-1">
-                      <Check className="h-4 w-4 text-white" />
-                    </div>
-                  )}
-                  
-                  <div className="mb-3">
-                    <h3 className="font-semibold text-lg mb-1">{themeData.name}</h3>
-                    <p className="text-xs text-gray-600">{themeData.description}</p>
-                  </div>
-                  
-                  <div className="flex gap-2 mb-3">
-                    <div 
-                      className="w-8 h-8 rounded border border-gray-300"
-                      style={{ backgroundColor: themeData.backgroundColor }}
-                      title="Background"
-                    />
-                    <div 
-                      className="w-8 h-8 rounded border border-gray-300"
-                      style={{ backgroundColor: themeData.primary }}
-                      title="Primary"
-                    />
-                    <div 
-                      className="w-8 h-8 rounded border border-gray-300"
-                      style={{ backgroundColor: themeData.secondary }}
-                      title="Secondary"
-                    />
-                    <div 
-                      className="w-8 h-8 rounded border border-gray-300"
-                      style={{ backgroundColor: themeData.accent }}
-                      title="Accent"
-                    />
-                  </div>
-                  
-                  <div 
-                    className={`text-xs px-2 py-1 rounded ${
-                      isDark ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-700'
-                    }`}
-                    style={{ backgroundColor: themeData.backgroundColor }}
-                  >
-                    <span className={isDark ? 'text-white' : 'text-gray-700'}>
-                      Preview background
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="backgroundColor">Background Color</Label>
+              <div className="flex gap-2 mt-1">
+                <Input
+                  id="backgroundColor"
+                  type="color"
+                  value={colors.backgroundColor}
+                  onChange={(e) => setColors({ ...colors, backgroundColor: e.target.value })}
+                  className="w-20 h-10"
+                />
+                <Input
+                  type="text"
+                  value={colors.backgroundColor}
+                  onChange={(e) => setColors({ ...colors, backgroundColor: e.target.value })}
+                  placeholder="#f9fafb"
+                  className="flex-1"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="quickTileColor">Quick Tile Accent</Label>
+              <div className="flex gap-2 mt-1">
+                <Input
+                  id="quickTileColor"
+                  type="color"
+                  value={colors.quickTileColor}
+                  onChange={(e) => setColors({ ...colors, quickTileColor: e.target.value })}
+                  className="w-20 h-10"
+                />
+                <Input
+                  type="text"
+                  value={colors.quickTileColor}
+                  onChange={(e) => setColors({ ...colors, quickTileColor: e.target.value })}
+                  placeholder="#3b82f6"
+                  className="flex-1"
+                />
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Delivery Type Colors</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <Label htmlFor="primaryColor">Primary</Label>
+              <div className="flex gap-2 mt-1">
+                <Input
+                  id="primaryColor"
+                  type="color"
+                  value={colors.primaryColor}
+                  onChange={(e) => setColors({ ...colors, primaryColor: e.target.value })}
+                  className="w-20 h-10"
+                />
+                <Input
+                  type="text"
+                  value={colors.primaryColor}
+                  onChange={(e) => setColors({ ...colors, primaryColor: e.target.value })}
+                  placeholder="#2563eb"
+                  className="flex-1"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="secondaryColor">Secondary</Label>
+              <div className="flex gap-2 mt-1">
+                <Input
+                  id="secondaryColor"
+                  type="color"
+                  value={colors.secondaryColor}
+                  onChange={(e) => setColors({ ...colors, secondaryColor: e.target.value })}
+                  className="w-20 h-10"
+                />
+                <Input
+                  type="text"
+                  value={colors.secondaryColor}
+                  onChange={(e) => setColors({ ...colors, secondaryColor: e.target.value })}
+                  placeholder="#7c3aed"
+                  className="flex-1"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="accentColor">Accent</Label>
+              <div className="flex gap-2 mt-1">
+                <Input
+                  id="accentColor"
+                  type="color"
+                  value={colors.accentColor}
+                  onChange={(e) => setColors({ ...colors, accentColor: e.target.value })}
+                  className="w-20 h-10"
+                />
+                <Input
+                  type="text"
+                  value={colors.accentColor}
+                  onChange={(e) => setColors({ ...colors, accentColor: e.target.value })}
+                  placeholder="#059669"
+                  className="flex-1"
+                />
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
