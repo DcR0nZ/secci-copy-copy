@@ -26,13 +26,7 @@ import { getJobCardInlineStyles, getBadgeStyles, getJobCardStyles } from '../com
 import EditPlaceholderForm from '../components/scheduling/EditPlaceholderForm';
 
 
-const TRUCKS = [
-  { id: 'ACCO1', name: 'ACCO1', capacity: 14 },
-  { id: 'ACCO2', name: 'ACCO2', capacity: 14 },
-  { id: 'FUSO', name: 'FUSO', capacity: 9 },
-  { id: 'ISUZU', name: 'ISUZU', capacity: 9 },
-  { id: 'UD', name: 'UD', capacity: 9 }
-];
+
 
 const TIME_SLOTS = [
   { id: 'first-am', label: '6-8am (1st AM)' },
@@ -49,6 +43,7 @@ export default function SchedulingBoard() {
   const [placeholders, setPlaceholders] = useState([]);
   const [deliveryTypes, setDeliveryTypes] = useState([]);
   const [pickupLocations, setPickupLocations] = useState([]);
+  const [trucks, setTrucks] = useState([]);
   
   // Get initial date from URL or default to today
   const [selectedDate, setSelectedDate] = useState(() => {
@@ -116,7 +111,9 @@ export default function SchedulingBoard() {
     try {
       const date = startOfDay(new Date(selectedDate));
       
-      const [allAvailableJobs, todaysAssignments, allDeliveryTypes, todaysPlaceholders, readStatusList, allPickupLocations] = await Promise.all([
+      const currentTenant = currentUser.tenantId || 'sec';
+
+      const [allAvailableJobs, todaysAssignments, allDeliveryTypes, todaysPlaceholders, readStatusList, allPickupLocations, tenantTrucks] = await Promise.all([
         base44.entities.Job.filter({ 
           status: { $in: ['PENDING_APPROVAL', 'APPROVED', 'SCHEDULED', 'DELIVERED', 'RETURNED'] }
         }),
@@ -124,10 +121,10 @@ export default function SchedulingBoard() {
         base44.entities.DeliveryType.list(),
         base44.entities.Placeholder.filter({ date: format(date, 'yyyy-MM-dd') }),
         base44.entities.NotificationReadStatus.filter({ userId: currentUser.id }),
-        base44.entities.PickupLocation.list()
+        base44.entities.PickupLocation.list(),
+        base44.entities.Truck.filter({ tenantId: currentTenant, isActive: true })
       ]);
 
-      const currentTenant = currentUser.tenantId || 'sec';
       const isGlobalAdmin = currentUser.appRole === 'globalAdmin';
       let visibleJobs = [...allAvailableJobs];
 
@@ -147,6 +144,7 @@ export default function SchedulingBoard() {
       setPlaceholders(todaysPlaceholders);
       setNotificationReadStatus(readStatusList);
       setPickupLocations(allPickupLocations);
+      setTrucks(tenantTrucks);
 
       const assignedJobIds = new Set(visibleJobs.filter(j => 
         j.status === 'SCHEDULED' || 
@@ -636,7 +634,7 @@ export default function SchedulingBoard() {
                   </Card>
                 )}
 
-                {TRUCKS.map(truck => {
+                {trucks.map(truck => {
                   const truckJobs = getJobsForTruck(truck.id);
                   const truckPlaceholders = getPlaceholdersForTruck(truck.id);
                   const totalSqm = getTruckUtilization(truck.id);
@@ -1076,7 +1074,7 @@ export default function SchedulingBoard() {
               <div className="flex-1 overflow-auto">
                 <DndProvider backend={HTML5Backend}>
                   <SchedulerGrid
-                    trucks={TRUCKS}
+                    trucks={trucks}
                     timeSlots={TIME_SLOTS}
                     jobs={jobs}
                     assignments={assignments}
