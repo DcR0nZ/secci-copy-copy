@@ -9,6 +9,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/components/ui/use-toast';
 import { MapPin, Save, UserPlus, X } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import AddressInput from '../scheduling/AddressInput';
 
 export default function TimesheetSettingsTab({ user }) {
   const { toast } = useToast();
@@ -169,6 +170,23 @@ export default function TimesheetSettingsTab({ user }) {
                 />
               </div>
 
+              <div>
+                <Label>Location Address</Label>
+                <AddressInput
+                  value={formData.geofenceAddress || ''}
+                  onChange={(address) => setFormData({ ...formData, geofenceAddress: address })}
+                  onAddressConfirmed={(data) => {
+                    setFormData({
+                      ...formData,
+                      geofenceAddress: data.address,
+                      geofenceCenterLat: data.latitude,
+                      geofenceCenterLng: data.longitude
+                    });
+                  }}
+                  placeholder="Enter work location address"
+                />
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Latitude</Label>
@@ -177,6 +195,8 @@ export default function TimesheetSettingsTab({ user }) {
                     step="0.000001"
                     value={formData.geofenceCenterLat}
                     onChange={(e) => setFormData({ ...formData, geofenceCenterLat: parseFloat(e.target.value) })}
+                    readOnly
+                    className="bg-gray-50"
                   />
                 </div>
                 <div>
@@ -186,6 +206,8 @@ export default function TimesheetSettingsTab({ user }) {
                     step="0.000001"
                     value={formData.geofenceCenterLng}
                     onChange={(e) => setFormData({ ...formData, geofenceCenterLng: parseFloat(e.target.value) })}
+                    readOnly
+                    className="bg-gray-50"
                   />
                 </div>
               </div>
