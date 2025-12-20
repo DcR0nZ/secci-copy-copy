@@ -30,7 +30,8 @@ import {
   PanelLeft,
   Home,
   BarChart3,
-  Bell
+  Bell,
+  Clock
 } from 'lucide-react';
 
 import ChatWidget from './components/chat/ChatWidget';
@@ -166,12 +167,13 @@ const AdminNav = ({ collapsed, onNavigate }) => {
       {isGlobalAdmin && (
         <NavLink to={createPageUrl('ManageTenants')} icon={Settings} collapsed={collapsed} onClick={onNavigate}>Manage Tenants</NavLink>
       )}
+      <NavLink to={createPageUrl('TimesheetsAndRosters')} icon={Clock} collapsed={collapsed} onClick={onNavigate}>Timesheets</NavLink>
       <NavLink to={createPageUrl('WeatherToday')} icon={CloudRain} collapsed={collapsed} onClick={onNavigate}>Weather Today</NavLink>
-    </>
-  );
-};
+      </>
+      );
+      };
 
-const DispatcherNav = ({ collapsed, onNavigate }) => {
+      const DispatcherNav = ({ collapsed, onNavigate }) => {
   const [libraryOpen, setLibraryOpen] = useState(false);
   const location = useLocation();
   
@@ -238,16 +240,18 @@ const DispatcherNav = ({ collapsed, onNavigate }) => {
       ) : (
         <NavLink to={createPageUrl('AdminJobs')} icon={Library} collapsed={collapsed} onClick={onNavigate}>Library</NavLink>
       )}
-      
-      <NavLink to={createPageUrl('WeatherToday')} icon={CloudRain} collapsed={collapsed} onClick={onNavigate}>Weather Today</NavLink>
-    </>
-  );
-};
 
-const DriverNav = ({ collapsed, onNavigate }) =>
+      <NavLink to={createPageUrl('TimesheetsAndRosters')} icon={Clock} collapsed={collapsed} onClick={onNavigate}>Timesheets</NavLink>
+      <NavLink to={createPageUrl('WeatherToday')} icon={CloudRain} collapsed={collapsed} onClick={onNavigate}>Weather Today</NavLink>
+      </>
+      );
+      };
+
+      const DriverNav = ({ collapsed, onNavigate }) =>
   <>
     <NavLink to={createPageUrl('Dashboard')} icon={Home} collapsed={collapsed} onClick={onNavigate}>Dashboard</NavLink>
     <NavLink to={createPageUrl('DriverMyRuns')} icon={Calendar} collapsed={collapsed} onClick={onNavigate}>My Runs</NavLink>
+    <NavLink to={createPageUrl('MyTimesheet')} icon={Clock} collapsed={collapsed} onClick={onNavigate}>My Timesheet</NavLink>
     <NavLink to={createPageUrl('DailyJobBoard')} icon={LayoutGrid} collapsed={collapsed} onClick={onNavigate}>Daily Job Board</NavLink>
     <NavLink to={createPageUrl('Phonebook')} icon={Users} collapsed={collapsed} onClick={onNavigate}>Phonebook</NavLink>
     <NavLink to={createPageUrl('Notifications')} icon={Bell} collapsed={collapsed} onClick={onNavigate}>Notifications</NavLink>
