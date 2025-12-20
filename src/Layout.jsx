@@ -11,6 +11,19 @@ import {
 } from "@/components/ui/collapsible";
 import { Toaster } from '@/components/ui/toaster';
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   LogOut,
   Menu,
   Truck,
@@ -31,7 +44,8 @@ import {
   Home,
   BarChart3,
   Bell,
-  Clock
+  Clock,
+  ChevronDown
 } from 'lucide-react';
 
 import ChatWidget from './components/chat/ChatWidget';
@@ -40,49 +54,66 @@ import ReturnedJobAlert from './components/scheduling/ReturnedJobAlert';
 import UserAvatarDropdown from './components/layout/UserAvatarDropdown';
 import NotificationBell from './components/notifications/NotificationBell';
 
-const NavLink = ({ to, icon: Icon, children, collapsed, onClick }) => {
+const NavIconLink = ({ to, icon: Icon, label, onClick }) => {
+  const location = useLocation();
+  const isActive = location.pathname === to;
+  return (
+    <Tooltip delayDuration={0}>
+      <TooltipTrigger asChild>
+        <Link
+          to={to}
+          onClick={onClick}
+          className={`flex items-center justify-center h-10 w-10 rounded-lg transition-all ${
+            isActive
+              ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/50'
+              : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+          }`}
+        >
+          <Icon className="h-5 w-5" />
+        </Link>
+      </TooltipTrigger>
+      <TooltipContent side="bottom" className="font-medium">
+        <p>{label}</p>
+      </TooltipContent>
+    </Tooltip>
+  );
+};
+
+const MobileNavLink = ({ to, icon: Icon, children, onClick }) => {
   const location = useLocation();
   const isActive = location.pathname === to;
   return (
     <Link
       to={to}
       onClick={onClick}
-      className={`flex items-center ${collapsed ? 'justify-center px-2' : 'px-4'} py-2.5 text-sm font-medium rounded-lg transition-colors ${
-        isActive ?
-          'bg-blue-600 text-white' :
-          'text-gray-600 hover:bg-gray-100'}`
-      }
-      title={collapsed ? children : ''}
+      className={`flex items-center px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ${
+        isActive ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'
+      }`}
     >
-      <Icon className={`h-5 w-5 ${collapsed ? '' : 'mr-3'}`} />
-      {!collapsed && children}
+      <Icon className="h-5 w-5 mr-3" />
+      {children}
     </Link>
   );
 };
 
-const SubNavLink = ({ to, children, collapsed, onClick }) => {
+const MobileSubNavLink = ({ to, children, onClick }) => {
   const location = useLocation();
   const isActive = location.pathname === to;
   return (
     <Link
       to={to}
       onClick={onClick}
-      className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors ${collapsed ? '' : 'ml-8'} ${
-        isActive ?
-          'bg-blue-600 text-white' :
-          'text-gray-600 hover:bg-gray-100'}`
-      }
-      title={collapsed ? children : ''}
+      className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors ml-8 ${
+        isActive ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'
+      }`}
     >
       {children}
     </Link>
   );
 };
 
-const AdminNav = ({ collapsed, onNavigate }) => {
-  const [libraryOpen, setLibraryOpen] = useState(false);
+const AdminNav = ({ onNavigate }) => {
   const location = useLocation();
-  
   const libraryPages = [
     createPageUrl('AdminJobs'),
     createPageUrl('JobsKanban'),
@@ -93,11 +124,9 @@ const AdminNav = ({ collapsed, onNavigate }) => {
     createPageUrl('SheetSpecs'),
     createPageUrl('DeliveryPartners')
   ];
-  
   const isLibraryActive = libraryPages.includes(location.pathname);
-  
-  // Check if current user is global admin
   const [isGlobalAdmin, setIsGlobalAdmin] = useState(false);
+  
   useEffect(() => {
     const checkUser = async () => {
       try {
@@ -110,73 +139,52 @@ const AdminNav = ({ collapsed, onNavigate }) => {
     checkUser();
   }, []);
 
-  useEffect(() => {
-    if (isLibraryActive && !libraryOpen && !collapsed) {
-      setLibraryOpen(true);
-    }
-  }, [isLibraryActive, libraryOpen, collapsed]);
-
-  useEffect(() => {
-    if (collapsed) {
-      setLibraryOpen(false);
-    }
-  }, [collapsed]);
-  
   return (
     <>
-      <NavLink to={createPageUrl('Dashboard')} icon={Home} collapsed={collapsed} onClick={onNavigate}>Dashboard</NavLink>
-      <NavLink to={createPageUrl('SchedulingBoard')} icon={LayoutGrid} collapsed={collapsed} onClick={onNavigate}>Scheduling</NavLink>
-      <NavLink to={createPageUrl('DailyJobBoard')} icon={Calendar} collapsed={collapsed} onClick={onNavigate}>Daily Job Board</NavLink>
-      <NavLink to={createPageUrl('LiveTracking')} icon={MapPin} collapsed={collapsed} onClick={onNavigate}>Live Tracking</NavLink>
-      <NavLink to={createPageUrl('Reports')} icon={BarChart3} collapsed={collapsed} onClick={onNavigate}>Reports</NavLink>
-      <NavLink to={createPageUrl('Phonebook')} icon={Users} collapsed={collapsed} onClick={onNavigate}>Phonebook</NavLink>
-      <NavLink to={createPageUrl('Notifications')} icon={Bell} collapsed={collapsed} onClick={onNavigate}>Notifications</NavLink>
-      <NavLink to={createPageUrl('Settings')} icon={Settings} collapsed={collapsed} onClick={onNavigate}>Settings</NavLink>
+      <NavIconLink to={createPageUrl('Dashboard')} icon={Home} label="Dashboard" onClick={onNavigate} />
+      <NavIconLink to={createPageUrl('SchedulingBoard')} icon={LayoutGrid} label="Scheduling" onClick={onNavigate} />
+      <NavIconLink to={createPageUrl('DailyJobBoard')} icon={Calendar} label="Daily Job Board" onClick={onNavigate} />
+      <NavIconLink to={createPageUrl('LiveTracking')} icon={MapPin} label="Live Tracking" onClick={onNavigate} />
+      <NavIconLink to={createPageUrl('Reports')} icon={BarChart3} label="Reports" onClick={onNavigate} />
+      <NavIconLink to={createPageUrl('Phonebook')} icon={Users} label="Phonebook" onClick={onNavigate} />
+      <NavIconLink to={createPageUrl('Notifications')} icon={Bell} label="Notifications" onClick={onNavigate} />
       
-      {!collapsed ? (
-        <Collapsible open={libraryOpen} onOpenChange={setLibraryOpen}>
-          <CollapsibleTrigger asChild>
-            <button
-              className={`w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ${
-                isLibraryActive ?
-                  'bg-blue-600 text-white' :
-                  'text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              <div className="flex items-center">
-                <Library className="h-5 w-5 mr-3" />
-                Company Library
-              </div>
-              <ChevronRight className={`h-4 w-4 transition-transform ${libraryOpen ? 'rotate-90' : ''}`} />
-            </button>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="space-y-1 mt-1">
-            <SubNavLink to={createPageUrl('AdminJobs')} onClick={onNavigate}>All Jobs</SubNavLink>
-            <SubNavLink to={createPageUrl('AdminCustomers')} onClick={onNavigate}>Customers</SubNavLink>
-            <SubNavLink to={createPageUrl('AdminUsers')} onClick={onNavigate}>System Users</SubNavLink>
-            <SubNavLink to={createPageUrl('AdminPickupLocations')} onClick={onNavigate}>Pickup Locations</SubNavLink>
-            <SubNavLink to={createPageUrl('AdminDeliveryTypes')} onClick={onNavigate}>Delivery Types</SubNavLink>
-            <SubNavLink to={createPageUrl('SheetSpecs')} onClick={onNavigate}>Sheet Specs</SubNavLink>
-            <SubNavLink to={createPageUrl('DeliveryPartners')} onClick={onNavigate}>Delivery Partners</SubNavLink>
-          </CollapsibleContent>
-        </Collapsible>
-      ) : (
-        <NavLink to={createPageUrl('AdminJobs')} icon={Library} collapsed={collapsed} onClick={onNavigate}>Library</NavLink>
-      )}
+      <DropdownMenu>
+        <Tooltip delayDuration={0}>
+          <TooltipTrigger asChild>
+            <DropdownMenuTrigger asChild>
+              <button className={`flex items-center justify-center h-10 w-10 rounded-lg transition-all ${
+                isLibraryActive ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/50' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+              }`}>
+                <Library className="h-5 w-5" />
+              </button>
+            </DropdownMenuTrigger>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="font-medium">
+            <p>Company Library</p>
+          </TooltipContent>
+        </Tooltip>
+        <DropdownMenuContent align="start">
+          <DropdownMenuItem onClick={() => { onNavigate(); window.location.href = createPageUrl('AdminJobs'); }}>All Jobs</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => { onNavigate(); window.location.href = createPageUrl('AdminCustomers'); }}>Customers</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => { onNavigate(); window.location.href = createPageUrl('AdminUsers'); }}>System Users</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => { onNavigate(); window.location.href = createPageUrl('AdminPickupLocations'); }}>Pickup Locations</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => { onNavigate(); window.location.href = createPageUrl('AdminDeliveryTypes'); }}>Delivery Types</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => { onNavigate(); window.location.href = createPageUrl('SheetSpecs'); }}>Sheet Specs</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => { onNavigate(); window.location.href = createPageUrl('DeliveryPartners'); }}>Delivery Partners</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
       
-      {isGlobalAdmin && (
-        <NavLink to={createPageUrl('ManageTenants')} icon={Settings} collapsed={collapsed} onClick={onNavigate}>Manage Tenants</NavLink>
-      )}
-      <NavLink to={createPageUrl('TimesheetsAndRosters')} icon={Clock} collapsed={collapsed} onClick={onNavigate}>Timesheets</NavLink>
-      <NavLink to={createPageUrl('WeatherToday')} icon={CloudRain} collapsed={collapsed} onClick={onNavigate}>Weather Today</NavLink>
-      </>
-      );
-      };
+      {isGlobalAdmin && <NavIconLink to={createPageUrl('ManageTenants')} icon={Settings} label="Manage Tenants" onClick={onNavigate} />}
+      <NavIconLink to={createPageUrl('TimesheetsAndRosters')} icon={Clock} label="Timesheets" onClick={onNavigate} />
+      <NavIconLink to={createPageUrl('WeatherToday')} icon={CloudRain} label="Weather Today" onClick={onNavigate} />
+      <NavIconLink to={createPageUrl('Settings')} icon={Settings} label="Settings" onClick={onNavigate} />
+    </>
+  );
+};
 
-      const DispatcherNav = ({ collapsed, onNavigate }) => {
-  const [libraryOpen, setLibraryOpen] = useState(false);
+      const DispatcherNav = ({ onNavigate }) => {
   const location = useLocation();
-  
   const libraryPages = [
     createPageUrl('AdminJobs'),
     createPageUrl('JobsKanban'),
@@ -185,150 +193,114 @@ const AdminNav = ({ collapsed, onNavigate }) => {
     createPageUrl('AdminDeliveryTypes'),
     createPageUrl('DeliveryPartners')
   ];
-  
   const isLibraryActive = libraryPages.includes(location.pathname);
 
-  useEffect(() => {
-    if (isLibraryActive && !libraryOpen && !collapsed) {
-      setLibraryOpen(true);
-    }
-  }, [isLibraryActive, libraryOpen, collapsed]);
-
-  useEffect(() => {
-    if (collapsed) {
-      setLibraryOpen(false);
-    }
-  }, [collapsed]);
-  
   return (
     <>
-      <NavLink to={createPageUrl('Dashboard')} icon={Home} collapsed={collapsed} onClick={onNavigate}>Dashboard</NavLink>
-      <NavLink to={createPageUrl('SchedulingBoard')} icon={LayoutGrid} collapsed={collapsed} onClick={onNavigate}>Scheduling</NavLink>
-      <NavLink to={createPageUrl('DailyJobBoard')} icon={Calendar} collapsed={collapsed} onClick={onNavigate}>Daily Job Board</NavLink>
-      <NavLink to={createPageUrl('LiveTracking')} icon={MapPin} collapsed={collapsed} onClick={onNavigate}>Live Tracking</NavLink>
-      <NavLink to={createPageUrl('Reports')} icon={BarChart3} collapsed={collapsed} onClick={onNavigate}>Reports</NavLink>
-      <NavLink to={createPageUrl('Phonebook')} icon={Users} collapsed={collapsed} onClick={onNavigate}>Phonebook</NavLink>
-      <NavLink to={createPageUrl('Notifications')} icon={Bell} collapsed={collapsed} onClick={onNavigate}>Notifications</NavLink>
-      <NavLink to={createPageUrl('Settings')} icon={Settings} collapsed={collapsed} onClick={onNavigate}>Settings</NavLink>
+      <NavIconLink to={createPageUrl('Dashboard')} icon={Home} label="Dashboard" onClick={onNavigate} />
+      <NavIconLink to={createPageUrl('SchedulingBoard')} icon={LayoutGrid} label="Scheduling" onClick={onNavigate} />
+      <NavIconLink to={createPageUrl('DailyJobBoard')} icon={Calendar} label="Daily Job Board" onClick={onNavigate} />
+      <NavIconLink to={createPageUrl('LiveTracking')} icon={MapPin} label="Live Tracking" onClick={onNavigate} />
+      <NavIconLink to={createPageUrl('Reports')} icon={BarChart3} label="Reports" onClick={onNavigate} />
+      <NavIconLink to={createPageUrl('Phonebook')} icon={Users} label="Phonebook" onClick={onNavigate} />
+      <NavIconLink to={createPageUrl('Notifications')} icon={Bell} label="Notifications" onClick={onNavigate} />
       
-      {!collapsed ? (
-        <Collapsible open={libraryOpen} onOpenChange={setLibraryOpen}>
-          <CollapsibleTrigger asChild>
-            <button
-              className={`w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ${
-                isLibraryActive ?
-                  'bg-blue-600 text-white' :
-                  'text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              <div className="flex items-center">
-                <Library className="h-5 w-5 mr-3" />
-                Company Library
-              </div>
-              <ChevronRight className={`h-4 w-4 transition-transform ${libraryOpen ? 'rotate-90' : ''}`} />
-            </button>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="space-y-1 mt-1">
-            <SubNavLink to={createPageUrl('AdminJobs')} onClick={onNavigate}>All Jobs</SubNavLink>
-            <SubNavLink to={createPageUrl('JobsKanban')} onClick={onNavigate}>Jobs Kanban</SubNavLink>
-            <SubNavLink to={createPageUrl('AdminCustomers')} onClick={onNavigate}>Customers</SubNavLink>
-            <SubNavLink to={createPageUrl('AdminPickupLocations')} onClick={onNavigate}>Pickup Locations</SubNavLink>
-            <SubNavLink to={createPageUrl('AdminDeliveryTypes')} onClick={onNavigate}>Delivery Types</SubNavLink>
-            <SubNavLink to={createPageUrl('DeliveryPartners')} onClick={onNavigate}>Delivery Partners</SubNavLink>
-          </CollapsibleContent>
-        </Collapsible>
-      ) : (
-        <NavLink to={createPageUrl('AdminJobs')} icon={Library} collapsed={collapsed} onClick={onNavigate}>Library</NavLink>
-      )}
+      <DropdownMenu>
+        <Tooltip delayDuration={0}>
+          <TooltipTrigger asChild>
+            <DropdownMenuTrigger asChild>
+              <button className={`flex items-center justify-center h-10 w-10 rounded-lg transition-all ${
+                isLibraryActive ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/50' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+              }`}>
+                <Library className="h-5 w-5" />
+              </button>
+            </DropdownMenuTrigger>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="font-medium">
+            <p>Company Library</p>
+          </TooltipContent>
+        </Tooltip>
+        <DropdownMenuContent align="start">
+          <DropdownMenuItem onClick={() => { onNavigate(); window.location.href = createPageUrl('AdminJobs'); }}>All Jobs</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => { onNavigate(); window.location.href = createPageUrl('JobsKanban'); }}>Jobs Kanban</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => { onNavigate(); window.location.href = createPageUrl('AdminCustomers'); }}>Customers</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => { onNavigate(); window.location.href = createPageUrl('AdminPickupLocations'); }}>Pickup Locations</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => { onNavigate(); window.location.href = createPageUrl('AdminDeliveryTypes'); }}>Delivery Types</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => { onNavigate(); window.location.href = createPageUrl('DeliveryPartners'); }}>Delivery Partners</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
-      <NavLink to={createPageUrl('TimesheetsAndRosters')} icon={Clock} collapsed={collapsed} onClick={onNavigate}>Timesheets</NavLink>
-      <NavLink to={createPageUrl('WeatherToday')} icon={CloudRain} collapsed={collapsed} onClick={onNavigate}>Weather Today</NavLink>
-      </>
-      );
-      };
+      <NavIconLink to={createPageUrl('TimesheetsAndRosters')} icon={Clock} label="Timesheets" onClick={onNavigate} />
+      <NavIconLink to={createPageUrl('WeatherToday')} icon={CloudRain} label="Weather Today" onClick={onNavigate} />
+      <NavIconLink to={createPageUrl('Settings')} icon={Settings} label="Settings" onClick={onNavigate} />
+    </>
+  );
+};
 
-      const DriverNav = ({ collapsed, onNavigate }) =>
+      const DriverNav = ({ onNavigate }) => (
   <>
-    <NavLink to={createPageUrl('Dashboard')} icon={Home} collapsed={collapsed} onClick={onNavigate}>Dashboard</NavLink>
-    <NavLink to={createPageUrl('DriverMyRuns')} icon={Calendar} collapsed={collapsed} onClick={onNavigate}>My Runs</NavLink>
-    <NavLink to={createPageUrl('MyTimesheet')} icon={Clock} collapsed={collapsed} onClick={onNavigate}>My Timesheet</NavLink>
-    <NavLink to={createPageUrl('DailyJobBoard')} icon={LayoutGrid} collapsed={collapsed} onClick={onNavigate}>Daily Job Board</NavLink>
-    <NavLink to={createPageUrl('Phonebook')} icon={Users} collapsed={collapsed} onClick={onNavigate}>Phonebook</NavLink>
-    <NavLink to={createPageUrl('Notifications')} icon={Bell} collapsed={collapsed} onClick={onNavigate}>Notifications</NavLink>
-    <NavLink to={createPageUrl('Settings')} icon={Settings} collapsed={collapsed} onClick={onNavigate}>Settings</NavLink>
-    <NavLink to={createPageUrl('WeatherToday')} icon={CloudRain} collapsed={collapsed} onClick={onNavigate}>Weather Today</NavLink>
-  </>;
+    <NavIconLink to={createPageUrl('Dashboard')} icon={Home} label="Dashboard" onClick={onNavigate} />
+    <NavIconLink to={createPageUrl('DriverMyRuns')} icon={Calendar} label="My Runs" onClick={onNavigate} />
+    <NavIconLink to={createPageUrl('MyTimesheet')} icon={Clock} label="My Timesheet" onClick={onNavigate} />
+    <NavIconLink to={createPageUrl('DailyJobBoard')} icon={LayoutGrid} label="Daily Job Board" onClick={onNavigate} />
+    <NavIconLink to={createPageUrl('Phonebook')} icon={Users} label="Phonebook" onClick={onNavigate} />
+    <NavIconLink to={createPageUrl('Notifications')} icon={Bell} label="Notifications" onClick={onNavigate} />
+    <NavIconLink to={createPageUrl('WeatherToday')} icon={CloudRain} label="Weather Today" onClick={onNavigate} />
+    <NavIconLink to={createPageUrl('Settings')} icon={Settings} label="Settings" onClick={onNavigate} />
+  </>
+);
 
-const CustomerNav = ({ collapsed, onNavigate }) =>
+const CustomerNav = ({ onNavigate }) => (
   <>
-    <NavLink to={createPageUrl('AdminJobs')} icon={Briefcase} collapsed={collapsed} onClick={onNavigate}>My Jobs</NavLink>
-    <NavLink to={createPageUrl('DailyJobBoard')} icon={Calendar} collapsed={collapsed} onClick={onNavigate}>Daily Schedule</NavLink>
-    <NavLink to={createPageUrl('CustomerRequestDelivery')} icon={Plus} collapsed={collapsed} onClick={onNavigate}>Request Delivery</NavLink>
-    <NavLink to={createPageUrl('Phonebook')} icon={Users} collapsed={collapsed} onClick={onNavigate}>Phonebook</NavLink>
-    <NavLink to={createPageUrl('Notifications')} icon={Bell} collapsed={collapsed} onClick={onNavigate}>Notifications</NavLink>
-    <NavLink to={createPageUrl('Settings')} icon={Settings} collapsed={collapsed} onClick={onNavigate}>Settings</NavLink>
-    <NavLink to={createPageUrl('WeatherToday')} icon={CloudRain} collapsed={collapsed} onClick={onNavigate}>Weather Today</NavLink>
-  </>;
+    <NavIconLink to={createPageUrl('AdminJobs')} icon={Briefcase} label="My Jobs" onClick={onNavigate} />
+    <NavIconLink to={createPageUrl('DailyJobBoard')} icon={Calendar} label="Daily Schedule" onClick={onNavigate} />
+    <NavIconLink to={createPageUrl('CustomerRequestDelivery')} icon={Plus} label="Request Delivery" onClick={onNavigate} />
+    <NavIconLink to={createPageUrl('Phonebook')} icon={Users} label="Phonebook" onClick={onNavigate} />
+    <NavIconLink to={createPageUrl('Notifications')} icon={Bell} label="Notifications" onClick={onNavigate} />
+    <NavIconLink to={createPageUrl('WeatherToday')} icon={CloudRain} label="Weather Today" onClick={onNavigate} />
+    <NavIconLink to={createPageUrl('Settings')} icon={Settings} label="Settings" onClick={onNavigate} />
+  </>
+);
 
-const ManagerNav = ({ collapsed, onNavigate }) => {
-  const [libraryOpen, setLibraryOpen] = useState(false);
+const ManagerNav = ({ onNavigate }) => {
   const location = useLocation();
-  
   const libraryPages = [
     createPageUrl('AdminJobs'),
     createPageUrl('AdminCustomers')
   ];
-  
   const isLibraryActive = libraryPages.includes(location.pathname);
 
-  useEffect(() => {
-    if (isLibraryActive && !libraryOpen && !collapsed) {
-      setLibraryOpen(true);
-    }
-  }, [isLibraryActive, libraryOpen, collapsed]);
-
-  useEffect(() => {
-    if (collapsed) {
-      setLibraryOpen(false);
-    }
-  }, [collapsed]);
-  
   return (
     <>
-      <NavLink to={createPageUrl('Dashboard')} icon={Home} collapsed={collapsed} onClick={onNavigate}>Dashboard</NavLink>
-      <NavLink to={createPageUrl('DailyJobBoard')} icon={Calendar} collapsed={collapsed} onClick={onNavigate}>Daily Job Board</NavLink>
-      <NavLink to={createPageUrl('Reports')} icon={BarChart3} collapsed={collapsed} onClick={onNavigate}>Reports</NavLink>
-      <NavLink to={createPageUrl('Phonebook')} icon={Users} collapsed={collapsed} onClick={onNavigate}>Phonebook</NavLink>
-      <NavLink to={createPageUrl('Notifications')} icon={Bell} collapsed={collapsed} onClick={onNavigate}>Notifications</NavLink>
-      <NavLink to={createPageUrl('Settings')} icon={Settings} collapsed={collapsed} onClick={onNavigate}>Settings</NavLink>
+      <NavIconLink to={createPageUrl('Dashboard')} icon={Home} label="Dashboard" onClick={onNavigate} />
+      <NavIconLink to={createPageUrl('DailyJobBoard')} icon={Calendar} label="Daily Job Board" onClick={onNavigate} />
+      <NavIconLink to={createPageUrl('Reports')} icon={BarChart3} label="Reports" onClick={onNavigate} />
+      <NavIconLink to={createPageUrl('Phonebook')} icon={Users} label="Phonebook" onClick={onNavigate} />
+      <NavIconLink to={createPageUrl('Notifications')} icon={Bell} label="Notifications" onClick={onNavigate} />
       
-      {!collapsed ? (
-        <Collapsible open={libraryOpen} onOpenChange={setLibraryOpen}>
-          <CollapsibleTrigger asChild>
-            <button
-              className={`w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ${
-                isLibraryActive ?
-                  'bg-blue-600 text-white' :
-                  'text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              <div className="flex items-center">
-                <Library className="h-5 w-5 mr-3" />
-                Company Library
-              </div>
-              <ChevronRight className={`h-4 w-4 transition-transform ${libraryOpen ? 'rotate-90' : ''}`} />
-            </button>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="space-y-1 mt-1">
-            <SubNavLink to={createPageUrl('AdminJobs')} onClick={onNavigate}>All Jobs</SubNavLink>
-            <SubNavLink to={createPageUrl('AdminCustomers')} onClick={onNavigate}>Customers</SubNavLink>
-          </CollapsibleContent>
-        </Collapsible>
-      ) : (
-        <NavLink to={createPageUrl('AdminJobs')} icon={Library} collapsed={collapsed} onClick={onNavigate}>Library</NavLink>
-      )}
+      <DropdownMenu>
+        <Tooltip delayDuration={0}>
+          <TooltipTrigger asChild>
+            <DropdownMenuTrigger asChild>
+              <button className={`flex items-center justify-center h-10 w-10 rounded-lg transition-all ${
+                isLibraryActive ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/50' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+              }`}>
+                <Library className="h-5 w-5" />
+              </button>
+            </DropdownMenuTrigger>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="font-medium">
+            <p>Company Library</p>
+          </TooltipContent>
+        </Tooltip>
+        <DropdownMenuContent align="start">
+          <DropdownMenuItem onClick={() => { onNavigate(); window.location.href = createPageUrl('AdminJobs'); }}>All Jobs</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => { onNavigate(); window.location.href = createPageUrl('AdminCustomers'); }}>Customers</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
       
-      <NavLink to={createPageUrl('WeatherToday')} icon={CloudRain} collapsed={collapsed} onClick={onNavigate}>Weather Today</NavLink>
+      <NavIconLink to={createPageUrl('WeatherToday')} icon={CloudRain} label="Weather Today" onClick={onNavigate} />
+      <NavIconLink to={createPageUrl('Settings')} icon={Settings} label="Settings" onClick={onNavigate} />
     </>
   );
 };
@@ -337,7 +309,6 @@ export default function Layout({ children, currentPageName }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [returnedJobs, setReturnedJobs] = useState([]);
   const [showReturnedAlert, setShowReturnedAlert] = useState(false);
@@ -481,28 +452,116 @@ export default function Layout({ children, currentPageName }) {
     if (isPending) return null;
 
     if (user.role === 'admin') {
-      return <AdminNav collapsed={sidebarCollapsed} onNavigate={onNavigate} />;
+      return <AdminNav onNavigate={onNavigate} />;
     }
 
     const appRole = user.appRole;
 
-    console.log('Rendering nav for appRole:', appRole);
-
     switch (appRole) {
       case 'globalAdmin':
-        return <AdminNav collapsed={sidebarCollapsed} onNavigate={onNavigate} />;
+        return <AdminNav onNavigate={onNavigate} />;
       case 'tenantAdmin':
-        return <AdminNav collapsed={sidebarCollapsed} onNavigate={onNavigate} />;
+        return <AdminNav onNavigate={onNavigate} />;
       case 'dispatcher':
-        return <DispatcherNav collapsed={sidebarCollapsed} onNavigate={onNavigate} />;
+        return <DispatcherNav onNavigate={onNavigate} />;
       case 'driver':
-        return <DriverNav collapsed={sidebarCollapsed} onNavigate={onNavigate} />;
+        return <DriverNav onNavigate={onNavigate} />;
       case 'manager':
-        return <ManagerNav collapsed={sidebarCollapsed} onNavigate={onNavigate} />;
+        return <ManagerNav onNavigate={onNavigate} />;
       case 'customer':
       default:
-        return <CustomerNav collapsed={sidebarCollapsed} onNavigate={onNavigate} />;
+        return <CustomerNav onNavigate={onNavigate} />;
     }
+  };
+
+  const renderMobileNavLinks = (onNavigate) => {
+    if (!user) return null;
+    const needsCustomerId = user.appRole === 'customer' || user.appRole === 'manager' || !user.appRole;
+    const isPending = !!(user && user.role !== 'admin' && needsCustomerId && !user.customerId);
+
+    if (isPending) return null;
+
+    const isCustomer = user.role !== 'admin' && (user.appRole === 'customer' || !user.appRole);
+    const isDriver = user.role !== 'admin' && user.appRole === 'driver';
+    const appRole = user.appRole;
+
+    if (user.role === 'admin' || appRole === 'globalAdmin' || appRole === 'tenantAdmin') {
+      return (
+        <>
+          <MobileNavLink to={createPageUrl('Dashboard')} icon={Home} onClick={onNavigate}>Dashboard</MobileNavLink>
+          <MobileNavLink to={createPageUrl('SchedulingBoard')} icon={LayoutGrid} onClick={onNavigate}>Scheduling</MobileNavLink>
+          <MobileNavLink to={createPageUrl('DailyJobBoard')} icon={Calendar} onClick={onNavigate}>Daily Job Board</MobileNavLink>
+          <MobileNavLink to={createPageUrl('LiveTracking')} icon={MapPin} onClick={onNavigate}>Live Tracking</MobileNavLink>
+          <MobileNavLink to={createPageUrl('Reports')} icon={BarChart3} onClick={onNavigate}>Reports</MobileNavLink>
+          <MobileNavLink to={createPageUrl('Phonebook')} icon={Users} onClick={onNavigate}>Phonebook</MobileNavLink>
+          <MobileNavLink to={createPageUrl('Notifications')} icon={Bell} onClick={onNavigate}>Notifications</MobileNavLink>
+          <MobileNavLink to={createPageUrl('AdminJobs')} icon={Library} onClick={onNavigate}>All Jobs</MobileNavLink>
+          <MobileNavLink to={createPageUrl('TimesheetsAndRosters')} icon={Clock} onClick={onNavigate}>Timesheets</MobileNavLink>
+          <MobileNavLink to={createPageUrl('WeatherToday')} icon={CloudRain} onClick={onNavigate}>Weather Today</MobileNavLink>
+          <MobileNavLink to={createPageUrl('Settings')} icon={Settings} onClick={onNavigate}>Settings</MobileNavLink>
+        </>
+      );
+    }
+
+    if (appRole === 'dispatcher') {
+      return (
+        <>
+          <MobileNavLink to={createPageUrl('Dashboard')} icon={Home} onClick={onNavigate}>Dashboard</MobileNavLink>
+          <MobileNavLink to={createPageUrl('SchedulingBoard')} icon={LayoutGrid} onClick={onNavigate}>Scheduling</MobileNavLink>
+          <MobileNavLink to={createPageUrl('DailyJobBoard')} icon={Calendar} onClick={onNavigate}>Daily Job Board</MobileNavLink>
+          <MobileNavLink to={createPageUrl('LiveTracking')} icon={MapPin} onClick={onNavigate}>Live Tracking</MobileNavLink>
+          <MobileNavLink to={createPageUrl('Reports')} icon={BarChart3} onClick={onNavigate}>Reports</MobileNavLink>
+          <MobileNavLink to={createPageUrl('Phonebook')} icon={Users} onClick={onNavigate}>Phonebook</MobileNavLink>
+          <MobileNavLink to={createPageUrl('Notifications')} icon={Bell} onClick={onNavigate}>Notifications</MobileNavLink>
+          <MobileNavLink to={createPageUrl('AdminJobs')} icon={Library} onClick={onNavigate}>All Jobs</MobileNavLink>
+          <MobileNavLink to={createPageUrl('TimesheetsAndRosters')} icon={Clock} onClick={onNavigate}>Timesheets</MobileNavLink>
+          <MobileNavLink to={createPageUrl('WeatherToday')} icon={CloudRain} onClick={onNavigate}>Weather Today</MobileNavLink>
+          <MobileNavLink to={createPageUrl('Settings')} icon={Settings} onClick={onNavigate}>Settings</MobileNavLink>
+        </>
+      );
+    }
+
+    if (isDriver) {
+      return (
+        <>
+          <MobileNavLink to={createPageUrl('Dashboard')} icon={Home} onClick={onNavigate}>Dashboard</MobileNavLink>
+          <MobileNavLink to={createPageUrl('DriverMyRuns')} icon={Calendar} onClick={onNavigate}>My Runs</MobileNavLink>
+          <MobileNavLink to={createPageUrl('MyTimesheet')} icon={Clock} onClick={onNavigate}>My Timesheet</MobileNavLink>
+          <MobileNavLink to={createPageUrl('DailyJobBoard')} icon={LayoutGrid} onClick={onNavigate}>Daily Job Board</MobileNavLink>
+          <MobileNavLink to={createPageUrl('Phonebook')} icon={Users} onClick={onNavigate}>Phonebook</MobileNavLink>
+          <MobileNavLink to={createPageUrl('Notifications')} icon={Bell} onClick={onNavigate}>Notifications</MobileNavLink>
+          <MobileNavLink to={createPageUrl('WeatherToday')} icon={CloudRain} onClick={onNavigate}>Weather Today</MobileNavLink>
+          <MobileNavLink to={createPageUrl('Settings')} icon={Settings} onClick={onNavigate}>Settings</MobileNavLink>
+        </>
+      );
+    }
+
+    if (appRole === 'manager') {
+      return (
+        <>
+          <MobileNavLink to={createPageUrl('Dashboard')} icon={Home} onClick={onNavigate}>Dashboard</MobileNavLink>
+          <MobileNavLink to={createPageUrl('DailyJobBoard')} icon={Calendar} onClick={onNavigate}>Daily Job Board</MobileNavLink>
+          <MobileNavLink to={createPageUrl('Reports')} icon={BarChart3} onClick={onNavigate}>Reports</MobileNavLink>
+          <MobileNavLink to={createPageUrl('Phonebook')} icon={Users} onClick={onNavigate}>Phonebook</MobileNavLink>
+          <MobileNavLink to={createPageUrl('Notifications')} icon={Bell} onClick={onNavigate}>Notifications</MobileNavLink>
+          <MobileNavLink to={createPageUrl('AdminJobs')} icon={Library} onClick={onNavigate}>All Jobs</MobileNavLink>
+          <MobileNavLink to={createPageUrl('WeatherToday')} icon={CloudRain} onClick={onNavigate}>Weather Today</MobileNavLink>
+          <MobileNavLink to={createPageUrl('Settings')} icon={Settings} onClick={onNavigate}>Settings</MobileNavLink>
+        </>
+      );
+    }
+
+    return (
+      <>
+        <MobileNavLink to={createPageUrl('AdminJobs')} icon={Briefcase} onClick={onNavigate}>My Jobs</MobileNavLink>
+        <MobileNavLink to={createPageUrl('DailyJobBoard')} icon={Calendar} onClick={onNavigate}>Daily Schedule</MobileNavLink>
+        <MobileNavLink to={createPageUrl('CustomerRequestDelivery')} icon={Plus} onClick={onNavigate}>Request Delivery</MobileNavLink>
+        <MobileNavLink to={createPageUrl('Phonebook')} icon={Users} onClick={onNavigate}>Phonebook</MobileNavLink>
+        <MobileNavLink to={createPageUrl('Notifications')} icon={Bell} onClick={onNavigate}>Notifications</MobileNavLink>
+        <MobileNavLink to={createPageUrl('WeatherToday')} icon={CloudRain} onClick={onNavigate}>Weather Today</MobileNavLink>
+        <MobileNavLink to={createPageUrl('Settings')} icon={Settings} onClick={onNavigate}>Settings</MobileNavLink>
+      </>
+    );
   };
 
   if (loading) {
@@ -545,7 +604,7 @@ export default function Layout({ children, currentPageName }) {
   const isCustomer = user.role !== 'admin' && (user.appRole === 'customer' || !user.appRole);
   const isDriver = user.role !== 'admin' && user.appRole === 'driver';
 
-  const getSidebarTitle = () => {
+  const getToolbarTitle = () => {
     if (user?.appRole === 'globalAdmin') {
       return 'Global Admin';
     }
@@ -558,216 +617,180 @@ export default function Layout({ children, currentPageName }) {
     return 'Dispatch';
   };
 
-  const sidebarWidth = sidebarCollapsed ? 'w-16' : 'w-64';
-  const mainMargin = sidebarCollapsed ? 'md:ml-16' : 'md:ml-64';
-
   return (
-    <OfflineProvider>
-      <style>{`
-        html, body, #root {
-          height: 100%;
-          margin: 0;
-          padding: 0;
-        }
+    <TooltipProvider>
+      <OfflineProvider>
+        <style>{`
+          html, body, #root {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+          }
+          
+          .pac-container {
+            z-index: 999999 !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+            border-radius: 0.375rem !important;
+            border: 1px solid #e5e7eb !important;
+            margin-top: 4px !important;
+            background: white !important;
+          }
+          
+          .pac-item {
+            padding: 8px 12px !important;
+            cursor: pointer !important;
+            border: none !important;
+            background: white !important;
+            line-height: 1.5 !important;
+          }
+          
+          .pac-item:hover {
+            background-color: #f3f4f6 !important;
+          }
+          
+          .pac-item-selected,
+          .pac-item-selected:hover {
+            background-color: #e5e7eb !important;
+          }
+          
+          .pac-icon {
+            margin-right: 8px !important;
+          }
+          
+          .pac-item-query {
+            font-weight: 600 !important;
+            color: #111827 !important;
+          }
+          
+          .pac-container * {
+            pointer-events: auto !important;
+          }
+        `}</style>
         
-        .pac-container {
-          z-index: 999999 !important;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
-          border-radius: 0.375rem !important;
-          border: 1px solid #e5e7eb !important;
-          margin-top: 4px !important;
-          background: white !important;
-        }
-        
-        .pac-item {
-          padding: 8px 12px !important;
-          cursor: pointer !important;
-          border: none !important;
-          background: white !important;
-          line-height: 1.5 !important;
-        }
-        
-        .pac-item:hover {
-          background-color: #f3f4f6 !important;
-        }
-        
-        .pac-item-selected,
-        .pac-item-selected:hover {
-          background-color: #e5e7eb !important;
-        }
-        
-        .pac-icon {
-          margin-right: 8px !important;
-        }
-        
-        .pac-item-query {
-          font-weight: 600 !important;
-          color: #111827 !important;
-        }
-        
-        .pac-container * {
-          pointer-events: auto !important;
-        }
-      `}</style>
-      
-      <div className="h-screen w-screen flex bg-gray-50 overflow-hidden">
-        {/* Desktop Sidebar */}
-        <div className={`hidden md:flex flex-col ${sidebarWidth} border-r bg-white h-full fixed left-0 top-0 z-20 transition-all duration-300`}>
-          <div className={`flex items-center flex-shrink-0 px-4 pt-5 pb-4 ${sidebarCollapsed ? 'justify-center' : ''}`}>
-            {!sidebarCollapsed && (
-              <>
-                <Truck className="h-8 w-8 text-blue-600" />
-                <span className="ml-3 font-semibold text-xl">
-                  {getSidebarTitle()}
-                </span>
-              </>
-            )}
-            {sidebarCollapsed && <Truck className="h-8 w-8 text-blue-600" />}
-          </div>
-
-          {!sidebarCollapsed && user && (
-            <div className="px-4 pb-2">
-              <div className="inline-flex items-center px-2 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-medium">
-                {user.appRole === 'globalAdmin' ? 'All Tenants' : (() => {
-                  const tenantId = user.tenantId || 'sec';
-                  const tenantNames = {
-                    'sec': 'South East Carters',
-                    'bayside_plasterboard': 'Bayside Plasterboard',
-                    'outreach_hire': 'Outreach Hire'
-                  };
-                  return tenantNames[tenantId] || 'South East Carters';
-                })()}
+        <div className="h-screen w-screen flex flex-col bg-gray-50 overflow-hidden">
+          {/* Desktop Top Toolbar */}
+          <div className="hidden md:flex items-center justify-between px-6 py-3 bg-white border-b shadow-sm z-30">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Truck className="h-7 w-7 text-blue-600" />
+                <span className="font-semibold text-lg text-gray-900">{getToolbarTitle()}</span>
               </div>
-            </div>
-          )}
-          
-          {/* Toggle Button */}
-          <div className={`px-2 pb-2 flex ${sidebarCollapsed ? 'justify-center' : 'justify-end'}`}>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className="bg-blue-50 border-2 border-blue-300 text-blue-700 hover:bg-blue-100 hover:border-blue-400 shadow-sm"
-              title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            >
-              {sidebarCollapsed ? <PanelLeft className="h-5 w-5" /> : <PanelLeftClose className="h-5 w-5" />}
-            </Button>
-          </div>
-          
-          {isCustomer && user.customerName && !sidebarCollapsed && (
-            <div className="px-4 py-2 mx-2 mb-2 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-xs text-blue-600 font-medium text-center">Customer Portal</p>
-            </div>
-          )}
-          
-          <nav className="flex-1 px-5 space-y-2 overflow-y-auto">
-            {renderNavLinks()}
-          </nav>
-          <div className="px-5 pb-4 flex-shrink-0">
-            <Button
-              variant="ghost"
-              className={`w-full ${sidebarCollapsed ? 'justify-center px-2' : 'justify-start'} text-gray-600 hover:bg-gray-100`}
-              onClick={handleLogout}
-              title={sidebarCollapsed ? 'Log Out' : ''}
-            >
-              <LogOut className={`h-5 w-5 ${sidebarCollapsed ? '' : 'mr-3'}`} />
-              {!sidebarCollapsed && 'Log Out'}
-            </Button>
-          </div>
-        </div>
-
-        {/* Main Content Wrapper - applies margin for desktop, contains mobile header & main */}
-        <div className={`flex-1 flex flex-col ${mainMargin} h-full transition-all duration-300`}>
-          {/* Mobile Header */}
-          <div className="md:hidden bg-white border-b px-4 py-3 flex items-center justify-between z-30">
-            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-              <SheetTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  className="touch-manipulation active:bg-gray-100"
-                  aria-label="Open menu"
-                >
-                  <Menu className="h-6 w-6" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="w-64 p-0">
-                <div className="flex flex-col h-full">
-                  <div className="flex items-center flex-shrink-0 px-4 pt-5">
-                    <Truck className="h-8 w-8 text-blue-600" />
-                    <span className="ml-3 font-semibold text-xl">
-                      {getSidebarTitle()}
-                    </span>
-                  </div>
-                  
-                  {isCustomer && user.customerName && (
-                    <div className="px-4 py-2 mx-2 my-3 bg-blue-50 border border-blue-200 rounded-lg">
-                      <p className="text-xs text-blue-600 font-medium text-center">Customer Portal</p>
-                    </div>
-                  )}
-                  
-                  <nav className="mt-5 flex-1 px-5 space-y-2 overflow-y-auto">
-                    {renderNavLinks(handleMobileNavigate)}
-                  </nav>
-                  <div className="p-5 flex-shrink-0">
-                    <Button
-                      variant="ghost"
-                      className="w-full justify-start text-gray-600 hover:bg-gray-100"
-                      onClick={() => {
-                        handleLogout();
-                        setMobileMenuOpen(false);
-                      }}
-                    >
-                      <LogOut className="h-5 w-5 mr-3" />
-                      Log Out
-                    </Button>
-                  </div>
+              {user && (
+                <div className="inline-flex items-center px-2 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-medium">
+                  {user.appRole === 'globalAdmin' ? 'All Tenants' : (() => {
+                    const tenantId = user.tenantId || 'sec';
+                    const tenantNames = {
+                      'sec': 'South East Carters',
+                      'bayside_plasterboard': 'Bayside Plasterboard',
+                      'outreach_hire': 'Outreach Hire'
+                    };
+                    return tenantNames[tenantId] || 'South East Carters';
+                  })()}
                 </div>
-              </SheetContent>
-            </Sheet>
+              )}
+            </div>
+
+            <nav className="flex items-center gap-2">
+              {renderNavLinks()}
+            </nav>
 
             <div className="flex items-center gap-2">
-              <Truck className="h-6 w-6 text-blue-600" />
-              <span className="font-semibold text-lg">{getSidebarTitle()}</span>
+              <NotificationBell user={user} />
+              <UserAvatarDropdown user={user} />
             </div>
           </div>
 
-          {/* Desktop header with notifications and user avatar dropdown */}
-          <div className="hidden md:flex items-center justify-end gap-2 px-6 py-3 bg-white border-b">
-            <NotificationBell user={user} />
-            <UserAvatarDropdown user={user} />
+          {/* Main Content Wrapper */}
+          <div className="flex-1 flex flex-col h-full overflow-hidden">
+            {/* Mobile Header */}
+            <div className="md:hidden bg-white border-b px-4 py-3 flex items-center justify-between z-30">
+              <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+                <SheetTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    className="touch-manipulation active:bg-gray-100"
+                    aria-label="Open menu"
+                  >
+                    <Menu className="h-6 w-6" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-64 p-0">
+                  <div className="flex flex-col h-full">
+                    <div className="flex items-center flex-shrink-0 px-4 pt-5">
+                      <Truck className="h-8 w-8 text-blue-600" />
+                      <span className="ml-3 font-semibold text-xl">
+                        {getToolbarTitle()}
+                      </span>
+                    </div>
+                    
+                    {isCustomer && user.customerName && (
+                      <div className="px-4 py-2 mx-2 my-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <p className="text-xs text-blue-600 font-medium text-center">Customer Portal</p>
+                      </div>
+                    )}
+                    
+                    <nav className="mt-5 flex-1 px-5 space-y-2 overflow-y-auto">
+                      {renderMobileNavLinks(handleMobileNavigate)}
+                    </nav>
+                    <div className="p-5 flex-shrink-0">
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start text-gray-600 hover:bg-gray-100"
+                        onClick={() => {
+                          handleLogout();
+                          setMobileMenuOpen(false);
+                        }}
+                      >
+                        <LogOut className="h-5 w-5 mr-3" />
+                        Log Out
+                      </Button>
+                    </div>
+                  </div>
+                </SheetContent>
+              </Sheet>
+
+              <div className="flex items-center gap-2">
+                <Truck className="h-6 w-6 text-blue-600" />
+                <span className="font-semibold text-lg">{getToolbarTitle()}</span>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <NotificationBell user={user} />
+                <UserAvatarDropdown user={user} />
+              </div>
+            </div>
+
+            <main className="flex-1 overflow-y-auto p-6">
+              {children}
+            </main>
           </div>
-
-          <main className="flex-1 overflow-y-auto p-6">
-            {children}
-          </main>
         </div>
-      </div>
 
-      <ChatWidget />
-      <Toaster />
-      
-      {/* Returned Job Alert Popup */}
-      {showReturnedAlert && returnedJobs.length > 0 && user && (
-        <ReturnedJobAlert
-          returnedJobs={returnedJobs}
-          user={user}
-          onDismiss={() => setShowReturnedAlert(false)}
-          onJobsUpdated={() => {
-            // Refresh the returned jobs list
-            base44.entities.Job.filter({ status: 'RETURNED' }).then(jobs => {
-              const dismissedBy = jobs.filter(job => {
-                const dismissed = job.returnAlertDismissedBy || [];
-                return !dismissed.includes(user.id);
+        <ChatWidget />
+        <Toaster />
+        
+        {/* Returned Job Alert Popup */}
+        {showReturnedAlert && returnedJobs.length > 0 && user && (
+          <ReturnedJobAlert
+            returnedJobs={returnedJobs}
+            user={user}
+            onDismiss={() => setShowReturnedAlert(false)}
+            onJobsUpdated={() => {
+              base44.entities.Job.filter({ status: 'RETURNED' }).then(jobs => {
+                const dismissedBy = jobs.filter(job => {
+                  const dismissed = job.returnAlertDismissedBy || [];
+                  return !dismissed.includes(user.id);
+                });
+                setReturnedJobs(dismissedBy);
+                if (dismissedBy.length === 0) {
+                  setShowReturnedAlert(false);
+                }
               });
-              setReturnedJobs(dismissedBy);
-              if (dismissedBy.length === 0) {
-                setShowReturnedAlert(false);
-              }
-            });
-          }}
-        />
-      )}
-    </OfflineProvider>
+            }}
+          />
+        )}
+      </OfflineProvider>
+    </TooltipProvider>
   );
 }
