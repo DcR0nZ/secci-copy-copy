@@ -6,11 +6,9 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/components/ui/use-toast';
-import { DndContext, DragOverlay, closestCorners, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
-import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { Truck, Users, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Search } from 'lucide-react';
+import { DndContext, DragOverlay, closestCorners, useSensor, useSensors, PointerSensor, useDroppable } from '@dnd-kit/core';
+import { Truck, Users, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Search, GripVertical } from 'lucide-react';
 import { format, addDays, subDays } from 'date-fns';
-import RosterCard from './RosterCard';
 
 export default function RostersTab({ user }) {
   const { toast } = useToast();
@@ -126,6 +124,56 @@ export default function RostersTab({ user }) {
 
   const activeEmployee = activeId ? employees.find(e => e.id === activeId) : null;
 
+  const DroppableColumn = ({ id, children }) => {
+    const { setNodeRef, isOver } = useDroppable({ id });
+    
+    return (
+      <div 
+        ref={setNodeRef}
+        className={`space-y-2 min-h-[200px] p-2 rounded-lg transition-colors ${
+          isOver ? 'bg-blue-50 border-2 border-blue-300 border-dashed' : ''
+        }`}
+      >
+        {children}
+      </div>
+    );
+  };
+
+  const DraggableEmployeeCard = ({ employee }) => {
+    const isOnShift = employee.userWorkStatus === 'ON_SHIFT';
+
+    return (
+      <div
+        className="bg-white p-3 rounded-lg border-2 border-gray-200 hover:border-blue-300 transition-colors cursor-move"
+        onMouseDown={(e) => {
+          e.currentTarget.style.cursor = 'grabbing';
+        }}
+        onMouseUp={(e) => {
+          e.currentTarget.style.cursor = 'move';
+        }}
+      >
+        <div className="flex items-center gap-2">
+          <GripVertical className="h-4 w-4 text-gray-400" />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <div className="bg-blue-100 w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0">
+                <span className="text-blue-600 font-semibold text-sm">
+                  {employee.full_name?.charAt(0) || employee.email.charAt(0).toUpperCase()}
+                </span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-sm truncate">{employee.full_name || employee.email}</p>
+                {isOnShift && (
+                  <Badge className="bg-green-500 text-white text-xs mt-1">On Shift</Badge>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4 flex-wrap">
@@ -180,16 +228,16 @@ export default function RostersTab({ user }) {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <SortableContext id="unassigned" items={getUnassignedEmployees().map(e => e.id)} strategy={verticalListSortingStrategy}>
-                <div className="space-y-2 min-h-[200px]">
-                  {getUnassignedEmployees().map(employee => (
-                    <RosterCard key={employee.id} employee={employee} />
-                  ))}
-                  {getUnassignedEmployees().length === 0 && (
-                    <p className="text-sm text-gray-500 text-center py-8">All assigned</p>
-                  )}
-                </div>
-              </SortableContext>
+              <DroppableColumn id="unassigned">
+                {getUnassignedEmployees().map(employee => (
+                  <div key={employee.id} draggable onDragStart={() => setActiveId(employee.id)}>
+                    <DraggableEmployeeCard employee={employee} />
+                  </div>
+                ))}
+                {getUnassignedEmployees().length === 0 && (
+                  <p className="text-sm text-gray-500 text-center py-8">All assigned</p>
+                )}
+              </DroppableColumn>
             </CardContent>
           </Card>
 
@@ -206,16 +254,16 @@ export default function RostersTab({ user }) {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <SortableContext id={truck.id} items={getEmployeesForTruck(truck.id).map(e => e.id)} strategy={verticalListSortingStrategy}>
-                  <div className="space-y-2 min-h-[200px]">
-                    {getEmployeesForTruck(truck.id).map(employee => (
-                      <RosterCard key={employee.id} employee={employee} />
-                    ))}
-                    {getEmployeesForTruck(truck.id).length === 0 && (
-                      <p className="text-sm text-gray-500 text-center py-8">No assignments</p>
-                    )}
-                  </div>
-                </SortableContext>
+                <DroppableColumn id={truck.id}>
+                  {getEmployeesForTruck(truck.id).map(employee => (
+                    <div key={employee.id} draggable onDragStart={() => setActiveId(employee.id)}>
+                      <DraggableEmployeeCard employee={employee} />
+                    </div>
+                  ))}
+                  {getEmployeesForTruck(truck.id).length === 0 && (
+                    <p className="text-sm text-gray-500 text-center py-8">No assignments</p>
+                  )}
+                </DroppableColumn>
               </CardContent>
             </Card>
           ))}
