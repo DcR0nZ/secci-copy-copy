@@ -9,6 +9,7 @@ import { getJobCardInlineStyles, getBadgeStyles, getJobCardStyles } from './Deli
 
 import JobDetailsDialog from './JobDetailsDialog';
 import PlaceholderBlock from './PlaceholderBlock';
+import CreateTruckDialog from './CreateTruckDialog';
 
 const TIME_SLOTS = [
   { id: 'first-am', label: '6-8am (1st AM)', color: 'bg-blue-100' },
@@ -390,6 +391,7 @@ export default function SchedulerGrid({
   const [isJobDialogOpen, setJobDialogOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [pickupLocations, setPickupLocations] = useState([]);
+  const [isCreateTruckOpen, setCreateTruckOpen] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -468,6 +470,7 @@ export default function SchedulerGrid({
 
   const unscheduledJobs = getUnscheduledJobs();
   const canCreatePlaceholder = currentUser && (currentUser.role === 'admin' || currentUser.appRole === 'dispatcher');
+  const canCreateTruck = currentUser && (currentUser.role === 'admin' || currentUser.appRole === 'dispatcher' || currentUser.appRole === 'tenantAdmin');
 
   return (
     <>
@@ -527,6 +530,32 @@ export default function SchedulerGrid({
 
         {/* Truck Rows */}
         <div className="flex-1 overflow-auto pb-4">
+          {/* Add Truck Row */}
+          {canCreateTruck && (
+            <div className="flex border-b-2 border-dashed border-gray-300 min-h-[60px] mb-4 bg-gray-50/50 hover:bg-gray-100/50 transition-colors">
+              <div className="w-24 lg:w-32 flex-shrink-0 p-2 bg-gray-50 border-r-2 border-dashed border-gray-300 sticky left-0 z-10 flex items-center justify-center">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setCreateTruckOpen(true)}
+                  className="flex items-center gap-1 text-gray-600 hover:text-gray-900"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span className="text-xs font-semibold">Add Truck</span>
+                </Button>
+              </div>
+              <div className="flex flex-1 relative">
+                {TIME_SLOTS.map((slot) => (
+                  <div
+                    key={slot.id}
+                    className={`${slot.color} border-r border-gray-200 flex flex-1 opacity-50`}
+                    style={{ minWidth: '200px' }}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
           {trucks.map((truck, truckIndex) => {
             const totalSqm = assignments
               .filter((a) => a.truckId === truck.id)
@@ -695,6 +724,12 @@ export default function SchedulerGrid({
         open={isJobDialogOpen}
         onOpenChange={setJobDialogOpen}
         onJobUpdated={() => window.location.reload()}
+      />
+
+      <CreateTruckDialog
+        open={isCreateTruckOpen}
+        onOpenChange={setCreateTruckOpen}
+        onCreated={() => window.location.reload()}
       />
     </>
   );
