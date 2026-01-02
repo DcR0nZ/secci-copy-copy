@@ -3,16 +3,26 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { UserPlus, Building2, ExternalLink, Loader2 } from 'lucide-react';
+import { UserPlus, Users, ExternalLink, Loader2 } from 'lucide-react';
 import { useToast } from "@/components/ui/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose, DialogFooter } from '@/components/ui/dialog';
 import UserCard from '../components/users/UserCard';
 import UserDetailsModal from '../components/users/UserDetailsModal';
 
+const ROLE_GROUPS = [
+  { id: 'globalAdmin', label: 'Global Admins', color: 'bg-red-100' },
+  { id: 'tenantAdmin', label: 'Tenant Admins', color: 'bg-orange-100' },
+  { id: 'dispatcher', label: 'Dispatchers', color: 'bg-purple-100' },
+  { id: 'driver', label: 'Drivers', color: 'bg-green-100' },
+  { id: 'customer', label: 'Customers', color: 'bg-blue-100' },
+  { id: 'manager', label: 'Managers', color: 'bg-yellow-100' },
+  { id: 'outreachOperator', label: 'Outreach Operators', color: 'bg-pink-100' },
+  { id: 'outreach', label: 'Outreach', color: 'bg-indigo-100' }
+];
+
 export default function AdminUsersPage() {
   const [users, setUsers] = useState([]);
   const [customers, setCustomers] = useState([]);
-  const [tenants, setTenants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -33,14 +43,12 @@ export default function AdminUsersPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [allUsers, allCustomers, allTenants] = await Promise.all([
+      const [allUsers, allCustomers] = await Promise.all([
         base44.entities.User.list(),
-        base44.entities.Customer.list(),
-        base44.entities.Tenant.list()
+        base44.entities.Customer.list()
       ]);
       setUsers(allUsers.filter(u => u.email));
       setCustomers(allCustomers);
-      setTenants(allTenants);
     } catch (error) {
       toast({
         title: "Error",
@@ -105,12 +113,8 @@ export default function AdminUsersPage() {
     }
   };
 
-  const getUsersForTenant = (tenantId) => {
-    return users.filter(u => u.tenantId === tenantId);
-  };
-
-  const getGlobalAdmins = () => {
-    return users.filter(u => u.appRole === 'globalAdmin');
+  const getUsersForRole = (roleId) => {
+    return users.filter(u => (u.appRole || 'customer') === roleId);
   };
 
   const handleUserClick = (user) => {
@@ -148,61 +152,28 @@ export default function AdminUsersPage() {
         {/* Scrollable Content */}
         <div className="px-4 py-4 pb-24">
           <div className="space-y-4">
-            {/* Global Admins */}
-            {getGlobalAdmins().length > 0 && (
-              <Card className="bg-red-100 border-2">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center justify-between">
-                    <span className="flex items-center gap-2">
-                      <Building2 className="h-5 w-5 text-red-600" />
-                      <span>Global Admins</span>
-                    </span>
-                    <Badge variant="secondary" className="bg-white">
-                      {getGlobalAdmins().length} {getGlobalAdmins().length === 1 ? 'user' : 'users'}
-                    </Badge>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3" style={{ touchAction: 'pan-y' }}>
-                    {getGlobalAdmins().map((user) => {
-                      const customer = customers.find(c => c.id === user.customerId);
-                      return (
-                        <UserCard
-                          key={user.id}
-                          user={user}
-                          customer={customer}
-                          onClick={() => handleUserClick(user)}
-                        />
-                      );
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Tenants */}
-            {tenants.map((tenant) => {
-              const tenantUsers = getUsersForTenant(tenant.tenantId);
+            {ROLE_GROUPS.map((roleGroup) => {
+              const roleUsers = getUsersForRole(roleGroup.id);
               
               return (
-                <Card key={tenant.id} className="bg-blue-100 border-2">
+                <Card key={roleGroup.id} className={`${roleGroup.color} border-2`}>
                   <CardHeader className="pb-3">
                     <CardTitle className="text-base flex items-center justify-between">
                       <span className="flex items-center gap-2">
-                        <Building2 className="h-5 w-5 text-blue-600" />
-                        <span>{tenant.name}</span>
+                        <Users className="h-5 w-5 text-indigo-600" />
+                        <span>{roleGroup.label}</span>
                       </span>
                       <Badge variant="secondary" className="bg-white">
-                        {tenantUsers.length} {tenantUsers.length === 1 ? 'user' : 'users'}
+                        {roleUsers.length} {roleUsers.length === 1 ? 'user' : 'users'}
                       </Badge>
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3" style={{ touchAction: 'pan-y' }}>
-                      {tenantUsers.length === 0 ? (
-                        <p className="text-sm text-gray-500 text-center py-4">No users in this tenant</p>
+                      {roleUsers.length === 0 ? (
+                        <p className="text-sm text-gray-500 text-center py-4">No users in this role</p>
                       ) : (
-                        tenantUsers.map((user) => {
+                        roleUsers.map((user) => {
                           const customer = customers.find(c => c.id === user.customerId);
                           return (
                             <UserCard
@@ -286,61 +257,28 @@ export default function AdminUsersPage() {
       {/* Scrollable Content */}
       <div className="flex-1 overflow-y-auto -webkit-overflow-scrolling-touch" style={{ touchAction: 'pan-y' }}>
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          {/* Global Admins */}
-          {getGlobalAdmins().length > 0 && (
-            <Card className="bg-red-100 border-2">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center justify-between">
-                  <span className="flex items-center gap-2">
-                    <Building2 className="h-5 w-5 text-red-600" />
-                    <span>Global Admins</span>
-                  </span>
-                  <Badge variant="secondary" className="bg-white">
-                    {getGlobalAdmins().length}
-                  </Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {getGlobalAdmins().map((user) => {
-                    const customer = customers.find(c => c.id === user.customerId);
-                    return (
-                      <UserCard
-                        key={user.id}
-                        user={user}
-                        customer={customer}
-                        onClick={() => handleUserClick(user)}
-                      />
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Tenants */}
-          {tenants.map((tenant) => {
-            const tenantUsers = getUsersForTenant(tenant.tenantId);
+          {ROLE_GROUPS.map((roleGroup) => {
+            const roleUsers = getUsersForRole(roleGroup.id);
             
             return (
-              <Card key={tenant.id} className="bg-blue-100 border-2">
+              <Card key={roleGroup.id} className={`${roleGroup.color} border-2`}>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base flex items-center justify-between">
                     <span className="flex items-center gap-2">
-                      <Building2 className="h-5 w-5 text-blue-600" />
-                      <span>{tenant.name}</span>
+                      <Users className="h-5 w-5 text-indigo-600" />
+                      <span>{roleGroup.label}</span>
                     </span>
                     <Badge variant="secondary" className="bg-white">
-                      {tenantUsers.length}
+                      {roleUsers.length}
                     </Badge>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {tenantUsers.length === 0 ? (
-                      <p className="text-sm text-gray-500 text-center py-4">No users in this tenant</p>
+                    {roleUsers.length === 0 ? (
+                      <p className="text-sm text-gray-500 text-center py-4">No users in this role</p>
                     ) : (
-                      tenantUsers.map((user) => {
+                      roleUsers.map((user) => {
                         const customer = customers.find(c => c.id === user.customerId);
                         return (
                           <UserCard

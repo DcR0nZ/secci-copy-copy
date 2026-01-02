@@ -173,9 +173,8 @@ const AdminNav = ({ onNavigate }) => {
           <DropdownMenuItem onClick={() => { onNavigate?.(); window.location.href = createPageUrl('DeliveryPartners'); }}>Delivery Partners</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-
+      
       {isGlobalAdmin && <NavIconLink to={createPageUrl('ManageTenants')} icon={Settings} label="Manage Tenants" onClick={onNavigate} />}
-      <NavIconLink to={createPageUrl('TenantRolesManagement')} icon={Settings} label="Role Management" onClick={onNavigate} />
       <NavIconLink to={createPageUrl('TimesheetsAndRosters')} icon={Clock} label="Timesheets" onClick={onNavigate} />
       <NavIconLink to={createPageUrl('WeatherToday')} icon={CloudRain} label="Weather Today" onClick={onNavigate} />
     </>
@@ -669,11 +668,11 @@ export default function Layout({ children, currentPageName }) {
               {user && (
                 <div className="inline-flex items-center px-2 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-medium">
                   {user.appRole === 'globalAdmin' ? 'All Tenants' : (() => {
-                    const tenantId = user.tenantId || 'SEC';
+                    const tenantId = user.tenantId || 'sec';
                     const tenantNames = {
-                      'SEC': 'South East Carters',
-                      'north_coast_logistics': 'North Coast Logistics',
-                      'metro_freight': 'Metro Freight Services'
+                      'sec': 'South East Carters',
+                      'bayside_plasterboard': 'Bayside Plasterboard',
+                      'outreach_hire': 'Outreach Hire'
                     };
                     return tenantNames[tenantId] || 'South East Carters';
                   })()}

@@ -1,69 +1,67 @@
+import SchedulingBoard from './pages/SchedulingBoard';
+import AdminJobs from './pages/AdminJobs';
+import CustomerRequestDelivery from './pages/CustomerRequestDelivery';
+import Home from './pages/Home';
+import DailyJobBoard from './pages/DailyJobBoard';
+import AdminUsers from './pages/AdminUsers';
 import AccessPending from './pages/AccessPending';
 import AdminCustomers from './pages/AdminCustomers';
-import AdminDeliveryTypes from './pages/AdminDeliveryTypes';
-import AdminJobs from './pages/AdminJobs';
 import AdminPickupLocations from './pages/AdminPickupLocations';
-import AdminUsers from './pages/AdminUsers';
-import CustomerPortal from './pages/CustomerPortal';
-import CustomerRequestDelivery from './pages/CustomerRequestDelivery';
-import DailyJobBoard from './pages/DailyJobBoard';
-import Dashboard from './pages/Dashboard';
-import DataExport from './pages/DataExport';
-import DeliveryPartners from './pages/DeliveryPartners';
-import DriverMobile from './pages/DriverMobile';
+import AdminDeliveryTypes from './pages/AdminDeliveryTypes';
 import DriverMyRuns from './pages/DriverMyRuns';
-import DriverVehicle from './pages/DriverVehicle';
-import FleetManagement from './pages/FleetManagement';
-import Home from './pages/Home';
-import JobsKanban from './pages/JobsKanban';
-import LiveTracking from './pages/LiveTracking';
-import ManageTenants from './pages/ManageTenants';
-import MyTimesheet from './pages/MyTimesheet';
-import Notifications from './pages/Notifications';
-import Phonebook from './pages/Phonebook';
-import Reports from './pages/Reports';
-import SchedulingBoard from './pages/SchedulingBoard';
-import Settings from './pages/Settings';
-import SheetSpecs from './pages/SheetSpecs';
-import TestEmails from './pages/TestEmails';
-import TimesheetsAndRosters from './pages/TimesheetsAndRosters';
+import Dashboard from './pages/Dashboard';
 import WeatherToday from './pages/WeatherToday';
-import TenantRolesManagement from './pages/TenantRolesManagement';
+import TestEmails from './pages/TestEmails';
+import Reports from './pages/Reports';
+import LiveTracking from './pages/LiveTracking';
+import DataExport from './pages/DataExport';
+import SheetSpecs from './pages/SheetSpecs';
+import ManageTenants from './pages/ManageTenants';
+import Phonebook from './pages/Phonebook';
+import Settings from './pages/Settings';
+import DeliveryPartners from './pages/DeliveryPartners';
+import Notifications from './pages/Notifications';
+import JobsKanban from './pages/JobsKanban';
+import DriverMobile from './pages/DriverMobile';
+import CustomerPortal from './pages/CustomerPortal';
+import FleetManagement from './pages/FleetManagement';
+import DriverVehicle from './pages/DriverVehicle';
+import MyTimesheet from './pages/MyTimesheet';
+import TimesheetsAndRosters from './pages/TimesheetsAndRosters';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
+    "SchedulingBoard": SchedulingBoard,
+    "AdminJobs": AdminJobs,
+    "CustomerRequestDelivery": CustomerRequestDelivery,
+    "Home": Home,
+    "DailyJobBoard": DailyJobBoard,
+    "AdminUsers": AdminUsers,
     "AccessPending": AccessPending,
     "AdminCustomers": AdminCustomers,
-    "AdminDeliveryTypes": AdminDeliveryTypes,
-    "AdminJobs": AdminJobs,
     "AdminPickupLocations": AdminPickupLocations,
-    "AdminUsers": AdminUsers,
-    "CustomerPortal": CustomerPortal,
-    "CustomerRequestDelivery": CustomerRequestDelivery,
-    "DailyJobBoard": DailyJobBoard,
-    "Dashboard": Dashboard,
-    "DataExport": DataExport,
-    "DeliveryPartners": DeliveryPartners,
-    "DriverMobile": DriverMobile,
+    "AdminDeliveryTypes": AdminDeliveryTypes,
     "DriverMyRuns": DriverMyRuns,
-    "DriverVehicle": DriverVehicle,
-    "FleetManagement": FleetManagement,
-    "Home": Home,
-    "JobsKanban": JobsKanban,
-    "LiveTracking": LiveTracking,
-    "ManageTenants": ManageTenants,
-    "MyTimesheet": MyTimesheet,
-    "Notifications": Notifications,
-    "Phonebook": Phonebook,
-    "Reports": Reports,
-    "SchedulingBoard": SchedulingBoard,
-    "Settings": Settings,
-    "SheetSpecs": SheetSpecs,
-    "TestEmails": TestEmails,
-    "TimesheetsAndRosters": TimesheetsAndRosters,
+    "Dashboard": Dashboard,
     "WeatherToday": WeatherToday,
-    "TenantRolesManagement": TenantRolesManagement,
+    "TestEmails": TestEmails,
+    "Reports": Reports,
+    "LiveTracking": LiveTracking,
+    "DataExport": DataExport,
+    "SheetSpecs": SheetSpecs,
+    "ManageTenants": ManageTenants,
+    "Phonebook": Phonebook,
+    "Settings": Settings,
+    "DeliveryPartners": DeliveryPartners,
+    "Notifications": Notifications,
+    "JobsKanban": JobsKanban,
+    "DriverMobile": DriverMobile,
+    "CustomerPortal": CustomerPortal,
+    "FleetManagement": FleetManagement,
+    "DriverVehicle": DriverVehicle,
+    "MyTimesheet": MyTimesheet,
+    "TimesheetsAndRosters": TimesheetsAndRosters,
 }
 
 export const pagesConfig = {
