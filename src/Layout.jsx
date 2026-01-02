@@ -147,6 +147,7 @@ const AdminNav = ({ onNavigate }) => {
       <NavIconLink to={createPageUrl('LiveTracking')} icon={MapPin} label="Live Tracking" onClick={onNavigate} />
       <NavIconLink to={createPageUrl('Reports')} icon={BarChart3} label="Reports" onClick={onNavigate} />
       <NavIconLink to={createPageUrl('Phonebook')} icon={Users} label="Phonebook" onClick={onNavigate} />
+      <NavIconLink to={createPageUrl('Notifications')} icon={Bell} label="Notifications" onClick={onNavigate} />
       
       <DropdownMenu>
         <Tooltip delayDuration={0}>
@@ -177,6 +178,7 @@ const AdminNav = ({ onNavigate }) => {
       {isGlobalAdmin && <NavIconLink to={createPageUrl('ManageTenants')} icon={Settings} label="Manage Tenants" onClick={onNavigate} />}
       <NavIconLink to={createPageUrl('TimesheetsAndRosters')} icon={Clock} label="Timesheets" onClick={onNavigate} />
       <NavIconLink to={createPageUrl('WeatherToday')} icon={CloudRain} label="Weather Today" onClick={onNavigate} />
+      <NavIconLink to={createPageUrl('Settings')} icon={Settings} label="Settings" onClick={onNavigate} />
     </>
   );
 };
@@ -201,7 +203,8 @@ const AdminNav = ({ onNavigate }) => {
       <NavIconLink to={createPageUrl('LiveTracking')} icon={MapPin} label="Live Tracking" onClick={onNavigate} />
       <NavIconLink to={createPageUrl('Reports')} icon={BarChart3} label="Reports" onClick={onNavigate} />
       <NavIconLink to={createPageUrl('Phonebook')} icon={Users} label="Phonebook" onClick={onNavigate} />
-
+      <NavIconLink to={createPageUrl('Notifications')} icon={Bell} label="Notifications" onClick={onNavigate} />
+      
       <DropdownMenu>
         <Tooltip delayDuration={0}>
           <TooltipTrigger asChild>
@@ -229,6 +232,7 @@ const AdminNav = ({ onNavigate }) => {
 
       <NavIconLink to={createPageUrl('TimesheetsAndRosters')} icon={Clock} label="Timesheets" onClick={onNavigate} />
       <NavIconLink to={createPageUrl('WeatherToday')} icon={CloudRain} label="Weather Today" onClick={onNavigate} />
+      <NavIconLink to={createPageUrl('Settings')} icon={Settings} label="Settings" onClick={onNavigate} />
     </>
   );
 };
@@ -240,7 +244,9 @@ const AdminNav = ({ onNavigate }) => {
     <NavIconLink to={createPageUrl('MyTimesheet')} icon={Clock} label="My Timesheet" onClick={onNavigate} />
     <NavIconLink to={createPageUrl('DailyJobBoard')} icon={LayoutGrid} label="Daily Job Board" onClick={onNavigate} />
     <NavIconLink to={createPageUrl('Phonebook')} icon={Users} label="Phonebook" onClick={onNavigate} />
+    <NavIconLink to={createPageUrl('Notifications')} icon={Bell} label="Notifications" onClick={onNavigate} />
     <NavIconLink to={createPageUrl('WeatherToday')} icon={CloudRain} label="Weather Today" onClick={onNavigate} />
+    <NavIconLink to={createPageUrl('Settings')} icon={Settings} label="Settings" onClick={onNavigate} />
   </>
 );
 
@@ -250,7 +256,9 @@ const CustomerNav = ({ onNavigate }) => (
     <NavIconLink to={createPageUrl('DailyJobBoard')} icon={Calendar} label="Daily Schedule" onClick={onNavigate} />
     <NavIconLink to={createPageUrl('CustomerRequestDelivery')} icon={Plus} label="Request Delivery" onClick={onNavigate} />
     <NavIconLink to={createPageUrl('Phonebook')} icon={Users} label="Phonebook" onClick={onNavigate} />
+    <NavIconLink to={createPageUrl('Notifications')} icon={Bell} label="Notifications" onClick={onNavigate} />
     <NavIconLink to={createPageUrl('WeatherToday')} icon={CloudRain} label="Weather Today" onClick={onNavigate} />
+    <NavIconLink to={createPageUrl('Settings')} icon={Settings} label="Settings" onClick={onNavigate} />
   </>
 );
 
@@ -268,7 +276,8 @@ const ManagerNav = ({ onNavigate }) => {
       <NavIconLink to={createPageUrl('DailyJobBoard')} icon={Calendar} label="Daily Job Board" onClick={onNavigate} />
       <NavIconLink to={createPageUrl('Reports')} icon={BarChart3} label="Reports" onClick={onNavigate} />
       <NavIconLink to={createPageUrl('Phonebook')} icon={Users} label="Phonebook" onClick={onNavigate} />
-
+      <NavIconLink to={createPageUrl('Notifications')} icon={Bell} label="Notifications" onClick={onNavigate} />
+      
       <DropdownMenu>
         <Tooltip delayDuration={0}>
           <TooltipTrigger asChild>
@@ -289,8 +298,9 @@ const ManagerNav = ({ onNavigate }) => {
           <DropdownMenuItem onClick={() => { onNavigate?.(); window.location.href = createPageUrl('AdminCustomers'); }}>Customers</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-
+      
       <NavIconLink to={createPageUrl('WeatherToday')} icon={CloudRain} label="Weather Today" onClick={onNavigate} />
+      <NavIconLink to={createPageUrl('Settings')} icon={Settings} label="Settings" onClick={onNavigate} />
     </>
   );
 };
@@ -685,6 +695,7 @@ export default function Layout({ children, currentPageName }) {
             </nav>
 
             <div className="flex items-center gap-2">
+              <NotificationBell user={user} />
               <UserAvatarDropdown user={user} />
             </div>
           </div>
@@ -745,6 +756,7 @@ export default function Layout({ children, currentPageName }) {
               </div>
               
               <div className="flex items-center gap-2">
+                <NotificationBell user={user} />
                 <UserAvatarDropdown user={user} />
               </div>
             </div>
