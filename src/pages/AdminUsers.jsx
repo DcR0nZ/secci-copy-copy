@@ -44,7 +44,7 @@ export default function AdminUsersPage() {
     setLoading(true);
     try {
       const [allUsers, allCustomers] = await Promise.all([
-        base44.entities.User.list(),
+        base44.asServiceRole.entities.User.list(),
         base44.entities.Customer.list()
       ]);
       setUsers(allUsers.filter(u => u.email));
@@ -67,7 +67,7 @@ export default function AdminUsersPage() {
 
   const handleUserUpdate = async (userId, updateData) => {
     try {
-      await base44.entities.User.update(userId, updateData);
+      await base44.asServiceRole.entities.User.update(userId, updateData);
 
       setUsers(prevUsers => 
         prevUsers.map(u => 
@@ -95,7 +95,7 @@ export default function AdminUsersPage() {
 
   const handleUserDelete = async (userId) => {
     try {
-      await base44.entities.User.delete(userId);
+      await base44.asServiceRole.entities.User.delete(userId);
 
       setUsers(prevUsers => prevUsers.filter(u => u.id !== userId));
 
