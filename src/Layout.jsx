@@ -669,11 +669,11 @@ export default function Layout({ children, currentPageName }) {
               {user && (
                 <div className="inline-flex items-center px-2 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-medium">
                   {user.appRole === 'globalAdmin' ? 'All Tenants' : (() => {
-                    const tenantId = user.tenantId || 'sec';
+                    const tenantId = user.tenantId || 'SEC';
                     const tenantNames = {
-                      'sec': 'South East Carters',
-                      'bayside_plasterboard': 'Bayside Plasterboard',
-                      'outreach_hire': 'Outreach Hire'
+                      'SEC': 'South East Carters',
+                      'north_coast_logistics': 'North Coast Logistics',
+                      'metro_freight': 'Metro Freight Services'
                     };
                     return tenantNames[tenantId] || 'South East Carters';
                   })()}
