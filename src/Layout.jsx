@@ -173,8 +173,9 @@ const AdminNav = ({ onNavigate }) => {
           <DropdownMenuItem onClick={() => { onNavigate?.(); window.location.href = createPageUrl('DeliveryPartners'); }}>Delivery Partners</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      
+
       {isGlobalAdmin && <NavIconLink to={createPageUrl('ManageTenants')} icon={Settings} label="Manage Tenants" onClick={onNavigate} />}
+      <NavIconLink to={createPageUrl('TenantRolesManagement')} icon={Settings} label="Role Management" onClick={onNavigate} />
       <NavIconLink to={createPageUrl('TimesheetsAndRosters')} icon={Clock} label="Timesheets" onClick={onNavigate} />
       <NavIconLink to={createPageUrl('WeatherToday')} icon={CloudRain} label="Weather Today" onClick={onNavigate} />
     </>
