@@ -250,9 +250,7 @@ const CustomerNav = ({ onNavigate }) => (
     <NavIconLink to={createPageUrl('DailyJobBoard')} icon={Calendar} label="Daily Schedule" onClick={onNavigate} />
     <NavIconLink to={createPageUrl('CustomerRequestDelivery')} icon={Plus} label="Request Delivery" onClick={onNavigate} />
     <NavIconLink to={createPageUrl('Phonebook')} icon={Users} label="Phonebook" onClick={onNavigate} />
-    <NavIconLink to={createPageUrl('Notifications')} icon={Bell} label="Notifications" onClick={onNavigate} />
     <NavIconLink to={createPageUrl('WeatherToday')} icon={CloudRain} label="Weather Today" onClick={onNavigate} />
-    <NavIconLink to={createPageUrl('Settings')} icon={Settings} label="Settings" onClick={onNavigate} />
   </>
 );
 
