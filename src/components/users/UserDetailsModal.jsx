@@ -124,7 +124,6 @@ export default function UserDetailsModal({
     setIsSaving(true);
     try {
       const payload = {
-        id: user.id,
         full_name: editedUser.full_name,
         email: editedUser.email,
         appRole: editedUser.appRole,
