@@ -141,13 +141,17 @@ export default function UserDetailsModal({
       
       // Send notification if role changed
       if (oldRole !== newRole) {
-        await base44.asServiceRole.entities.Notification.create({
-          userId: user.id,
-          title: 'Your Role Has Been Updated',
-          message: `Your role has been changed from ${oldRole || 'user'} to ${newRole}.`,
-          type: 'role_change',
-          isRead: false,
-        });
+        try {
+          await base44.entities.Notification.create({
+            userId: user.id,
+            title: 'Your Role Has Been Updated',
+            message: `Your role has been changed from ${oldRole || 'user'} to ${newRole}.`,
+            type: 'role_change',
+            isRead: false,
+          });
+        } catch (notifError) {
+          console.error('Failed to send notification:', notifError);
+        }
       }
       
       onOpenChange(false);
