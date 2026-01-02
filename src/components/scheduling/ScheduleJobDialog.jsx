@@ -9,14 +9,6 @@ import { base44 } from '@/api/base44Client';
 import { CalendarClock } from 'lucide-react';
 import { format } from 'date-fns';
 
-const TRUCKS = [
-  { id: 'ACCO1', name: 'ACCO1' },
-  { id: 'ACCO2', name: 'ACCO2' },
-  { id: 'FUSO', name: 'FUSO' },
-  { id: 'ISUZU', name: 'ISUZU' },
-  { id: 'UD', name: 'UD' }
-];
-
 const DELIVERY_WINDOWS = [
   { id: 'first-am', label: '6-8am (1st AM)' },
   { id: 'second-am', label: '8-10am (2nd AM)' },
@@ -31,10 +23,24 @@ export default function ScheduleJobDialog({ job, assignment, open, onOpenChange,
   const [selectedTimeSlot, setSelectedTimeSlot] = useState('');
   const [selectedSlotPosition, setSelectedSlotPosition] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [trucks, setTrucks] = useState([]);
   const { toast } = useToast();
 
   useEffect(() => {
+    const fetchTrucks = async () => {
+      try {
+        const user = await base44.auth.me();
+        const tenantId = user.tenantId || 'sec';
+        const activeTrucks = await base44.entities.Truck.filter({ tenantId, isActive: true });
+        setTrucks(activeTrucks);
+      } catch (error) {
+        console.error('Failed to fetch trucks:', error);
+      }
+    };
+
     if (open) {
+      fetchTrucks();
+      
       if (assignment) {
         setSelectedTruck(assignment.truckId || '');
         setSelectedDate(assignment.date || format(new Date(), 'yyyy-MM-dd'));
@@ -100,7 +106,8 @@ export default function ScheduleJobDialog({ job, assignment, open, onOpenChange,
         if (customers.length > 0) {
           const customer = customers[0];
           if (customer.contactEmail) {
-            const truckName = TRUCKS.find(t => t.id === formData.truckId)?.name || formData.truckId;
+            const truck = trucks.find(t => t.id === formData.truckId);
+            const truckName = truck?.name || formData.truckId;
 
             await base44.functions.invoke('sendJobScheduledEmail', {
               jobId: job.id,
@@ -185,7 +192,7 @@ export default function ScheduleJobDialog({ job, assignment, open, onOpenChange,
                   <SelectValue placeholder="Select truck..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {TRUCKS.map(truck => (
+                  {trucks.map(truck => (
                     <SelectItem key={truck.id} value={truck.id}>{truck.name}</SelectItem>
                   ))}
                 </SelectContent>
