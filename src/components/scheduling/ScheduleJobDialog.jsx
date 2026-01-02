@@ -128,7 +128,9 @@ export default function ScheduleJobDialog({ job, assignment, open, onOpenChange,
         description: `Job has been ${assignment ? 'rescheduled' : 'scheduled'} successfully.`,
       });
 
-      onScheduled();
+      if (typeof onScheduled === 'function') {
+        onScheduled();
+      }
     } catch (error) {
       toast({
         title: "Error",
@@ -152,7 +154,10 @@ export default function ScheduleJobDialog({ job, assignment, open, onOpenChange,
         title: "Job Unscheduled",
         description: "Job has been removed from the schedule and is now available to reschedule.",
       });
-      onScheduled();
+      
+      if (typeof onScheduled === 'function') {
+        onScheduled();
+      }
     } catch (error) {
       toast({
         title: "Error",
