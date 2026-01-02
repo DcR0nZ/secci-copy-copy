@@ -112,7 +112,7 @@ const MobileSubNavLink = ({ to, children, onClick }) => {
   );
 };
 
-const AdminNav = ({ onNavigate }) => {
+const ManagementNav = ({ onNavigate }) => {
   const location = useLocation();
   const libraryPages = [
     createPageUrl('AdminJobs'),
@@ -181,57 +181,18 @@ const AdminNav = ({ onNavigate }) => {
   );
 };
 
-      const DispatcherNav = ({ onNavigate }) => {
-        const location = useLocation();
-        const libraryPages = [
-          createPageUrl('AdminJobs'),
-          createPageUrl('JobsKanban'),
-          createPageUrl('AdminCustomers'),
-          createPageUrl('AdminPickupLocations'),
-          createPageUrl('AdminDeliveryTypes'),
-          createPageUrl('DeliveryPartners')
-        ];
-        const isLibraryActive = libraryPages.includes(location.pathname);
+const TeamLeaderNav = ({ onNavigate }) => (
+  <>
+    <NavIconLink to={createPageUrl('Dashboard')} icon={Home} label="Dashboard" onClick={onNavigate} />
+    <NavIconLink to={createPageUrl('DailyJobBoard')} icon={Calendar} label="Daily Job Board" onClick={onNavigate} />
+    <NavIconLink to={createPageUrl('LiveTracking')} icon={MapPin} label="Live Tracking" onClick={onNavigate} />
+    <NavIconLink to={createPageUrl('Phonebook')} icon={Users} label="Phonebook" onClick={onNavigate} />
+    <NavIconLink to={createPageUrl('TimesheetsAndRosters')} icon={Clock} label="Timesheets" onClick={onNavigate} />
+    <NavIconLink to={createPageUrl('WeatherToday')} icon={CloudRain} label="Weather Today" onClick={onNavigate} />
+  </>
+);
 
-        return (
-          <>
-            <NavIconLink to={createPageUrl('Dashboard')} icon={Home} label="Dashboard" onClick={onNavigate} />
-            <NavIconLink to={createPageUrl('SchedulingBoard')} icon={LayoutGrid} label="Scheduling" onClick={onNavigate} />
-            <NavIconLink to={createPageUrl('DailyJobBoard')} icon={Calendar} label="Daily Job Board" onClick={onNavigate} />
-            <NavIconLink to={createPageUrl('LiveTracking')} icon={MapPin} label="Live Tracking" onClick={onNavigate} />
-            <NavIconLink to={createPageUrl('Reports')} icon={BarChart3} label="Reports" onClick={onNavigate} />
-            <NavIconLink to={createPageUrl('Phonebook')} icon={Users} label="Phonebook" onClick={onNavigate} />
-      
-      <DropdownMenu>
-        <Tooltip delayDuration={0}>
-          <TooltipTrigger asChild>
-            <DropdownMenuTrigger asChild>
-              <button className={`flex items-center justify-center h-10 w-10 rounded-lg transition-all ${
-                isLibraryActive ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/50' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-              }`}>
-                <Library className="h-5 w-5" />
-              </button>
-            </DropdownMenuTrigger>
-          </TooltipTrigger>
-          <TooltipContent side="bottom" className="font-medium">
-            <p>Company Library</p>
-          </TooltipContent>
-        </Tooltip>
-        <DropdownMenuContent align="start">
-          <DropdownMenuItem onClick={() => { onNavigate?.(); window.location.href = createPageUrl('AdminJobs'); }}>All Jobs</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => { onNavigate?.(); window.location.href = createPageUrl('JobsKanban'); }}>Jobs Kanban</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => { onNavigate?.(); window.location.href = createPageUrl('AdminCustomers'); }}>Customers</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => { onNavigate?.(); window.location.href = createPageUrl('AdminPickupLocations'); }}>Pickup Locations</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => { onNavigate?.(); window.location.href = createPageUrl('AdminDeliveryTypes'); }}>Delivery Types</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => { onNavigate?.(); window.location.href = createPageUrl('DeliveryPartners'); }}>Delivery Partners</DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
 
-      <NavIconLink to={createPageUrl('TimesheetsAndRosters')} icon={Clock} label="Timesheets" onClick={onNavigate} />
-      <NavIconLink to={createPageUrl('WeatherToday')} icon={CloudRain} label="Weather Today" onClick={onNavigate} />
-    </>
-  );
-};
 
       const DriverNav = ({ onNavigate }) => (
   <>
@@ -254,46 +215,7 @@ const CustomerNav = ({ onNavigate }) => (
   </>
 );
 
-const ManagerNav = ({ onNavigate }) => {
-  const location = useLocation();
-  const libraryPages = [
-    createPageUrl('AdminJobs'),
-    createPageUrl('AdminCustomers')
-  ];
-  const isLibraryActive = libraryPages.includes(location.pathname);
 
-  return (
-    <>
-      <NavIconLink to={createPageUrl('Dashboard')} icon={Home} label="Dashboard" onClick={onNavigate} />
-      <NavIconLink to={createPageUrl('DailyJobBoard')} icon={Calendar} label="Daily Job Board" onClick={onNavigate} />
-      <NavIconLink to={createPageUrl('Reports')} icon={BarChart3} label="Reports" onClick={onNavigate} />
-      <NavIconLink to={createPageUrl('Phonebook')} icon={Users} label="Phonebook" onClick={onNavigate} />
-      
-      <DropdownMenu>
-        <Tooltip delayDuration={0}>
-          <TooltipTrigger asChild>
-            <DropdownMenuTrigger asChild>
-              <button className={`flex items-center justify-center h-10 w-10 rounded-lg transition-all ${
-                isLibraryActive ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/50' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-              }`}>
-                <Library className="h-5 w-5" />
-              </button>
-            </DropdownMenuTrigger>
-          </TooltipTrigger>
-          <TooltipContent side="bottom" className="font-medium">
-            <p>Company Library</p>
-          </TooltipContent>
-        </Tooltip>
-        <DropdownMenuContent align="start">
-          <DropdownMenuItem onClick={() => { onNavigate?.(); window.location.href = createPageUrl('AdminJobs'); }}>All Jobs</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => { onNavigate?.(); window.location.href = createPageUrl('AdminCustomers'); }}>Customers</DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-      
-      <NavIconLink to={createPageUrl('WeatherToday')} icon={CloudRain} label="Weather Today" onClick={onNavigate} />
-    </>
-  );
-};
 
 export default function Layout({ children, currentPageName }) {
   const [user, setUser] = useState(null);
@@ -315,11 +237,10 @@ export default function Layout({ children, currentPageName }) {
         
         setUser(currentUser);
 
-        // Check for returned jobs that need alerts (for admin, dispatcher, manager, customer)
+        // Check for returned jobs that need alerts (for admin, tenantAdmin, teamLeader, customer)
         const shouldCheckReturned = currentUser.role === 'admin' || 
-          currentUser.appRole === 'dispatcher' || 
           currentUser.appRole === 'tenantAdmin' ||
-          currentUser.appRole === 'manager' ||
+          currentUser.appRole === 'teamLeader' ||
           currentUser.appRole === 'customer';
         
         if (shouldCheckReturned) {
@@ -339,11 +260,11 @@ export default function Layout({ children, currentPageName }) {
               // But we want to show it on next login, so we actually DON'T filter these out
               
               // Check if user should see this job
-              if (currentUser.role === 'admin' || currentUser.appRole === 'dispatcher' || currentUser.appRole === 'tenantAdmin') {
-                return true; // Admin, dispatchers, and tenant admins see all
+              if (currentUser.role === 'admin' || currentUser.appRole === 'tenantAdmin' || currentUser.appRole === 'teamLeader') {
+                return true; // Admin, tenant admins, and team leaders see all within their tenant
               }
-              if (currentUser.appRole === 'manager' || currentUser.appRole === 'customer') {
-                // Customers and managers only see their own jobs
+              if (currentUser.appRole === 'customer') {
+                // Customers only see their own jobs
                 return job.customerId === currentUser.customerId;
               }
               return false;
@@ -358,7 +279,7 @@ export default function Layout({ children, currentPageName }) {
           }
         }
 
-        const needsCustomerId = currentUser.appRole === 'customer' || currentUser.appRole === 'manager' || !currentUser.appRole;
+        const needsCustomerId = currentUser.appRole === 'customer' || !currentUser.appRole;
         const isPending = currentUser && currentUser.role !== 'admin' && needsCustomerId && !currentUser.customerId;
 
         if (isPending && currentPageName !== 'AccessPending') {
@@ -385,16 +306,14 @@ export default function Layout({ children, currentPageName }) {
           
           if (currentUser.role === 'admin') {
             dashboardUrl = createPageUrl('Dashboard');
-          } else if (currentUser.appRole === 'dispatcher') {
+          } else if (currentUser.appRole === 'tenantAdmin') {
+            dashboardUrl = createPageUrl('Dashboard');
+          } else if (currentUser.appRole === 'teamLeader') {
             dashboardUrl = createPageUrl('Dashboard');
           } else if (currentUser.appRole === 'driver') {
             dashboardUrl = createPageUrl('Dashboard');
-          } else if (currentUser.appRole === 'manager') {
-            dashboardUrl = createPageUrl('Dashboard');
           } else if (currentUser.appRole === 'customer') {
             dashboardUrl = createPageUrl('AdminJobs');
-          } else if (currentUser.appRole === 'outreach' || currentUser.appRole === 'outreachOperator') {
-            dashboardUrl = createPageUrl('Dashboard');
           } else {
             dashboardUrl = createPageUrl('DailyJobBoard');
           }
@@ -436,28 +355,26 @@ export default function Layout({ children, currentPageName }) {
 
   const renderNavLinks = (onNavigate) => {
     if (!user) return null;
-    const needsCustomerId = user.appRole === 'customer' || user.appRole === 'manager' || !user.appRole;
+    const needsCustomerId = user.appRole === 'customer' || !user.appRole;
     const isPending = !!(user && user.role !== 'admin' && needsCustomerId && !user.customerId);
 
     if (isPending) return null;
 
     if (user.role === 'admin') {
-      return <AdminNav onNavigate={onNavigate} />;
+      return <ManagementNav onNavigate={onNavigate} />;
     }
 
     const appRole = user.appRole;
 
     switch (appRole) {
       case 'globalAdmin':
-        return <AdminNav onNavigate={onNavigate} />;
+        return <ManagementNav onNavigate={onNavigate} />;
       case 'tenantAdmin':
-        return <AdminNav onNavigate={onNavigate} />;
-      case 'dispatcher':
-        return <DispatcherNav onNavigate={onNavigate} />;
+        return <ManagementNav onNavigate={onNavigate} />;
+      case 'teamLeader':
+        return <TeamLeaderNav onNavigate={onNavigate} />;
       case 'driver':
         return <DriverNav onNavigate={onNavigate} />;
-      case 'manager':
-        return <ManagerNav onNavigate={onNavigate} />;
       case 'customer':
       default:
         return <CustomerNav onNavigate={onNavigate} />;
@@ -466,7 +383,7 @@ export default function Layout({ children, currentPageName }) {
 
   const renderMobileNavLinks = (onNavigate) => {
     if (!user) return null;
-    const needsCustomerId = user.appRole === 'customer' || user.appRole === 'manager' || !user.appRole;
+    const needsCustomerId = user.appRole === 'customer' || !user.appRole;
     const isPending = !!(user && user.role !== 'admin' && needsCustomerId && !user.customerId);
 
     if (isPending) return null;
@@ -493,17 +410,14 @@ export default function Layout({ children, currentPageName }) {
       );
     }
 
-    if (appRole === 'dispatcher') {
+    if (appRole === 'teamLeader') {
       return (
         <>
           <MobileNavLink to={createPageUrl('Dashboard')} icon={Home} onClick={onNavigate}>Dashboard</MobileNavLink>
-          <MobileNavLink to={createPageUrl('SchedulingBoard')} icon={LayoutGrid} onClick={onNavigate}>Scheduling</MobileNavLink>
           <MobileNavLink to={createPageUrl('DailyJobBoard')} icon={Calendar} onClick={onNavigate}>Daily Job Board</MobileNavLink>
           <MobileNavLink to={createPageUrl('LiveTracking')} icon={MapPin} onClick={onNavigate}>Live Tracking</MobileNavLink>
-          <MobileNavLink to={createPageUrl('Reports')} icon={BarChart3} onClick={onNavigate}>Reports</MobileNavLink>
           <MobileNavLink to={createPageUrl('Phonebook')} icon={Users} onClick={onNavigate}>Phonebook</MobileNavLink>
           <MobileNavLink to={createPageUrl('Notifications')} icon={Bell} onClick={onNavigate}>Notifications</MobileNavLink>
-          <MobileNavLink to={createPageUrl('AdminJobs')} icon={Library} onClick={onNavigate}>All Jobs</MobileNavLink>
           <MobileNavLink to={createPageUrl('TimesheetsAndRosters')} icon={Clock} onClick={onNavigate}>Timesheets</MobileNavLink>
           <MobileNavLink to={createPageUrl('WeatherToday')} icon={CloudRain} onClick={onNavigate}>Weather Today</MobileNavLink>
           <MobileNavLink to={createPageUrl('Settings')} icon={Settings} onClick={onNavigate}>Settings</MobileNavLink>
@@ -520,21 +434,6 @@ export default function Layout({ children, currentPageName }) {
           <MobileNavLink to={createPageUrl('DailyJobBoard')} icon={LayoutGrid} onClick={onNavigate}>Daily Job Board</MobileNavLink>
           <MobileNavLink to={createPageUrl('Phonebook')} icon={Users} onClick={onNavigate}>Phonebook</MobileNavLink>
           <MobileNavLink to={createPageUrl('Notifications')} icon={Bell} onClick={onNavigate}>Notifications</MobileNavLink>
-          <MobileNavLink to={createPageUrl('WeatherToday')} icon={CloudRain} onClick={onNavigate}>Weather Today</MobileNavLink>
-          <MobileNavLink to={createPageUrl('Settings')} icon={Settings} onClick={onNavigate}>Settings</MobileNavLink>
-        </>
-      );
-    }
-
-    if (appRole === 'manager') {
-      return (
-        <>
-          <MobileNavLink to={createPageUrl('Dashboard')} icon={Home} onClick={onNavigate}>Dashboard</MobileNavLink>
-          <MobileNavLink to={createPageUrl('DailyJobBoard')} icon={Calendar} onClick={onNavigate}>Daily Job Board</MobileNavLink>
-          <MobileNavLink to={createPageUrl('Reports')} icon={BarChart3} onClick={onNavigate}>Reports</MobileNavLink>
-          <MobileNavLink to={createPageUrl('Phonebook')} icon={Users} onClick={onNavigate}>Phonebook</MobileNavLink>
-          <MobileNavLink to={createPageUrl('Notifications')} icon={Bell} onClick={onNavigate}>Notifications</MobileNavLink>
-          <MobileNavLink to={createPageUrl('AdminJobs')} icon={Library} onClick={onNavigate}>All Jobs</MobileNavLink>
           <MobileNavLink to={createPageUrl('WeatherToday')} icon={CloudRain} onClick={onNavigate}>Weather Today</MobileNavLink>
           <MobileNavLink to={createPageUrl('Settings')} icon={Settings} onClick={onNavigate}>Settings</MobileNavLink>
         </>
@@ -576,7 +475,7 @@ export default function Layout({ children, currentPageName }) {
     );
   }
 
-  const needsCustomerId = user.appRole === 'customer' || user.appRole === 'manager' || !user.appRole;
+  const needsCustomerId = user.appRole === 'customer' || !user.appRole;
   const isPending = !!(user && user.role !== 'admin' && needsCustomerId && !user.customerId);
 
   if (isPending && currentPageName === 'AccessPending') {
@@ -666,17 +565,19 @@ export default function Layout({ children, currentPageName }) {
                 <span className="font-semibold text-lg text-gray-900">{getToolbarTitle()}</span>
               </div>
               {user && (
-                <div className="inline-flex items-center px-2 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-medium">
-                  {user.appRole === 'globalAdmin' ? 'All Tenants' : (() => {
-                    const tenantId = user.tenantId || 'sec';
-                    const tenantNames = {
-                      'sec': 'South East Carters',
-                      'bayside_plasterboard': 'Bayside Plasterboard',
-                      'outreach_hire': 'Outreach Hire'
-                    };
-                    return tenantNames[tenantId] || 'South East Carters';
-                  })()}
-                </div>
+               <div className="inline-flex items-center px-2 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-medium">
+                 {user.appRole === 'globalAdmin' ? 'All Tenants' : (() => {
+                   const tenantId = user.tenantId || 'sec';
+                   const tenantNames = {
+                     'sec': 'South East Carters',
+                     'bayside_plasterboard': 'Bayside Plasterboard',
+                     'outreach_hire': 'Outreach Hire',
+                     'north_coast_logistics': 'North Coast Logistics',
+                     'metro_freight': 'Metro Freight Services'
+                   };
+                   return tenantNames[tenantId] || 'South East Carters';
+                 })()}
+               </div>
               )}
             </div>
 
