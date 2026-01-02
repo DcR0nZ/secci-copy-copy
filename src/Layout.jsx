@@ -126,7 +126,7 @@ const AdminNav = ({ onNavigate }) => {
   ];
   const isLibraryActive = libraryPages.includes(location.pathname);
   const [isGlobalAdmin, setIsGlobalAdmin] = useState(false);
-  
+
   useEffect(() => {
     const checkUser = async () => {
       try {
@@ -147,7 +147,6 @@ const AdminNav = ({ onNavigate }) => {
       <NavIconLink to={createPageUrl('LiveTracking')} icon={MapPin} label="Live Tracking" onClick={onNavigate} />
       <NavIconLink to={createPageUrl('Reports')} icon={BarChart3} label="Reports" onClick={onNavigate} />
       <NavIconLink to={createPageUrl('Phonebook')} icon={Users} label="Phonebook" onClick={onNavigate} />
-      <NavIconLink to={createPageUrl('Notifications')} icon={Bell} label="Notifications" onClick={onNavigate} />
       
       <DropdownMenu>
         <Tooltip delayDuration={0}>
@@ -183,26 +182,25 @@ const AdminNav = ({ onNavigate }) => {
 };
 
       const DispatcherNav = ({ onNavigate }) => {
-  const location = useLocation();
-  const libraryPages = [
-    createPageUrl('AdminJobs'),
-    createPageUrl('JobsKanban'),
-    createPageUrl('AdminCustomers'),
-    createPageUrl('AdminPickupLocations'),
-    createPageUrl('AdminDeliveryTypes'),
-    createPageUrl('DeliveryPartners')
-  ];
-  const isLibraryActive = libraryPages.includes(location.pathname);
+        const location = useLocation();
+        const libraryPages = [
+          createPageUrl('AdminJobs'),
+          createPageUrl('JobsKanban'),
+          createPageUrl('AdminCustomers'),
+          createPageUrl('AdminPickupLocations'),
+          createPageUrl('AdminDeliveryTypes'),
+          createPageUrl('DeliveryPartners')
+        ];
+        const isLibraryActive = libraryPages.includes(location.pathname);
 
-  return (
-    <>
-      <NavIconLink to={createPageUrl('Dashboard')} icon={Home} label="Dashboard" onClick={onNavigate} />
-      <NavIconLink to={createPageUrl('SchedulingBoard')} icon={LayoutGrid} label="Scheduling" onClick={onNavigate} />
-      <NavIconLink to={createPageUrl('DailyJobBoard')} icon={Calendar} label="Daily Job Board" onClick={onNavigate} />
-      <NavIconLink to={createPageUrl('LiveTracking')} icon={MapPin} label="Live Tracking" onClick={onNavigate} />
-      <NavIconLink to={createPageUrl('Reports')} icon={BarChart3} label="Reports" onClick={onNavigate} />
-      <NavIconLink to={createPageUrl('Phonebook')} icon={Users} label="Phonebook" onClick={onNavigate} />
-      <NavIconLink to={createPageUrl('Notifications')} icon={Bell} label="Notifications" onClick={onNavigate} />
+        return (
+          <>
+            <NavIconLink to={createPageUrl('Dashboard')} icon={Home} label="Dashboard" onClick={onNavigate} />
+            <NavIconLink to={createPageUrl('SchedulingBoard')} icon={LayoutGrid} label="Scheduling" onClick={onNavigate} />
+            <NavIconLink to={createPageUrl('DailyJobBoard')} icon={Calendar} label="Daily Job Board" onClick={onNavigate} />
+            <NavIconLink to={createPageUrl('LiveTracking')} icon={MapPin} label="Live Tracking" onClick={onNavigate} />
+            <NavIconLink to={createPageUrl('Reports')} icon={BarChart3} label="Reports" onClick={onNavigate} />
+            <NavIconLink to={createPageUrl('Phonebook')} icon={Users} label="Phonebook" onClick={onNavigate} />
       
       <DropdownMenu>
         <Tooltip delayDuration={0}>
