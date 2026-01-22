@@ -222,6 +222,11 @@ const DraggableScheduledJobBlock = ({ job, onClick, deliveryTypes, pickupLocatio
                 {pickupShortname}
               </span>
             )}
+            {job.jobReferenceNumber && (
+              <span className="bg-blue-50 text-blue-700 border border-blue-300 px-1 py-0.5 font-bold rounded text-[9px]">
+                #{job.jobReferenceNumber}
+              </span>
+            )}
             {job.sqm && (
               <span className="bg-white/80 text-gray-900 px-1 py-0.5 font-bold rounded text-[9px] shadow-sm">
                 {job.sqm.toLocaleString()}m²
