@@ -578,7 +578,7 @@ export default function Layout({ children, currentPageName }) {
             </div>
 
             <nav 
-              className="flex items-center gap-2 py-4 -my-4 px-4 -mx-4"
+              className="flex items-center gap-2"
               onMouseEnter={() => setNavExpanded(true)}
               onMouseLeave={() => setNavExpanded(false)}
             >
