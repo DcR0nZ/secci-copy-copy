@@ -54,28 +54,24 @@ import ReturnedJobAlert from './components/scheduling/ReturnedJobAlert';
 import UserAvatarDropdown from './components/layout/UserAvatarDropdown';
 import NotificationBell from './components/notifications/NotificationBell';
 
-const NavIconLink = ({ to, icon: Icon, label, onClick }) => {
+const NavIconLink = ({ to, icon: Icon, label, onClick, showLabel }) => {
   const location = useLocation();
   const isActive = location.pathname === to;
   return (
-    <Tooltip delayDuration={0}>
-      <TooltipTrigger asChild>
-        <Link
-          to={to}
-          onClick={onClick}
-          className={`flex items-center justify-center h-10 w-10 rounded-lg transition-all ${
-            isActive
-              ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/50'
-              : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-          }`}
-        >
-          <Icon className="h-5 w-5" />
-        </Link>
-      </TooltipTrigger>
-      <TooltipContent side="bottom" className="font-medium">
-        <p>{label}</p>
-      </TooltipContent>
-    </Tooltip>
+    <Link
+      to={to}
+      onClick={onClick}
+      className={`flex items-center gap-2 h-10 rounded-lg transition-all ${
+        showLabel ? 'px-3' : 'px-0 w-10 justify-center'
+      } ${
+        isActive
+          ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/50'
+          : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+      }`}
+    >
+      <Icon className="h-5 w-5 flex-shrink-0" />
+      {showLabel && <span className="text-sm font-medium whitespace-nowrap">{label}</span>}
+    </Link>
   );
 };
 
@@ -112,7 +108,7 @@ const MobileSubNavLink = ({ to, children, onClick }) => {
   );
 };
 
-const ManagementNav = ({ onNavigate }) => {
+const ManagementNav = ({ onNavigate, showLabel }) => {
   const location = useLocation();
   const libraryPages = [
     createPageUrl('AdminJobs'),
@@ -141,28 +137,22 @@ const ManagementNav = ({ onNavigate }) => {
 
   return (
     <>
-      <NavIconLink to={createPageUrl('Dashboard')} icon={Home} label="Dashboard" onClick={onNavigate} />
-      <NavIconLink to={createPageUrl('SchedulingBoard')} icon={LayoutGrid} label="Scheduling" onClick={onNavigate} />
-      <NavIconLink to={createPageUrl('DailyJobBoard')} icon={Calendar} label="Daily Job Board" onClick={onNavigate} />
-      <NavIconLink to={createPageUrl('LiveTracking')} icon={MapPin} label="Live Tracking" onClick={onNavigate} />
-      <NavIconLink to={createPageUrl('Reports')} icon={BarChart3} label="Reports" onClick={onNavigate} />
-      <NavIconLink to={createPageUrl('Phonebook')} icon={Users} label="Phonebook" onClick={onNavigate} />
+      <NavIconLink to={createPageUrl('Dashboard')} icon={Home} label="Dashboard" onClick={onNavigate} showLabel={showLabel} />
+      <NavIconLink to={createPageUrl('SchedulingBoard')} icon={LayoutGrid} label="Scheduling" onClick={onNavigate} showLabel={showLabel} />
+      <NavIconLink to={createPageUrl('DailyJobBoard')} icon={Calendar} label="Daily Job Board" onClick={onNavigate} showLabel={showLabel} />
+      <NavIconLink to={createPageUrl('LiveTracking')} icon={MapPin} label="Live Tracking" onClick={onNavigate} showLabel={showLabel} />
+      <NavIconLink to={createPageUrl('Reports')} icon={BarChart3} label="Reports" onClick={onNavigate} showLabel={showLabel} />
+      <NavIconLink to={createPageUrl('Phonebook')} icon={Users} label="Phonebook" onClick={onNavigate} showLabel={showLabel} />
       
       <DropdownMenu>
-        <Tooltip delayDuration={0}>
-          <TooltipTrigger asChild>
-            <DropdownMenuTrigger asChild>
-              <button className={`flex items-center justify-center h-10 w-10 rounded-lg transition-all ${
-                isLibraryActive ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/50' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-              }`}>
-                <Library className="h-5 w-5" />
-              </button>
-            </DropdownMenuTrigger>
-          </TooltipTrigger>
-          <TooltipContent side="bottom" className="font-medium">
-            <p>Company Library</p>
-          </TooltipContent>
-        </Tooltip>
+        <DropdownMenuTrigger asChild>
+          <button className={`flex items-center gap-2 h-10 rounded-lg transition-all ${
+            showLabel ? 'px-3' : 'px-0 w-10 justify-center'
+          } ${isLibraryActive ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/50' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}`}>
+            <Library className="h-5 w-5 flex-shrink-0" />
+            {showLabel && <span className="text-sm font-medium whitespace-nowrap">Company Library</span>}
+          </button>
+        </DropdownMenuTrigger>
         <DropdownMenuContent align="start">
           <DropdownMenuItem onClick={() => { onNavigate?.(); window.location.href = createPageUrl('AdminJobs'); }}>All Jobs</DropdownMenuItem>
           <DropdownMenuItem onClick={() => { onNavigate?.(); window.location.href = createPageUrl('AdminCustomers'); }}>Customers</DropdownMenuItem>
@@ -174,44 +164,44 @@ const ManagementNav = ({ onNavigate }) => {
         </DropdownMenuContent>
       </DropdownMenu>
       
-      {isGlobalAdmin && <NavIconLink to={createPageUrl('ManageTenants')} icon={Settings} label="Manage Tenants" onClick={onNavigate} />}
-      <NavIconLink to={createPageUrl('TimesheetsAndRosters')} icon={Clock} label="Timesheets" onClick={onNavigate} />
-      <NavIconLink to={createPageUrl('WeatherToday')} icon={CloudRain} label="Weather Today" onClick={onNavigate} />
+      {isGlobalAdmin && <NavIconLink to={createPageUrl('ManageTenants')} icon={Settings} label="Manage Tenants" onClick={onNavigate} showLabel={showLabel} />}
+      <NavIconLink to={createPageUrl('TimesheetsAndRosters')} icon={Clock} label="Timesheets" onClick={onNavigate} showLabel={showLabel} />
+      <NavIconLink to={createPageUrl('WeatherToday')} icon={CloudRain} label="Weather Today" onClick={onNavigate} showLabel={showLabel} />
     </>
   );
 };
 
-const TeamLeaderNav = ({ onNavigate }) => (
+const TeamLeaderNav = ({ onNavigate, showLabel }) => (
   <>
-    <NavIconLink to={createPageUrl('Dashboard')} icon={Home} label="Dashboard" onClick={onNavigate} />
-    <NavIconLink to={createPageUrl('DailyJobBoard')} icon={Calendar} label="Daily Job Board" onClick={onNavigate} />
-    <NavIconLink to={createPageUrl('LiveTracking')} icon={MapPin} label="Live Tracking" onClick={onNavigate} />
-    <NavIconLink to={createPageUrl('Phonebook')} icon={Users} label="Phonebook" onClick={onNavigate} />
-    <NavIconLink to={createPageUrl('TimesheetsAndRosters')} icon={Clock} label="Timesheets" onClick={onNavigate} />
-    <NavIconLink to={createPageUrl('WeatherToday')} icon={CloudRain} label="Weather Today" onClick={onNavigate} />
+    <NavIconLink to={createPageUrl('Dashboard')} icon={Home} label="Dashboard" onClick={onNavigate} showLabel={showLabel} />
+    <NavIconLink to={createPageUrl('DailyJobBoard')} icon={Calendar} label="Daily Job Board" onClick={onNavigate} showLabel={showLabel} />
+    <NavIconLink to={createPageUrl('LiveTracking')} icon={MapPin} label="Live Tracking" onClick={onNavigate} showLabel={showLabel} />
+    <NavIconLink to={createPageUrl('Phonebook')} icon={Users} label="Phonebook" onClick={onNavigate} showLabel={showLabel} />
+    <NavIconLink to={createPageUrl('TimesheetsAndRosters')} icon={Clock} label="Timesheets" onClick={onNavigate} showLabel={showLabel} />
+    <NavIconLink to={createPageUrl('WeatherToday')} icon={CloudRain} label="Weather Today" onClick={onNavigate} showLabel={showLabel} />
   </>
 );
 
 
 
-      const DriverNav = ({ onNavigate }) => (
+const DriverNav = ({ onNavigate, showLabel }) => (
   <>
-    <NavIconLink to={createPageUrl('Dashboard')} icon={Home} label="Dashboard" onClick={onNavigate} />
-    <NavIconLink to={createPageUrl('DriverMyRuns')} icon={Calendar} label="My Runs" onClick={onNavigate} />
-    <NavIconLink to={createPageUrl('MyTimesheet')} icon={Clock} label="My Timesheet" onClick={onNavigate} />
-    <NavIconLink to={createPageUrl('DailyJobBoard')} icon={LayoutGrid} label="Daily Job Board" onClick={onNavigate} />
-    <NavIconLink to={createPageUrl('Phonebook')} icon={Users} label="Phonebook" onClick={onNavigate} />
-    <NavIconLink to={createPageUrl('WeatherToday')} icon={CloudRain} label="Weather Today" onClick={onNavigate} />
+    <NavIconLink to={createPageUrl('Dashboard')} icon={Home} label="Dashboard" onClick={onNavigate} showLabel={showLabel} />
+    <NavIconLink to={createPageUrl('DriverMyRuns')} icon={Calendar} label="My Runs" onClick={onNavigate} showLabel={showLabel} />
+    <NavIconLink to={createPageUrl('MyTimesheet')} icon={Clock} label="My Timesheet" onClick={onNavigate} showLabel={showLabel} />
+    <NavIconLink to={createPageUrl('DailyJobBoard')} icon={LayoutGrid} label="Daily Job Board" onClick={onNavigate} showLabel={showLabel} />
+    <NavIconLink to={createPageUrl('Phonebook')} icon={Users} label="Phonebook" onClick={onNavigate} showLabel={showLabel} />
+    <NavIconLink to={createPageUrl('WeatherToday')} icon={CloudRain} label="Weather Today" onClick={onNavigate} showLabel={showLabel} />
   </>
 );
 
-const CustomerNav = ({ onNavigate }) => (
+const CustomerNav = ({ onNavigate, showLabel }) => (
   <>
-    <NavIconLink to={createPageUrl('AdminJobs')} icon={Briefcase} label="My Jobs" onClick={onNavigate} />
-    <NavIconLink to={createPageUrl('DailyJobBoard')} icon={Calendar} label="Daily Schedule" onClick={onNavigate} />
-    <NavIconLink to={createPageUrl('CustomerRequestDelivery')} icon={Plus} label="Request Delivery" onClick={onNavigate} />
-    <NavIconLink to={createPageUrl('Phonebook')} icon={Users} label="Phonebook" onClick={onNavigate} />
-    <NavIconLink to={createPageUrl('WeatherToday')} icon={CloudRain} label="Weather Today" onClick={onNavigate} />
+    <NavIconLink to={createPageUrl('AdminJobs')} icon={Briefcase} label="My Jobs" onClick={onNavigate} showLabel={showLabel} />
+    <NavIconLink to={createPageUrl('DailyJobBoard')} icon={Calendar} label="Daily Schedule" onClick={onNavigate} showLabel={showLabel} />
+    <NavIconLink to={createPageUrl('CustomerRequestDelivery')} icon={Plus} label="Request Delivery" onClick={onNavigate} showLabel={showLabel} />
+    <NavIconLink to={createPageUrl('Phonebook')} icon={Users} label="Phonebook" onClick={onNavigate} showLabel={showLabel} />
+    <NavIconLink to={createPageUrl('WeatherToday')} icon={CloudRain} label="Weather Today" onClick={onNavigate} showLabel={showLabel} />
   </>
 );
 
@@ -353,6 +343,8 @@ export default function Layout({ children, currentPageName }) {
     setMobileMenuOpen(false);
   };
 
+  const [navExpanded, setNavExpanded] = useState(false);
+
   const renderNavLinks = (onNavigate) => {
     if (!user) return null;
     const needsCustomerId = user.appRole === 'customer' || !user.appRole;
@@ -361,23 +353,23 @@ export default function Layout({ children, currentPageName }) {
     if (isPending) return null;
 
     if (user.role === 'admin') {
-      return <ManagementNav onNavigate={onNavigate} />;
+      return <ManagementNav onNavigate={onNavigate} showLabel={navExpanded} />;
     }
 
     const appRole = user.appRole;
 
     switch (appRole) {
       case 'globalAdmin':
-        return <ManagementNav onNavigate={onNavigate} />;
+        return <ManagementNav onNavigate={onNavigate} showLabel={navExpanded} />;
       case 'tenantAdmin':
-        return <ManagementNav onNavigate={onNavigate} />;
+        return <ManagementNav onNavigate={onNavigate} showLabel={navExpanded} />;
       case 'teamLeader':
-        return <TeamLeaderNav onNavigate={onNavigate} />;
+        return <TeamLeaderNav onNavigate={onNavigate} showLabel={navExpanded} />;
       case 'driver':
-        return <DriverNav onNavigate={onNavigate} />;
+        return <DriverNav onNavigate={onNavigate} showLabel={navExpanded} />;
       case 'customer':
       default:
-        return <CustomerNav onNavigate={onNavigate} />;
+        return <CustomerNav onNavigate={onNavigate} showLabel={navExpanded} />;
     }
   };
 
@@ -581,7 +573,11 @@ export default function Layout({ children, currentPageName }) {
               )}
             </div>
 
-            <nav className="flex items-center gap-2">
+            <nav 
+              className="flex items-center gap-2"
+              onMouseEnter={() => setNavExpanded(true)}
+              onMouseLeave={() => setNavExpanded(false)}
+            >
               {renderNavLinks(() => {})}
             </nav>
 
