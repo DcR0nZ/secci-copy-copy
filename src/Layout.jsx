@@ -61,7 +61,7 @@ const NavIconLink = ({ to, icon: Icon, label, onClick, showLabel }) => {
     <Link
       to={to}
       onClick={onClick}
-      className={`flex items-center gap-2 h-10 rounded-lg transition-all ${
+      className={`flex items-center gap-2 h-10 rounded-lg transition-all duration-300 ease-in-out ${
         showLabel ? 'px-3' : 'px-0 w-10 justify-center'
       } ${
         isActive
@@ -70,7 +70,9 @@ const NavIconLink = ({ to, icon: Icon, label, onClick, showLabel }) => {
       }`}
     >
       <Icon className="h-5 w-5 flex-shrink-0" />
-      {showLabel && <span className="text-sm font-medium whitespace-nowrap">{label}</span>}
+      <span className={`text-sm font-medium whitespace-nowrap transition-all duration-300 ease-in-out ${
+        showLabel ? 'opacity-100 max-w-xs' : 'opacity-0 max-w-0 overflow-hidden'
+      }`}>{label}</span>
     </Link>
   );
 };
@@ -146,11 +148,13 @@ const ManagementNav = ({ onNavigate, showLabel }) => {
       
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button className={`flex items-center gap-2 h-10 rounded-lg transition-all ${
+          <button className={`flex items-center gap-2 h-10 rounded-lg transition-all duration-300 ease-in-out ${
             showLabel ? 'px-3' : 'px-0 w-10 justify-center'
           } ${isLibraryActive ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/50' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}`}>
             <Library className="h-5 w-5 flex-shrink-0" />
-            {showLabel && <span className="text-sm font-medium whitespace-nowrap">Company Library</span>}
+            <span className={`text-sm font-medium whitespace-nowrap transition-all duration-300 ease-in-out ${
+              showLabel ? 'opacity-100 max-w-xs' : 'opacity-0 max-w-0 overflow-hidden'
+            }`}>Company Library</span>
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start">
