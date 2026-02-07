@@ -348,6 +348,20 @@ export default function Layout({ children, currentPageName }) {
   };
 
   const [navExpanded, setNavExpanded] = useState(false);
+  const navCollapseTimer = useRef(null);
+
+  const handleNavMouseEnter = () => {
+    if (navCollapseTimer.current) {
+      clearTimeout(navCollapseTimer.current);
+    }
+    setNavExpanded(true);
+  };
+
+  const handleNavMouseLeave = () => {
+    navCollapseTimer.current = setTimeout(() => {
+      setNavExpanded(false);
+    }, 200);
+  };
 
   const renderNavLinks = (onNavigate) => {
     if (!user) return null;
@@ -579,8 +593,8 @@ export default function Layout({ children, currentPageName }) {
 
             <nav 
               className="flex items-center gap-2"
-              onMouseEnter={() => setNavExpanded(true)}
-              onMouseLeave={() => setNavExpanded(false)}
+              onMouseEnter={handleNavMouseEnter}
+              onMouseLeave={handleNavMouseLeave}
             >
               {renderNavLinks(() => {})}
             </nav>
