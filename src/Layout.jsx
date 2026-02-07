@@ -591,13 +591,15 @@ export default function Layout({ children, currentPageName }) {
               )}
             </div>
 
-            <nav 
-              className="flex items-center gap-2"
+            <div 
+              className="flex-1 flex items-center justify-center"
               onMouseEnter={handleNavMouseEnter}
               onMouseLeave={handleNavMouseLeave}
             >
-              {renderNavLinks(() => {})}
-            </nav>
+              <nav className="flex items-center gap-2">
+                {renderNavLinks(() => {})}
+              </nav>
+            </div>
 
             <div className="flex items-center gap-2">
               <NotificationBell user={user} />
