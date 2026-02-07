@@ -568,11 +568,7 @@ export default function Layout({ children, currentPageName }) {
         
         <div className="h-screen w-screen flex flex-col bg-gray-50 overflow-hidden">
           {/* Desktop Top Toolbar */}
-          <div 
-            className="hidden md:flex items-center justify-between px-6 py-3 bg-white border-b shadow-sm z-30"
-            onMouseEnter={handleNavMouseEnter}
-            onMouseLeave={handleNavMouseLeave}
-          >
+          <div className="hidden md:flex items-center justify-between px-6 py-3 bg-white border-b shadow-sm z-30">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
                 <Truck className="h-7 w-7 text-blue-600" />
@@ -595,7 +591,11 @@ export default function Layout({ children, currentPageName }) {
               )}
             </div>
 
-            <nav className="flex items-center gap-2">
+            <nav 
+              className="flex items-center gap-2"
+              onMouseEnter={handleNavMouseEnter}
+              onMouseLeave={handleNavMouseLeave}
+            >
               {renderNavLinks(() => {})}
             </nav>
 
